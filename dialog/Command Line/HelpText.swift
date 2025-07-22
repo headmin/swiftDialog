@@ -491,12 +491,15 @@ struct SDHelp {
 
         Available commands:
             title: <text>
+            titlefont: <fontname>
             message: (+)<text>
-            image: <path/url>
+            alignment: [left | center | right]
+            image: [show | hide | clear | <path/url>]
             imagecaption: <text>
             progress: <int>/<text>
             progress: hide/show
             progresstext: <text>
+            helpmessage: <text>
             list: <text/csv>
             list: clear
             listitem: <item>: [<text>/wait]
@@ -507,11 +510,17 @@ struct SDHelp {
             button2: [disable/enable]
             button1text: (+)<text>
             button2text: (+)<text>
+            buttonsize: [mini | small | regular | large]
             infobuttontext: <text>
+            infotext: <text>
             infobox: <text>
             icon: <path/url/SF Symbol>
             icon: <centre/center/left/default>
             icon: size: <num>
+            iconalpha: <float> (0.0 -> 1.0)
+            overlayicon: <path/url/SF Symbol>
+            bannerimage: <path/url>
+            bannertext: [enable | disable | shadow | <text>]
             width: <num>
             height: <num>
             position: <position>
@@ -519,6 +528,8 @@ struct SDHelp {
             video: <path/url>
             blurscreen: [enable/disable]
             activate:
+            hide:
+            show:
             quit:
 """
 
