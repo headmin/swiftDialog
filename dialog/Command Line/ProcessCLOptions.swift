@@ -212,7 +212,18 @@ func processCLOptions(json: JSON = getJSON()) {
     // window location on screen
     if appArguments.position.present {
         writeLog("Window position will be set to \(appArguments.position.value)")
-        (appvars.windowPositionVertical,appvars.windowPositionHorozontal) = windowPosition(appArguments.position.value)
+        let pattern = #"^\b([0-9]{1,4}),([0-9]{1,4})\b$"#
+        let input = appArguments.position.value
+        if let regex = try? NSRegularExpression(pattern: pattern) {
+            let range = NSRange(location: 0, length: input.utf16.count)
+            if regex.firstMatch(in: input, options: [], range: range) != nil {
+                let posx = input.components(separatedBy: ",").first?.floatValue() ?? 0
+                let posy = input.components(separatedBy: ",").last?.floatValue() ?? 0
+                (appvars.windowPositionVertical,appvars.windowPositionHorozontal) = (.explicit(posx),.explicit(posy))
+            } else {
+                (appvars.windowPositionVertical,appvars.windowPositionHorozontal) = windowPosition(appArguments.position.value)
+            }
+        }
     }
     
     // Monitor mode: Always center horizontally (left-to-right)
@@ -453,7 +464,8 @@ func processCLOptions(json: JSON = getJSON()) {
                         name: String(json[appArguments.textField.long][index]["name"].stringValue),
                         value: String(json[appArguments.textField.long][index]["value"].stringValue),
                         isDate: Bool(json[appArguments.textField.long][index]["isdate"].boolValue),
-                        confirm: Bool(json[appArguments.textField.long][index]["confirm"].boolValue))
+                        confirm: Bool(json[appArguments.textField.long][index]["confirm"].boolValue),
+                        initialPath: String(json[appArguments.textField.long][index]["path"].stringValue))
                     )
                 }
             }
@@ -474,6 +486,7 @@ func processCLOptions(json: JSON = getJSON()) {
                 var fieldValue: String = ""
                 var fieldIsDate: Bool = false
                 var fieldConfirm: Bool = false
+                var fieldInitialPath: String = ""
                 if items.count > 0 {
                     fieldTitle = items[0]
                     if items.count > 1 {
@@ -509,6 +522,8 @@ func processCLOptions(json: JSON = getJSON()) {
                                 fieldIsDate = true
                             case "confirm":
                                 fieldConfirm = true
+                            case "path":
+                                fieldInitialPath = items[index+1]
                             default: ()
                             }
                         }
@@ -528,7 +543,8 @@ func processCLOptions(json: JSON = getJSON()) {
                             name: fieldName,
                             value: fieldValue,
                             isDate: fieldIsDate,
-                            confirm: fieldConfirm))
+                            confirm: fieldConfirm,
+                            initialPath: fieldInitialPath))
             }
         }
         for index in 0..<userInputState.textFields.count where userInputState.textFields[index].required {
@@ -664,7 +680,8 @@ func processCLOptions(json: JSON = getJSON()) {
                                                subTitle: String(json[appArguments.listItem.long][index]["subtitle"].stringValue),
                                                icon: String(json[appArguments.listItem.long][index]["icon"].stringValue),
                                                statusText: String(json[appArguments.listItem.long][index]["statustext"].stringValue),
-                                               statusIcon: String(json[appArguments.listItem.long][index]["status"].stringValue))
+                                               statusIcon: String(json[appArguments.listItem.long][index]["status"].stringValue),
+                                                action: String(json[appArguments.listItem.long][index]["action"].stringValue))
                                 )
                 }
             }
@@ -678,6 +695,7 @@ func processCLOptions(json: JSON = getJSON()) {
                 var icon: String = ""
                 var statusText: String = ""
                 var statusIcon: String = ""
+                var action: String = ""
                 for item in items {
                     var itemKeyValuePair = item.split(separator: "=", maxSplits: 1)
                     for _ in itemKeyValuePair.count...2 {
@@ -696,11 +714,13 @@ func processCLOptions(json: JSON = getJSON()) {
                         statusText = itemValue
                     case "status":
                         statusIcon = itemValue
+                    case "action":
+                        action = itemValue
                     default:
                         title = itemName
                     }
                 }
-                userInputState.listItems.append(ListItems(title: title, subTitle: subTitle, icon: icon, statusText: statusText, statusIcon: statusIcon))
+                userInputState.listItems.append(ListItems(title: title, subTitle: subTitle, icon: icon, statusText: statusText, statusIcon: statusIcon, action: action))
             }
         }
         if userInputState.listItems.isEmpty {

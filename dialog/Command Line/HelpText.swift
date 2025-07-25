@@ -491,12 +491,15 @@ struct SDHelp {
 
         Available commands:
             title: <text>
+            titlefont: <fontname>
             message: (+)<text>
-            image: <path/url>
+            alignment: [left | center | right]
+            image: [show | hide | clear | <path/url>]
             imagecaption: <text>
             progress: <int>/<text>
             progress: hide/show
             progresstext: <text>
+            helpmessage: <text>
             list: <text/csv>
             list: clear
             listitem: <item>: [<text>/wait]
@@ -507,11 +510,17 @@ struct SDHelp {
             button2: [disable/enable]
             button1text: (+)<text>
             button2text: (+)<text>
+            buttonsize: [mini | small | regular | large]
             infobuttontext: <text>
+            infotext: <text>
             infobox: <text>
             icon: <path/url/SF Symbol>
             icon: <centre/center/left/default>
             icon: size: <num>
+            iconalpha: <float> (0.0 -> 1.0)
+            overlayicon: <path/url/SF Symbol>
+            bannerimage: <path/url>
+            bannertext: [enable | disable | shadow | <text>]
             width: <num>
             height: <num>
             position: <position>
@@ -519,6 +528,8 @@ struct SDHelp {
             video: <path/url>
             blurscreen: [enable/disable]
             activate:
+            hide:
+            show:
             quit:
 """
 
@@ -622,6 +633,7 @@ struct SDHelp {
             confirm    - Will display a duplicate of the textfield who's content needs to match to validate
             regexerror - Specify a custom error to display if regex conditions are not met
             fileselect - Adds a "Select" button and presents a file picker
+            path       - Used with fileselect. Sets initial path for file select dialog
             filetype   - Limits fileselect to the named file extensions. Presented in space separated values
 
         modifiers can be combined e.g. --\(appArguments.textField.long) <text>,secure,required
@@ -688,7 +700,7 @@ struct SDHelp {
         argument.listItem.helpLong = """
         Multiple items can be added by specifying --\(appArguments.listItem.long) multiple times
 
-        Alternatly, specify a list item with either of the follwoing JSON formats (in conjunction with --\(appArguments.jsonFile.long) or \(appArguments.jsonString.long):
+        Alternatly, specify a list item with either of the following JSON formats (in conjunction with --\(appArguments.jsonFile.long) or \(appArguments.jsonString.long):
         Simple:
         {
           "listitem" : ["Item One", "Item Two", "Item Three", "Item Four", "Item Five"]
@@ -776,12 +788,15 @@ struct SDHelp {
         Sets the height of the dialog window to the specified height in points
 """
 
-        argument.position.helpShort = "Set dialog window position"
-        argument.position.helpUsage = "[topleft | left | bottomleft | top | center/centre | bottom | topright | right | bottomright]"
+        argument.position.helpShort = "Position the dialog window to the defined location on the screen"
+        argument.position.helpUsage = "[topleft | left | bottomleft | top | center/centre | bottom | topright | right | bottomright | x,y]"
         argument.position.helpLong = """
-        Poitions the dialog window to the defined location on the screen
+        Supply one of the defined keywords or a precise position in x,y format e.g. "100,200"
+          Position is calculated with the screen origin 0,0 and window position anchor at top left
 
-        Default is a visually appealing position slightly towards the top of centre, not dead centre.
+        There is a default edge offset value of \(appvars.windowPositionOffset). This can be adjusted using the --\(arguments.positionOffset.long) argument
+
+        Default is centred with a visually appealing vertical position slightly towards the top of centre, not dead centre.
 """
 
         argument.positionOffset.helpShort = "Set dialog window position offset"

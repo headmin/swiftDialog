@@ -192,7 +192,7 @@ struct dialogApp: App {
         }
 
         // Create main dialog state object
-        observedData = DialogUpdatableContent()
+        observedData = DialogUpdatableContent.shared
 
         if appArguments.fullScreenWindow.present {
             FullscreenView(observedData: observedData).showFullScreen()

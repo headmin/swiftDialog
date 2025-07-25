@@ -73,6 +73,7 @@ struct TextFieldState {
     var confirm: Bool     = false
     var validationValue: String = ""
     var requiredTextfieldHighlight: Color = .clear
+    var initialPath: String = ""
     var dictionary: [String: Any] {
             return ["title": title,
                     "name": name,
@@ -81,7 +82,8 @@ struct TextFieldState {
                     "prompt": prompt,
                     "regex": regex,
                     "regexerror": regexError,
-                    "value": value
+                    "value": value,
+                    "path": initialPath
             ]
         }
     var nsDictionary: NSDictionary {
@@ -119,13 +121,15 @@ struct ListItems: Codable {
     var statusText: String = ""
     var statusIcon: String = ""
     var progress: CGFloat = 0
+    var action: String = ""
     var dictionary: [String: Any] {
             return ["title": title,
                     "subtitle": subTitle,
                     "icon": icon,
                     "statustext": statusText,
                     "status": statusIcon,
-                    "progress": progress]
+                    "progress": progress,
+                    "action": action]
         }
     var nsDictionary: NSDictionary {
             return dictionary as NSDictionary

@@ -85,6 +85,8 @@
 		CC2190592A7BCDDD00269525 /* View+Additions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2190582A7BCDDD00269525 /* View+Additions.swift */; };
 		CC21905D2A7BD7D300269525 /* AppVariables.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC21905C2A7BD7D300269525 /* AppVariables.swift */; };
 		CC21905F2A7BD7F200269525 /* CommandLineArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC21905E2A7BD7F200269525 /* CommandLineArguments.swift */; };
+		CC72EBA22E1BE43400CF0DA1 /* dialogcli.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC72EBA12E1BE43400CF0DA1 /* dialogcli.swift */; };
+		CC72EBA82E1BE48800CF0DA1 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = CC72EBA72E1BE48800CF0DA1 /* ArgumentParser */; };
 		CC7D43CF2B972976004B9E65 /* PresentationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7D43CE2B972976004B9E65 /* PresentationView.swift */; };
 		CC7D44082B9C6FB5004B9E65 /* ImageFader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7D44072B9C6FB5004B9E65 /* ImageFader.swift */; };
 		CC8D96302A01CCAB00CC84C6 /* Theme+sdMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8D962F2A01CCAB00CC84C6 /* Theme+sdMarkdown.swift */; };
@@ -112,6 +114,18 @@
 			remoteInfo = dialog;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CC72EB9D2E1BE43400CF0DA1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		41110A2725F9E79E008171D2 /* License.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = License.swift; sourceTree = "<group>"; };
@@ -205,6 +219,8 @@
 		CC21905C2A7BD7D300269525 /* AppVariables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVariables.swift; sourceTree = "<group>"; };
 		CC21905E2A7BD7F200269525 /* CommandLineArguments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandLineArguments.swift; sourceTree = "<group>"; };
 		CC2190622A7DCA1A00269525 /* preinstall */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = preinstall; sourceTree = "<group>"; };
+		CC72EB9F2E1BE43400CF0DA1 /* dialog */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dialog; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC72EBA12E1BE43400CF0DA1 /* dialogcli.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = dialogcli.swift; sourceTree = "<group>"; };
 		CC7D43CE2B972976004B9E65 /* PresentationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationView.swift; sourceTree = "<group>"; };
 		CC7D44072B9C6FB5004B9E65 /* ImageFader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFader.swift; sourceTree = "<group>"; };
 		CC8D962F2A01CCAB00CC84C6 /* Theme+sdMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Theme+sdMarkdown.swift"; sourceTree = "<group>"; };
@@ -243,6 +259,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC72EB9C2E1BE43400CF0DA1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC72EBA82E1BE48800CF0DA1 /* ArgumentParser in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -277,6 +301,7 @@
 				4154C2EF25F76BDC00A3D373 /* dialogTests */,
 				4154C2FA25F76BDC00A3D373 /* dialogUITests */,
 				41FB6481268070CF00A54C3E /* dialog */,
+				CC72EBA02E1BE43400CF0DA1 /* dialogcli */,
 				4154C2DB25F76BDB00A3D373 /* Products */,
 				4114E1E727153FEE00388274 /* Frameworks */,
 			);
@@ -291,6 +316,7 @@
 				4154C2DA25F76BDB00A3D373 /* Dialog.app */,
 				4154C2EC25F76BDC00A3D373 /* dialogTests.xctest */,
 				4154C2F725F76BDC00A3D373 /* dialogUITests.xctest */,
+				CC72EB9F2E1BE43400CF0DA1 /* dialog */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -533,6 +559,14 @@
 			path = "Command Line";
 			sourceTree = "<group>";
 		};
+		CC72EBA02E1BE43400CF0DA1 /* dialogcli */ = {
+			isa = PBXGroup;
+			children = (
+				CC72EBA12E1BE43400CF0DA1 /* dialogcli.swift */,
+			);
+			path = dialogcli;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -595,6 +629,26 @@
 			productReference = 4154C2F725F76BDC00A3D373 /* dialogUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		CC72EB9E2E1BE43400CF0DA1 /* dialog */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC72EBA52E1BE43400CF0DA1 /* Build configuration list for PBXNativeTarget "dialog" */;
+			buildPhases = (
+				CC72EB9B2E1BE43400CF0DA1 /* Sources */,
+				CC72EB9C2E1BE43400CF0DA1 /* Frameworks */,
+				CC72EB9D2E1BE43400CF0DA1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = dialog;
+			packageProductDependencies = (
+				CC72EBA72E1BE48800CF0DA1 /* ArgumentParser */,
+			);
+			productName = dialogcli;
+			productReference = CC72EB9F2E1BE43400CF0DA1 /* dialog */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -602,7 +656,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastSwiftUpdateCheck = 1250;
+				LastSwiftUpdateCheck = 1540;
 				LastUpgradeCheck = 1540;
 				TargetAttributes = {
 					4154C2D925F76BDB00A3D373 = {
@@ -615,6 +669,9 @@
 					4154C2F625F76BDC00A3D373 = {
 						CreatedOnToolsVersion = 12.4;
 						TestTargetID = 4154C2D925F76BDB00A3D373;
+					};
+					CC72EB9E2E1BE43400CF0DA1 = {
+						CreatedOnToolsVersion = 15.4;
 					};
 				};
 			};
@@ -638,6 +695,7 @@
 				41E4BC9526AEDB130042A0A3 /* XCRemoteSwiftPackageReference "MarkdownUI" */,
 				414CBAE9278913BA00A1A980 /* XCRemoteSwiftPackageReference "SwiftyJSON" */,
 				41A5A6A228E5468100BD3D5E /* XCRemoteSwiftPackageReference "WebViewKit" */,
+				CC72EBA62E1BE48800CF0DA1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
 			);
 			productRefGroup = 4154C2DB25F76BDB00A3D373 /* Products */;
 			projectDirPath = "";
@@ -646,6 +704,7 @@
 				4154C2D925F76BDB00A3D373 /* Dialog */,
 				4154C2EB25F76BDC00A3D373 /* dialogTests */,
 				4154C2F625F76BDC00A3D373 /* dialogUITests */,
+				CC72EB9E2E1BE43400CF0DA1 /* dialog */,
 			);
 		};
 /* End PBXProject section */
@@ -799,6 +858,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				4154C2FC25F76BDC00A3D373 /* dialogUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC72EB9B2E1BE43400CF0DA1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC72EBA22E1BE43400CF0DA1 /* dialogcli.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -978,7 +1045,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 2.5.6;
+				MARKETING_VERSION = 2.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1007,7 +1074,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 2.5.6;
+				MARKETING_VERSION = 2.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1101,6 +1168,49 @@
 			};
 			name = Release;
 		};
+		CC72EBA32E1BE43400CF0DA1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = PWA5E9TQ59;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialogcli;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CC72EBA42E1BE43400CF0DA1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = PWA5E9TQ59;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialogcli;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1140,6 +1250,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		CC72EBA52E1BE43400CF0DA1 /* Build configuration list for PBXNativeTarget "dialog" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC72EBA32E1BE43400CF0DA1 /* Debug */,
+				CC72EBA42E1BE43400CF0DA1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -1167,6 +1286,14 @@
 				minimumVersion = 2.3.1;
 			};
 		};
+		CC72EBA62E1BE48800CF0DA1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-argument-parser.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.6.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1184,6 +1311,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 41A5A6A228E5468100BD3D5E /* XCRemoteSwiftPackageReference "WebViewKit" */;
 			productName = WebViewKit;
+		};
+		CC72EBA72E1BE48800CF0DA1 /* ArgumentParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CC72EBA62E1BE48800CF0DA1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
+			productName = ArgumentParser;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
