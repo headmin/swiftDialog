@@ -141,6 +141,10 @@ struct CommandLineArguments {
     var hideDefaultKeyboardAction = CommandlineArgument(long: "hidedefaultkeyboardaction", isbool: true)
     var alwaysReturnUserInput      = CommandlineArgument(long: "alwaysreturninput", isbool: true)
     var removeNotification        = CommandlineArgument(long: "remove", isbool: true)
+
+    // Inspect Mode Arguments
+    var inspectMode               = CommandlineArgument(long: "inspect-mode", isbool: true)
+    var inspectConfig             = CommandlineArgument(long: "inspect-config")
 }
 
 extension CommandlineArgument {
@@ -324,6 +328,8 @@ extension CommandLineArguments {
                     case "setAppIcon": self.setAppIcon = argument
                     case "removeNotification": self.removeNotification = argument
                     case "notificationIdentifier": self.notificationIdentifier = argument
+                    case "inspectMode": self.inspectMode = argument
+                    case "inspectConfig": self.inspectConfig = argument
                     default: break
                     }
                 }

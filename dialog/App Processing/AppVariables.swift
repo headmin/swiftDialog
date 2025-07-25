@@ -168,4 +168,7 @@ struct AppVariables {
     // debug flag
     var debugMode                       = Bool(false)
     var debugBorderColour               = Color.clear
+    
+    // inspect mode config path
+    var inspectConfigPath               = String("")
 }

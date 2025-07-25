@@ -102,6 +102,94 @@ func processCLOptions(json: JSON = getJSON()) {
     //this method goes through the arguments that are present and performs any processing required before use
     writeLog("Processing Options")
 
+    
+    // Monitor Mode - Use InspectView for all monitor scenarios (with or without config)
+    if appvars.debugMode { print("DEBUG: inspectMode.present = \(appArguments.inspectMode.present)") }
+    if appArguments.inspectMode.present {
+        writeLog("Inspect Mode activated", logLevel: .info)
+        writeLog("Inspect Mode: Activated", logLevel: .info)
+        writeLog("Inspect Mode: Config can be provided via:", logLevel: .info)
+        writeLog("  1. Environment variable: DIALOG_INSPECT_CONFIG=/path/to/config.json", logLevel: .info)
+        writeLog("  2. Standard location: /var/tmp/dialog-inspect-config.json", logLevel: .info)
+        writeLog("  3. Command line: --inspect-config (may cause hang with certain SwiftUI versions)", logLevel: .info)
+        
+        // Determine config path using same priority as InspectView
+        var configPath: String? = nil
+        
+        // Priority 1: Check environment variable DIALOG_INSPECT_CONFIG
+        if let envConfigPath = ProcessInfo.processInfo.environment["DIALOG_INSPECT_CONFIG"],
+           !envConfigPath.isEmpty {
+            configPath = envConfigPath
+            writeLog("Inspect Mode: Config path found in environment variable: \(configPath!)", logLevel: .info)
+        }
+        // Priority 2: Check standard config location
+        else if FileManager.default.fileExists(atPath: "/var/tmp/dialog-inspect-config.json") {
+            configPath = "/var/tmp/dialog-inspect-config.json"
+            writeLog("Inspect Mode: Using standard config location: \(configPath!)", logLevel: .info)
+        }
+        // Priority 3: Check command line argument
+        else if appArguments.inspectConfig.present {
+            configPath = appArguments.inspectConfig.value
+            writeLog("Inspect Mode: Config path from command line: \(configPath!)", logLevel: .info)
+        }
+        
+        // Store the config path for InspectView to access
+        if let configPath = configPath {
+            appvars.inspectConfigPath = configPath
+            
+            // Load the config to determine preset and apply appropriate window dimensions
+            if FileManager.default.fileExists(atPath: configPath) {
+                do {
+                    let data = try Data(contentsOf: URL(fileURLWithPath: configPath))
+                    let decoder = JSONDecoder()
+                    
+                    // Define an enhanced config struct for preset, width, and height
+                    struct InspectConfigForDimensions: Codable {
+                        let preset: String?
+                        let width: Int?
+                        let height: Int?
+                    }
+                    
+                    let config = try decoder.decode(InspectConfigForDimensions.self, from: data)
+                    
+                    // Priority 1: Use JSON config width/height if specified
+                    if let configWidth = config.width, let configHeight = config.height {
+                        appvars.windowWidth = CGFloat(configWidth)
+                        appvars.windowHeight = CGFloat(configHeight)
+                        writeLog("Inspect Mode: Using JSON config dimensions (\(configWidth)x\(configHeight))", logLevel: .info)
+                    }
+                    // Priority 2: Apply window dimensions based on preset defaults
+                    else if let preset = config.preset {
+                        if preset.contains("-mini") {
+                            // Mini presets use smaller window size
+                            appvars.windowWidth = 800
+                            appvars.windowHeight = 450
+                            writeLog("Inspect Mode: Using mini preset size (800x450) for preset: \(preset)", logLevel: .info)
+                        } else {
+                            // Standard presets use larger window size
+                            appvars.windowWidth = 1100
+                            appvars.windowHeight = 600
+                            writeLog("Inspect Mode: Using standard preset size (1100x600) for preset: \(preset)", logLevel: .info)
+                        }
+                    } else {
+                        // Default to standard size if no preset specified
+                        appvars.windowWidth = 1100
+                        appvars.windowHeight = 600
+                        writeLog("Inspect Mode: No preset specified, using default size (1100x600)", logLevel: .info)
+                    }
+                } catch {
+                    writeLog("Inspect Mode: Error loading config for dimensions: \(error)", logLevel: .error)
+                    // Default to standard size on error
+                    appvars.windowWidth = 1100
+                    appvars.windowHeight = 600
+                }
+            }
+        }
+        
+        // InspectView handles all its own state and configuration - no presentation mode needed
+        writeLog("Inspect Mode: InspectView will handle all config loading and presentation", logLevel: .info)
+    }
+
     if appArguments.messageAlignmentOld.present {
         appArguments.messageAlignment.present = appArguments.messageAlignmentOld.present
         appArguments.messageAlignment.value = appArguments.messageAlignmentOld.value
@@ -125,6 +213,12 @@ func processCLOptions(json: JSON = getJSON()) {
     if appArguments.position.present {
         writeLog("Window position will be set to \(appArguments.position.value)")
         (appvars.windowPositionVertical,appvars.windowPositionHorozontal) = windowPosition(appArguments.position.value)
+    }
+    
+    // Monitor mode: Always center horizontally (left-to-right)
+    if appArguments.inspectMode.present {
+        appvars.windowPositionHorozontal = NSWindow.Position.Horizontal.center
+        writeLog("Inspect Mode: Forcing horizontal position to center", logLevel: .info)
     }
     if appArguments.positionOffset.present {
         appvars.windowPositionOffset = appArguments.positionOffset.value.floatValue()
@@ -884,5 +978,6 @@ func processCLOptions(json: JSON = getJSON()) {
         appArguments.button1Disabled.present = true
     }
 
+    writeLog("ProcessCLOptions: Completed successfully", logLevel: .info)
 }
 

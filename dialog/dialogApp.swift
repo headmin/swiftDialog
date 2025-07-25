@@ -214,17 +214,27 @@ struct dialogApp: App {
     }
 
     var body: some Scene {
-
+        
         WindowGroup {
             if !appArguments.notification.present && !appvars.noargs {
+                let _ = appvars.debugMode ? print("DEBUG: Checking modes - mini:\(appArguments.miniMode.present) inspect:\(appArguments.inspectMode.present) presentation:\(appArguments.presentationMode.present)") : ()
                 ZStack {
                     if appArguments.miniMode.present {
+                        let _ = appvars.debugMode ? print("DEBUG: Loading MiniView") : ()
                         MiniView(observedDialogContent: observedData)
                             .frame(width: observedData.appProperties.windowWidth, height: observedData.appProperties.windowHeight)
+                    } else if appArguments.inspectMode.present {
+                        // Wrap InspectView to delay its initialization
+                        let _ = appvars.debugMode ? print("DEBUG: Loading InspectView") : ()
+                        InspectView()
+                            .frame(width: observedData.appProperties.windowWidth, 
+                                  height: observedData.appProperties.windowHeight)
                     } else if appArguments.presentationMode.present {
+                        let _ = appvars.debugMode ? print("DEBUG: Loading PresentationView") : ()
                         PresentationView(observedData: observedData)
                             .frame(width: observedData.appProperties.windowWidth, height: observedData.appProperties.windowHeight)
                     } else {
+                        let _ = appvars.debugMode ? print("DEBUG: Loading default ContentView") : ()
                         if appArguments.windowResizable.present {
                             ContentView(observedDialogContent: observedData)
                         } else {
@@ -243,6 +253,7 @@ struct dialogApp: App {
                             appArguments.movableWindow.present = true
                         }
                     }
+                    
                 }
                 .preferredColorScheme(observedData.args.preferredAppearance.present &&
                                       observedData.args.preferredAppearance.value.lowercased() == "dark" ? .dark

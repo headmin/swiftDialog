@@ -60,7 +60,22 @@
 		41D81E6C25F8209F00D1F7E1 /* CLOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E6B25F8209F00D1F7E1 /* CLOptions.swift */; };
 		41D81E7125F845D200D1F7E1 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E7025F845D200D1F7E1 /* AppState.swift */; };
 		41D81E7925F870A500D1F7E1 /* System.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E7825F870A500D1F7E1 /* System.swift */; };
+		927EC2B71BCB4E698795A084 /* DebouncedUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F660819C6A4FBC8F1D8BAB /* DebouncedUpdater.swift */; };
 		94072E492AFE931300B2A5C3 /* Font+Additions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94072E482AFE931300B2A5C3 /* Font+Additions.swift */; };
+		B4608E5B819446BC9AADDC8F /* FileSystemCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9F647DDE9CB42EBA9D931B9 /* FileSystemCache.swift */; };
+		BAC04B1E2E2FB3E6006B0F89 /* Preset3Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B1B2E2FB3E6006B0F89 /* Preset3Layout.swift */; };
+		BAC04B1F2E2FB3E6006B0F89 /* Preset2Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B1A2E2FB3E6006B0F89 /* Preset2Layout.swift */; };
+		BAC04B202E2FB3E6006B0F89 /* Preset1Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B192E2FB3E6006B0F89 /* Preset1Layout.swift */; };
+		BAC04B212E2FB3E6006B0F89 /* InspectLayoutProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B162E2FB3E6006B0F89 /* InspectLayoutProtocol.swift */; };
+		BAC04B222E2FB3E6006B0F89 /* InspectState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B172E2FB3E6006B0F89 /* InspectState.swift */; };
+		BAC04B232E2FB3E6006B0F89 /* Preset4Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B1C2E2FB3E6006B0F89 /* Preset4Layout.swift */; };
+		600393D08F1240E680E37402 /* Preset5Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 600393D08F1240E680E37403 /* Preset5Layout.swift */; };
+		BAC04B242E2FB3E6006B0F89 /* FSEventsInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B152E2FB3E6006B0F89 /* FSEventsInspector.swift */; };
+		BAC04B252E2FB3E6006B0F89 /* InspectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B182E2FB3E6006B0F89 /* InspectView.swift */; };
+		0E97D6F92AD54BE3B1A5467D /* InspectValidationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */; };
+		159C2690A9E64B5C96D813E8 /* InspectConfigurationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */; };
+		BAC04B282E2FB401006B0F89 /* AppInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B262E2FB401006B0F89 /* AppInspector.swift */; };
+		BAC04B292E2FB401006B0F89 /* InspectConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B272E2FB401006B0F89 /* InspectConstants.swift */; };
 		CC21904B2A7B994A00269525 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC21904A2A7B994A00269525 /* Preferences.swift */; };
 		CC21904E2A7BC3E000269525 /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC21904D2A7BC3E000269525 /* Strings.swift */; };
 		CC2190502A7BC9FE00269525 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC21904F2A7BC9FE00269525 /* Log.swift */; };
@@ -166,6 +181,20 @@
 		41FD45FD26C40366006976FC /* TimerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
 		41FD45FF26C8DC5D006976FC /* ImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageView.swift; sourceTree = "<group>"; };
 		94072E482AFE931300B2A5C3 /* Font+Additions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Additions.swift"; sourceTree = "<group>"; };
+		A4F660819C6A4FBC8F1D8BAB /* DebouncedUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebouncedUpdater.swift; sourceTree = "<group>"; };
+		BAC04B152E2FB3E6006B0F89 /* FSEventsInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FSEventsInspector.swift; sourceTree = "<group>"; };
+		BAC04B162E2FB3E6006B0F89 /* InspectLayoutProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectLayoutProtocol.swift; sourceTree = "<group>"; };
+		BAC04B172E2FB3E6006B0F89 /* InspectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectState.swift; sourceTree = "<group>"; };
+		BAC04B182E2FB3E6006B0F89 /* InspectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectView.swift; sourceTree = "<group>"; };
+		0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectValidationService.swift; sourceTree = "<group>"; };
+		159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectConfigurationService.swift; sourceTree = "<group>"; };
+		BAC04B192E2FB3E6006B0F89 /* Preset1Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset1Layout.swift; sourceTree = "<group>"; };
+		BAC04B1A2E2FB3E6006B0F89 /* Preset2Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset2Layout.swift; sourceTree = "<group>"; };
+		BAC04B1B2E2FB3E6006B0F89 /* Preset3Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset3Layout.swift; sourceTree = "<group>"; };
+		BAC04B1C2E2FB3E6006B0F89 /* Preset4Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset4Layout.swift; sourceTree = "<group>"; };
+		600393D08F1240E680E37403 /* Preset5Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset5Layout.swift; sourceTree = "<group>"; };
+		BAC04B262E2FB401006B0F89 /* AppInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInspector.swift; sourceTree = "<group>"; };
+		BAC04B272E2FB401006B0F89 /* InspectConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectConstants.swift; sourceTree = "<group>"; };
 		CC21904A2A7B994A00269525 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		CC21904D2A7BC3E000269525 /* Strings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
 		CC21904F2A7BC9FE00269525 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
@@ -185,6 +214,7 @@
 		CCD8ACEB2A011C9500D98695 /* RadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioView.swift; sourceTree = "<group>"; };
 		CCE934AC2ACC29F60094BD06 /* TextFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFileView.swift; sourceTree = "<group>"; };
 		CCF430592C07562D004DFB4D /* DebugOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugOverlay.swift; sourceTree = "<group>"; };
+		F9F647DDE9CB42EBA9D931B9 /* FileSystemCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystemCache.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -373,6 +403,7 @@
 		41C8259825F99AF90042DC50 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				BAC04B1D2E2FB3E6006B0F89 /* Inspect */,
 				4116922A28939A6C00A88700 /* ConstructionKit */,
 				414550A927C799D000D756E3 /* BackgroundBlur.swift */,
 				4154C2DF25F76BDB00A3D373 /* ContentView.swift */,
@@ -415,6 +446,24 @@
 			path = dialog;
 			sourceTree = "<group>";
 		};
+		BAC04B1D2E2FB3E6006B0F89 /* Inspect */ = {
+			isa = PBXGroup;
+			children = (
+				BAC04B152E2FB3E6006B0F89 /* FSEventsInspector.swift */,
+				BAC04B162E2FB3E6006B0F89 /* InspectLayoutProtocol.swift */,
+				BAC04B172E2FB3E6006B0F89 /* InspectState.swift */,
+				BAC04B182E2FB3E6006B0F89 /* InspectView.swift */,
+				0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */,
+				159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */,
+				BAC04B192E2FB3E6006B0F89 /* Preset1Layout.swift */,
+				BAC04B1A2E2FB3E6006B0F89 /* Preset2Layout.swift */,
+				BAC04B1B2E2FB3E6006B0F89 /* Preset3Layout.swift */,
+				BAC04B1C2E2FB3E6006B0F89 /* Preset4Layout.swift */,
+				600393D08F1240E680E37403 /* Preset5Layout.swift */,
+			);
+			path = Inspect;
+			sourceTree = "<group>";
+		};
 		CC21904C2A7BC3BC00269525 /* Functions */ = {
 			isa = PBXGroup;
 			children = (
@@ -445,10 +494,14 @@
 		CC21905A2A7BD47800269525 /* App Processing */ = {
 			isa = PBXGroup;
 			children = (
+				BAC04B262E2FB401006B0F89 /* AppInspector.swift */,
+				BAC04B272E2FB401006B0F89 /* InspectConstants.swift */,
 				41D81E7025F845D200D1F7E1 /* AppState.swift */,
 				CC21905C2A7BD7D300269525 /* AppVariables.swift */,
 				CC9F8FEE2A5EC76400802A88 /* ImageProcessing.swift */,
 				41D6FE8426DB11BA0083BE61 /* jamfHelper.swift */,
+				A4F660819C6A4FBC8F1D8BAB /* DebouncedUpdater.swift */,
+				F9F647DDE9CB42EBA9D931B9 /* FileSystemCache.swift */,
 			);
 			path = "App Processing";
 			sourceTree = "<group>";
@@ -495,7 +548,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				418A7B5B275994AD00E4D6F1 /* PBXTargetDependency */,
 			);
 			name = Dialog;
 			packageProductDependencies = (
@@ -665,6 +717,8 @@
 				418A7B532759949A00E4D6F1 /* TextEntryView.swift in Sources */,
 				CCB334702B2320F20079FB83 /* SolidColourView.swift in Sources */,
 				CC21905F2A7BD7F200269525 /* CommandLineArguments.swift in Sources */,
+				BAC04B282E2FB401006B0F89 /* AppInspector.swift in Sources */,
+				BAC04B292E2FB401006B0F89 /* InspectConstants.swift in Sources */,
 				CCE934AD2ACC29F60094BD06 /* TextFileView.swift in Sources */,
 				418A7B542759949A00E4D6F1 /* TimerView.swift in Sources */,
 				4116923B2893A22300A88700 /* CKListView.swift in Sources */,
@@ -674,6 +728,17 @@
 				CC7D44082B9C6FB5004B9E65 /* ImageFader.swift in Sources */,
 				418A7B572759949B00E4D6F1 /* ProcessCLOptions.swift in Sources */,
 				411692382893A21500A88700 /* CKImageView.swift in Sources */,
+				BAC04B1E2E2FB3E6006B0F89 /* Preset3Layout.swift in Sources */,
+				BAC04B1F2E2FB3E6006B0F89 /* Preset2Layout.swift in Sources */,
+				BAC04B202E2FB3E6006B0F89 /* Preset1Layout.swift in Sources */,
+				BAC04B212E2FB3E6006B0F89 /* InspectLayoutProtocol.swift in Sources */,
+				BAC04B222E2FB3E6006B0F89 /* InspectState.swift in Sources */,
+				BAC04B232E2FB3E6006B0F89 /* Preset4Layout.swift in Sources */,
+				600393D08F1240E680E37402 /* Preset5Layout.swift in Sources */,
+				BAC04B242E2FB3E6006B0F89 /* FSEventsInspector.swift in Sources */,
+				BAC04B252E2FB3E6006B0F89 /* InspectView.swift in Sources */,
+				0E97D6F92AD54BE3B1A5467D /* InspectValidationService.swift in Sources */,
+				159C2690A9E64B5C96D813E8 /* InspectConfigurationService.swift in Sources */,
 				CC2190522A7BCC3A00269525 /* Images.swift in Sources */,
 				418A7B582759949B00E4D6F1 /* NSWindow+Additions.swift in Sources */,
 				418A7B592759949B00E4D6F1 /* HelpText.swift in Sources */,
@@ -709,6 +774,9 @@
 				41D81E6C25F8209F00D1F7E1 /* CLOptions.swift in Sources */,
 				CC8D96302A01CCAB00CC84C6 /* Theme+sdMarkdown.swift in Sources */,
 				41D81E7125F845D200D1F7E1 /* AppState.swift in Sources */,
+				A78ED8A6E0EB427D86FCB769 /* MonitoringConstants.swift in Sources */,
+				927EC2B71BCB4E698795A084 /* DebouncedUpdater.swift in Sources */,
+				B4608E5B819446BC9AADDC8F /* FileSystemCache.swift in Sources */,
 				412B26AF289CE02100493EFF /* MiniView.swift in Sources */,
 				CC21905D2A7BD7D300269525 /* AppVariables.swift in Sources */,
 				4124EFD229455861003B00F4 /* HelpView.swift in Sources */,
@@ -746,10 +814,6 @@
 			isa = PBXTargetDependency;
 			target = 4154C2D925F76BDB00A3D373 /* Dialog */;
 			targetProxy = 4154C2F825F76BDC00A3D373 /* PBXContainerItemProxy */;
-		};
-		418A7B5B275994AD00E4D6F1 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = 418A7B5A275994AD00E4D6F1 /* MarkdownUI */;
 		};
 /* End PBXTargetDependency section */
 
@@ -905,7 +969,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"dialog/Preview Content\"";
-				DEVELOPMENT_TEAM = PWA5E9TQ59;
+				DEVELOPMENT_TEAM = D6G4X4D7C9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = dialog/Info.plist;
@@ -934,7 +998,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"dialog/Preview Content\"";
-				DEVELOPMENT_TEAM = PWA5E9TQ59;
+				DEVELOPMENT_TEAM = D6G4X4D7C9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = dialog/Info.plist;
@@ -1100,7 +1164,7 @@
 			repositoryURL = "https://github.com/gonzalezreal/MarkdownUI";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
+				minimumVersion = 2.3.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -1110,11 +1174,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 414CBAE9278913BA00A1A980 /* XCRemoteSwiftPackageReference "SwiftyJSON" */;
 			productName = SwiftyJSON;
-		};
-		418A7B5A275994AD00E4D6F1 /* MarkdownUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 41E4BC9526AEDB130042A0A3 /* XCRemoteSwiftPackageReference "MarkdownUI" */;
-			productName = MarkdownUI;
 		};
 		418A7B5C275994BB00E4D6F1 /* MarkdownUI */ = {
 			isa = XCSwiftPackageProductDependency;
