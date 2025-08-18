@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0E97D6F92AD54BE3B1A5467D /* InspectValidationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */; };
+		159C2690A9E64B5C96D813E8 /* InspectConfigurationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */; };
 		41005AA927CEF81A0065F323 /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = 41005AA827CEF81A0065F323 /* SwiftyJSON */; };
 		41005AAA27CEF8250065F323 /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4114E1E827153FEE00388274 /* AVKit.framework */; };
 		41110A2825F9E79E008171D2 /* License.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41110A2725F9E79E008171D2 /* License.swift */; };
@@ -60,6 +62,8 @@
 		41D81E6C25F8209F00D1F7E1 /* CLOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E6B25F8209F00D1F7E1 /* CLOptions.swift */; };
 		41D81E7125F845D200D1F7E1 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E7025F845D200D1F7E1 /* AppState.swift */; };
 		41D81E7925F870A500D1F7E1 /* System.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E7825F870A500D1F7E1 /* System.swift */; };
+		41E485B72E53006B00C085FD /* swiftDialog.icon in Resources */ = {isa = PBXBuildFile; fileRef = 41E485B62E53006B00C085FD /* swiftDialog.icon */; };
+		600393D08F1240E680E37402 /* Preset5Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 600393D08F1240E680E37403 /* Preset5Layout.swift */; };
 		927EC2B71BCB4E698795A084 /* DebouncedUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F660819C6A4FBC8F1D8BAB /* DebouncedUpdater.swift */; };
 		94072E492AFE931300B2A5C3 /* Font+Additions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94072E482AFE931300B2A5C3 /* Font+Additions.swift */; };
 		B4608E5B819446BC9AADDC8F /* FileSystemCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9F647DDE9CB42EBA9D931B9 /* FileSystemCache.swift */; };
@@ -69,11 +73,8 @@
 		BAC04B212E2FB3E6006B0F89 /* InspectLayoutProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B162E2FB3E6006B0F89 /* InspectLayoutProtocol.swift */; };
 		BAC04B222E2FB3E6006B0F89 /* InspectState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B172E2FB3E6006B0F89 /* InspectState.swift */; };
 		BAC04B232E2FB3E6006B0F89 /* Preset4Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B1C2E2FB3E6006B0F89 /* Preset4Layout.swift */; };
-		600393D08F1240E680E37402 /* Preset5Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 600393D08F1240E680E37403 /* Preset5Layout.swift */; };
 		BAC04B242E2FB3E6006B0F89 /* FSEventsInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B152E2FB3E6006B0F89 /* FSEventsInspector.swift */; };
 		BAC04B252E2FB3E6006B0F89 /* InspectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B182E2FB3E6006B0F89 /* InspectView.swift */; };
-		0E97D6F92AD54BE3B1A5467D /* InspectValidationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */; };
-		159C2690A9E64B5C96D813E8 /* InspectConfigurationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */; };
 		BAC04B282E2FB401006B0F89 /* AppInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B262E2FB401006B0F89 /* AppInspector.swift */; };
 		BAC04B292E2FB401006B0F89 /* InspectConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B272E2FB401006B0F89 /* InspectConstants.swift */; };
 		CC21904B2A7B994A00269525 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC21904A2A7B994A00269525 /* Preferences.swift */; };
@@ -128,6 +129,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectValidationService.swift; sourceTree = "<group>"; };
+		159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectConfigurationService.swift; sourceTree = "<group>"; };
 		41110A2725F9E79E008171D2 /* License.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = License.swift; sourceTree = "<group>"; };
 		4114E1E827153FEE00388274 /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
 		4114E1EA27154B2200388274 /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
@@ -192,21 +195,20 @@
 		41D81E6B25F8209F00D1F7E1 /* CLOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLOptions.swift; sourceTree = "<group>"; };
 		41D81E7025F845D200D1F7E1 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		41D81E7825F870A500D1F7E1 /* System.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = System.swift; sourceTree = "<group>"; };
+		41E485B62E53006B00C085FD /* swiftDialog.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = swiftDialog.icon; sourceTree = "<group>"; };
 		41FD45FD26C40366006976FC /* TimerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
 		41FD45FF26C8DC5D006976FC /* ImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageView.swift; sourceTree = "<group>"; };
+		600393D08F1240E680E37403 /* Preset5Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset5Layout.swift; sourceTree = "<group>"; };
 		94072E482AFE931300B2A5C3 /* Font+Additions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Additions.swift"; sourceTree = "<group>"; };
 		A4F660819C6A4FBC8F1D8BAB /* DebouncedUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebouncedUpdater.swift; sourceTree = "<group>"; };
 		BAC04B152E2FB3E6006B0F89 /* FSEventsInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FSEventsInspector.swift; sourceTree = "<group>"; };
 		BAC04B162E2FB3E6006B0F89 /* InspectLayoutProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectLayoutProtocol.swift; sourceTree = "<group>"; };
 		BAC04B172E2FB3E6006B0F89 /* InspectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectState.swift; sourceTree = "<group>"; };
 		BAC04B182E2FB3E6006B0F89 /* InspectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectView.swift; sourceTree = "<group>"; };
-		0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectValidationService.swift; sourceTree = "<group>"; };
-		159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectConfigurationService.swift; sourceTree = "<group>"; };
 		BAC04B192E2FB3E6006B0F89 /* Preset1Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset1Layout.swift; sourceTree = "<group>"; };
 		BAC04B1A2E2FB3E6006B0F89 /* Preset2Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset2Layout.swift; sourceTree = "<group>"; };
 		BAC04B1B2E2FB3E6006B0F89 /* Preset3Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset3Layout.swift; sourceTree = "<group>"; };
 		BAC04B1C2E2FB3E6006B0F89 /* Preset4Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset4Layout.swift; sourceTree = "<group>"; };
-		600393D08F1240E680E37403 /* Preset5Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset5Layout.swift; sourceTree = "<group>"; };
 		BAC04B262E2FB401006B0F89 /* AppInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInspector.swift; sourceTree = "<group>"; };
 		BAC04B272E2FB401006B0F89 /* InspectConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectConstants.swift; sourceTree = "<group>"; };
 		CC21904A2A7B994A00269525 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
@@ -297,6 +299,7 @@
 		4154C2D125F76BDB00A3D373 = {
 			isa = PBXGroup;
 			children = (
+				41E485B62E53006B00C085FD /* swiftDialog.icon */,
 				4154C2DC25F76BDB00A3D373 /* dialog */,
 				4154C2EF25F76BDC00A3D373 /* dialogTests */,
 				4154C2FA25F76BDC00A3D373 /* dialogUITests */,
@@ -714,6 +717,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41E485B72E53006B00C085FD /* swiftDialog.icon in Resources */,
 				4154C2E525F76BDC00A3D373 /* Preview Assets.xcassets in Resources */,
 				41832B7228436B430062AA1F /* Localizable.strings in Resources */,
 				4154C2E225F76BDC00A3D373 /* Assets.xcassets in Resources */,
@@ -833,7 +837,6 @@
 				41D81E6C25F8209F00D1F7E1 /* CLOptions.swift in Sources */,
 				CC8D96302A01CCAB00CC84C6 /* Theme+sdMarkdown.swift in Sources */,
 				41D81E7125F845D200D1F7E1 /* AppState.swift in Sources */,
-				A78ED8A6E0EB427D86FCB769 /* MonitoringConstants.swift in Sources */,
 				927EC2B71BCB4E698795A084 /* DebouncedUpdater.swift in Sources */,
 				B4608E5B819446BC9AADDC8F /* FileSystemCache.swift in Sources */,
 				412B26AF289CE02100493EFF /* MiniView.swift in Sources */,
@@ -1027,8 +1030,9 @@
 		4154C30125F76BDC00A3D373 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = swiftDialog;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = dialog/dialog.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -1036,7 +1040,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"dialog/Preview Content\"";
-				DEVELOPMENT_TEAM = D6G4X4D7C9;
+				DEVELOPMENT_TEAM = PWA5E9TQ59;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = dialog/Info.plist;
@@ -1044,7 +1048,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
 				MARKETING_VERSION = 2.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1056,8 +1060,9 @@
 		4154C30225F76BDC00A3D373 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = swiftDialog;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = dialog/dialog.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -1065,7 +1070,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"dialog/Preview Content\"";
-				DEVELOPMENT_TEAM = D6G4X4D7C9;
+				DEVELOPMENT_TEAM = PWA5E9TQ59;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = dialog/Info.plist;
@@ -1073,7 +1078,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
 				MARKETING_VERSION = 2.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
