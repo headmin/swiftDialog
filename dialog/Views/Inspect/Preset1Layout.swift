@@ -103,7 +103,7 @@ struct Preset1Layout: View, InspectLayoutProtocol {
                             HStack {
                                 // Item icon
                                 IconView(image: item.icon ?? "", defaultImage: systemImage, defaultColour: "accent")
-                                    .frame(width: 32, height: 32)
+                                    .frame(width: 48, height: 48)
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(item.displayName)
@@ -125,7 +125,7 @@ struct Preset1Layout: View, InspectLayoutProtocol {
                             
                             if item.id != sortedItems.last?.id {
                                 Divider()
-                                    .padding(.leading, 60)
+                                    .padding(.leading, 76)
                             }
                         }
                     }

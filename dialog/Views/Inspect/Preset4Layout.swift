@@ -293,7 +293,7 @@ struct SimpleInspectionTile: View {
             Group {
                 IconView(image: icon ?? "", defaultImage: getSystemIcon(for: title), defaultColour: "accent")
             }
-            .frame(width: 32 * scaleFactor, height: 32 * scaleFactor)
+            .frame(width: 48 * scaleFactor, height: 48 * scaleFactor)
             
             // Content with status - fixed height container
             VStack(alignment: .leading, spacing: 4 * scaleFactor) {
@@ -335,7 +335,7 @@ struct SimpleInspectionTile: View {
         .frame(minHeight: 72 * scaleFactor) // Fixed minimum height for all cards
         .padding(.horizontal, 18 * scaleFactor)
         .padding(.vertical, 16 * scaleFactor)
-        .background(Color.white)
+        .background(Color(NSColor.controlBackgroundColor))
         .overlay(
             RoundedRectangle(cornerRadius: 8 * scaleFactor)
                 .stroke(isPresent ? colorThresholds.getColor(for: 1.0) : 

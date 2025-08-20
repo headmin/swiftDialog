@@ -66,8 +66,9 @@ class InspectValidationService {
     
     /// Get actual plist value for display purposes
     func getPlistValue(at path: String, key: String) -> String? {
-        guard FileManager.default.fileExists(atPath: path),
-              let data = FileManager.default.contents(atPath: path),
+        let expandedPath = (path as NSString).expandingTildeInPath
+        guard FileManager.default.fileExists(atPath: expandedPath),
+              let data = FileManager.default.contents(atPath: expandedPath),
               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
             return nil
         }
@@ -102,10 +103,11 @@ class InspectValidationService {
         
         var foundPath: String? = nil
         let exists = item.paths.first { path in
-            let fileExists = FileManager.default.fileExists(atPath: path)
-            writeLog("ValidationService: Path '\(path)' exists: \(fileExists)", logLevel: .debug)
+            let expandedPath = (path as NSString).expandingTildeInPath
+            let fileExists = FileManager.default.fileExists(atPath: expandedPath)
+            writeLog("ValidationService: Path '\(path)' expanded to '\(expandedPath)' exists: \(fileExists)", logLevel: .debug)
             if fileExists {
-                foundPath = path
+                foundPath = expandedPath
             }
             return fileExists
         } != nil
@@ -132,10 +134,11 @@ class InspectValidationService {
         }
         
         for path in item.paths {
+            let expandedPath = (path as NSString).expandingTildeInPath
             if let result = checkSimplePlistKey(at: path, key: plistKey, expectedValue: item.expectedValue, evaluation: item.evaluation) {
                 let actualValue = getPlistValue(at: path, key: plistKey)
                 let details = ValidationDetails(
-                    path: path,
+                    path: expandedPath,
                     key: plistKey,
                     expectedValue: item.expectedValue,
                     actualValue: actualValue,
@@ -167,8 +170,9 @@ class InspectValidationService {
     }
     
     private func validateComplexPlistItem(_ item: InspectConfig.ItemConfig, source: InspectConfig.PlistSourceConfig) -> ValidationResult {
-        guard FileManager.default.fileExists(atPath: source.path),
-              let data = FileManager.default.contents(atPath: source.path),
+        let expandedPath = (source.path as NSString).expandingTildeInPath
+        guard FileManager.default.fileExists(atPath: expandedPath),
+              let data = FileManager.default.contents(atPath: expandedPath),
               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
             return ValidationResult(itemId: item.id, isValid: false, validationType: .complexPlistValidation, details: nil)
         }
@@ -188,8 +192,9 @@ class InspectValidationService {
     // MARK: - Smart Evaluation System
     
     private func checkSimplePlistKey(at path: String, key: String, expectedValue: String?, evaluation: String? = nil) -> Bool? {
-        guard FileManager.default.fileExists(atPath: path),
-              let data = FileManager.default.contents(atPath: path),
+        let expandedPath = (path as NSString).expandingTildeInPath
+        guard FileManager.default.fileExists(atPath: expandedPath),
+              let data = FileManager.default.contents(atPath: expandedPath),
               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
             return nil // File doesn't exist or can't be read
         }

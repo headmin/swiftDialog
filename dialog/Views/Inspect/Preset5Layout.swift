@@ -119,7 +119,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                     GridItem(.flexible(), spacing: 16 * scale)
                 ], spacing: 12 * scale) {
                     ForEach(complianceData, id: \.name) { category in
-                        CategoryCardView(category: category, scale: scale, colorThresholds: inspectState.colorThresholds)
+                        CategoryCardView(category: category, scale: scale, colorThresholds: inspectState.colorThresholds, inspectState: inspectState)
                     }
                 }
                 .padding(.horizontal, 32 * scale)
@@ -529,8 +529,8 @@ struct Preset5Layout: View, InspectLayoutProtocol {
             }
         }
         
-        // Priority 3: Simple fallback for common categories
-        return "questionmark.circle"
+        // Priority 3: Simple fallback for common categories - use info icon to indicate help is available
+        return "info.circle"
     }
     
     private func isCriticalItem(_ id: String) -> Bool {
@@ -623,14 +623,31 @@ struct CategoryCardView: View {
     let category: ComplianceCategory
     let scale: CGFloat
     let colorThresholds: InspectConfig.ColorThresholds
+    let inspectState: InspectState
+    @State private var showingCategoryHelp = false
     
     var body: some View {
         VStack(spacing: 8 * scale) {
             // Header with icon and status
             HStack {
-                Image(systemName: category.icon)
-                    .font(.system(size: 16 * scale))
-                    .foregroundColor(.blue)
+                // Make the category icon clickable for help
+                Button(action: {
+                    showingCategoryHelp = true
+                }) {
+                    Image(systemName: category.icon)
+                        .font(.system(size: 16 * scale, weight: .medium))
+                        .foregroundColor(.blue)
+                        .background(
+                            Circle()
+                                .fill(Color.blue.opacity(0.1))
+                                .frame(width: 24 * scale, height: 24 * scale)
+                        )
+                }
+                .buttonStyle(.plain)
+                .help("Click for category information and recommendations")
+                .popover(isPresented: $showingCategoryHelp) {
+                    CategoryHelpPopover(category: category, scale: scale, inspectState: inspectState)
+                }
                 
                 Spacer()
                 
@@ -1110,4 +1127,172 @@ struct ComplianceCategory {
     let total: Int
     let score: Double
     let icon: String
+}
+
+// MARK: - Category Help Popover
+struct CategoryHelpPopover: View {
+    let category: ComplianceCategory
+    let scale: CGFloat
+    let inspectState: InspectState
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header
+            HStack {
+                Image(systemName: category.icon)
+                    .font(.title2)
+                    .foregroundColor(.blue)
+                
+                Text(category.name)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+            }
+            
+            Divider()
+            
+            // Description based on category
+            Text(getCategoryDescription())
+                .font(.body)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            
+            // Compliance status
+            VStack(alignment: .leading, spacing: 8) {
+                Text(getStatusLabel())
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                
+                HStack {
+                    ProgressView(value: category.score)
+                        .progressViewStyle(LinearProgressViewStyle(tint: getScoreColor()))
+                    
+                    Text("\(Int(category.score * 100))%")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(getScoreColor())
+                }
+                
+                Text(getChecksPassedText())
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            // Recommendations
+            if category.score < 1.0 {
+                Divider()
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(getRecommendationsLabel())
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    
+                    Text(getRecommendations())
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding()
+        .frame(width: 320 * scale)
+    }
+    
+    private func getCategoryDescription() -> String {
+        // First check if there's custom help content in the configuration
+        if let categoryHelp = inspectState.config?.categoryHelp {
+            if let help = categoryHelp.first(where: { $0.category == category.name }) {
+                return help.description
+            }
+        }
+        
+        // Fallback to generic description
+        return "Security controls and configurations for \(category.name.lowercased()) to ensure compliance with organizational policies and industry standards."
+    }
+    
+    private func getRecommendations() -> String {
+        let failedCount = category.total - category.passed
+        
+        // First check if there's custom help content in the configuration
+        if let categoryHelp = inspectState.config?.categoryHelp {
+            if let help = categoryHelp.first(where: { $0.category == category.name }) {
+                if let recommendations = help.recommendations {
+                    return recommendations
+                }
+            }
+        }
+        
+        // Fallback to generic recommendations
+        return "Review and remediate the \(failedCount) failing check\(failedCount == 1 ? "" : "s") in this category to improve security posture."
+    }
+    
+    private func getScoreColor() -> Color {
+        if category.score >= 0.9 {
+            return .green
+        } else if category.score >= 0.75 {
+            return .blue
+        } else if category.score >= 0.5 {
+            return .orange
+        } else {
+            return .red
+        }
+    }
+    
+    private func getStatusLabel() -> String {
+        // First check category-specific label
+        if let categoryHelp = inspectState.config?.categoryHelp {
+            if let help = categoryHelp.first(where: { $0.category == category.name }) {
+                if let statusLabel = help.statusLabel {
+                    return statusLabel
+                }
+            }
+        }
+        
+        // Then check global UI labels
+        if let uiLabels = inspectState.config?.uiLabels {
+            if let complianceStatus = uiLabels.complianceStatus {
+                return complianceStatus
+            }
+        }
+        
+        // Default fallback
+        return "Compliance Status"
+    }
+    
+    private func getRecommendationsLabel() -> String {
+        // First check category-specific label
+        if let categoryHelp = inspectState.config?.categoryHelp {
+            if let help = categoryHelp.first(where: { $0.category == category.name }) {
+                if let recommendationsLabel = help.recommendationsLabel {
+                    return recommendationsLabel
+                }
+            }
+        }
+        
+        // Then check global UI labels
+        if let uiLabels = inspectState.config?.uiLabels {
+            if let recommendedActions = uiLabels.recommendedActions {
+                return recommendedActions
+            }
+        }
+        
+        // Default fallback
+        return "Recommended Actions"
+    }
+    
+    private func getChecksPassedText() -> String {
+        // Check for custom format in UI labels
+        if let uiLabels = inspectState.config?.uiLabels {
+            if let checksPassed = uiLabels.checksPassed {
+                // Replace placeholders with actual values
+                return checksPassed
+                    .replacingOccurrences(of: "{passed}", with: "\(category.passed)")
+                    .replacingOccurrences(of: "{total}", with: "\(category.total)")
+            }
+        }
+        
+        // Default format
+        return "\(category.passed) of \(category.total) checks passed"
+    }
 }

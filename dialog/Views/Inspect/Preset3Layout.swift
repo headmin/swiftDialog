@@ -58,7 +58,7 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                     }
                 }
                 .padding()
-                .background(Color.black.opacity(0.1))
+                .background(Color.primary.opacity(0.05))
                 
                 // Enlarged company icon section - always visible
                 VStack(spacing: 12) {
@@ -124,13 +124,13 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                                             .foregroundColor(textColor.opacity(0.7))
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 2)
-                                            .background(Color.white.opacity(0.2))
+                                            .background(Color.primary.opacity(0.1))
                                             .cornerRadius(4)
                                     }
                                 }
                                 .padding(.vertical, 6)
                                 .padding(.horizontal, 12)
-                                .background(Color.black.opacity(0.1))
+                                .background(Color.primary.opacity(0.05))
                                 .cornerRadius(6)
                             }
                         }
@@ -192,7 +192,7 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                             .scaleEffect(y: 2.0)
                     }
                     .padding()
-                    .background(Color.black.opacity(0.1))
+                    .background(Color.primary.opacity(0.05))
                     .cornerRadius(8)
                     .padding(.horizontal)
                     .padding(.top, 8)

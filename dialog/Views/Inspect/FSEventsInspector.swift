@@ -66,8 +66,9 @@ class FSEventsInspector {
         var pathsToWatch = Set<String>()
         
             for cachePath in cachePaths {
-            if FileManager.default.fileExists(atPath: cachePath) {
-                pathsToWatch.insert(cachePath)
+            let expandedPath = (cachePath as NSString).expandingTildeInPath
+            if FileManager.default.fileExists(atPath: expandedPath) {
+                pathsToWatch.insert(expandedPath)
             }
         }
         
@@ -134,7 +135,8 @@ class FSEventsInspector {
     
     private func isMonitoredPath(_ path: String) -> Bool {
         for cachePath in cachePaths {
-            if path.hasPrefix(cachePath) {
+            let expandedPath = (cachePath as NSString).expandingTildeInPath
+            if path.hasPrefix(expandedPath) {
                 return true
             }
         }

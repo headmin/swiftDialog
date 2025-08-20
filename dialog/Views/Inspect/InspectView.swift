@@ -485,6 +485,8 @@ struct InspectConfig: Codable {
     let hideSystemDetails: Bool?
     let colorThresholds: ColorThresholds?   // Configurable color thresholds for visualizations
     let plistSources: [PlistSourceConfig]?  // Array of plist configurations to monitor for preset5
+    let categoryHelp: [CategoryHelp]?       // Optional help content for categories
+    let uiLabels: UILabels?                 // Optional UI text customization
     let items: [ItemConfig]
     
     struct ItemConfig: Codable {
@@ -516,6 +518,25 @@ struct InspectConfig: Codable {
         let displayName: String?            // Human-readable name (optional)
         let category: String?               // Override category (optional)
         let isCritical: Bool?              // Override critical status (optional)
+    }
+    
+    struct CategoryHelp: Codable {
+        let category: String                // Category name to match
+        let description: String             // Description of the category
+        let recommendations: String?        // Recommendations if not compliant
+        let icon: String?                   // Optional custom icon for the category
+        let statusLabel: String?            // Optional custom label for "Compliance Status"
+        let recommendationsLabel: String?   // Optional custom label for "Recommended Actions"
+    }
+    
+    struct UILabels: Codable {
+        let complianceStatus: String?       // Label for "Compliance Status"
+        let recommendedActions: String?     // Label for "Recommended Actions"
+        let securityDetails: String?        // Label for "Security Details"
+        let lastCheck: String?              // Label for "Last Check"
+        let passed: String?                 // Label for "passed"
+        let failed: String?                 // Label for "failed"
+        let checksPassed: String?           // Format for "X of Y checks passed"
     }
     
     // Generic color threshold system for all presets
@@ -644,6 +665,8 @@ struct InspectConfig: Codable {
         hideSystemDetails = try container.decodeIfPresent(Bool.self, forKey: .hideSystemDetails)
         colorThresholds = try container.decodeIfPresent(ColorThresholds.self, forKey: .colorThresholds)
         plistSources = try container.decodeIfPresent([PlistSourceConfig].self, forKey: .plistSources)
+        categoryHelp = try container.decodeIfPresent([CategoryHelp].self, forKey: .categoryHelp)
+        uiLabels = try container.decodeIfPresent(UILabels.self, forKey: .uiLabels)
         
         // Default to empty array if items not provided
         items = try container.decodeIfPresent([ItemConfig].self, forKey: .items) ?? []
@@ -655,7 +678,7 @@ struct InspectConfig: Codable {
         case highlightColor, backgroundColor, backgroundImage, backgroundOpacity
         case textOverlayColor, gradientColors, button1Text, button1Disabled
         case button2Text, button2Disabled, button2Visible, buttonStyle
-        case autoEnableButton, hideSystemDetails, colorThresholds, plistSources, items
+        case autoEnableButton, hideSystemDetails, colorThresholds, plistSources, categoryHelp, uiLabels, items
     }
 }
 
