@@ -440,7 +440,8 @@ struct ItemCardView: View {
         .padding(12 * scale)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(NSColor.controlBackgroundColor))
+                // Using a custom colour for some level of consistency between macOS 15 and macOS 26
+                .fill(Color("controlBackgroundColour"))
                 .opacity(isDownloading ? 1.0 : 0.5)
         )
         .overlay(
