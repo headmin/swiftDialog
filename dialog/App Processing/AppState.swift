@@ -118,6 +118,7 @@ struct ListItems: Codable {
     var title: String
     var subTitle: String = ""
     var icon: String = ""
+    var iconAlpha: CGFloat = 1
     var statusText: String = ""
     var statusIcon: String = ""
     var progress: CGFloat = 0

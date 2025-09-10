@@ -679,6 +679,7 @@ func processCLOptions(json: JSON = getJSON()) {
                     userInputState.listItems.append(ListItems(title: String(json[appArguments.listItem.long][index]["title"].stringValue),
                                                subTitle: String(json[appArguments.listItem.long][index]["subtitle"].stringValue),
                                                icon: String(json[appArguments.listItem.long][index]["icon"].stringValue),
+                                               iconAlpha: CGFloat(json[appArguments.listItem.long][index]["iconalpha"].floatValue),
                                                statusText: String(json[appArguments.listItem.long][index]["statustext"].stringValue),
                                                statusIcon: String(json[appArguments.listItem.long][index]["status"].stringValue),
                                                 action: String(json[appArguments.listItem.long][index]["action"].stringValue))
@@ -693,6 +694,7 @@ func processCLOptions(json: JSON = getJSON()) {
                 var title: String = ""
                 var subTitle: String = ""
                 var icon: String = ""
+                var iconAlpha: CGFloat = 1
                 var statusText: String = ""
                 var statusIcon: String = ""
                 var action: String = ""
@@ -710,6 +712,8 @@ func processCLOptions(json: JSON = getJSON()) {
                         subTitle = itemValue
                     case "icon":
                         icon = itemValue
+                    case "iconalpha":
+                        iconAlpha = itemValue.floatValue()
                     case "statustext":
                         statusText = itemValue
                     case "status":
@@ -720,7 +724,7 @@ func processCLOptions(json: JSON = getJSON()) {
                         title = itemName
                     }
                 }
-                userInputState.listItems.append(ListItems(title: title, subTitle: subTitle, icon: icon, statusText: statusText, statusIcon: statusIcon, action: action))
+                userInputState.listItems.append(ListItems(title: title, subTitle: subTitle, icon: icon, iconAlpha: iconAlpha, statusText: statusText, statusIcon: statusIcon, action: action))
             }
         }
         if userInputState.listItems.isEmpty {

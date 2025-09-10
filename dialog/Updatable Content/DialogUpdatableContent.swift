@@ -109,6 +109,7 @@ class FileReader {
         var title: String = ""
         var subtitle: String = ""
         var icon: String = ""
+        var iconAlpha: CGFloat = 1.0
         var statusText: String = ""
         var statusIcon: String = ""
         var clickAction: String = ""
@@ -165,6 +166,8 @@ class FileReader {
                     case "icon":
                         icon = action[1].trimmingCharacters(in: .whitespaces)
                         iconIsSet = true
+                    case "iconalpha":
+                        iconAlpha = action[1].trimmingCharacters(in: .whitespaces).floatValue()
                     case "statustext":
                         statusText = action[1].trimmingCharacters(in: .whitespaces)
                         statusTextIsSet = true
@@ -194,7 +197,7 @@ class FileReader {
                     writeToLog("deleted row at index \(row)")
                 } else {
                     if subTitleIsSet { userInputState.listItems[row].subTitle = subtitle }
-                    if iconIsSet { userInputState.listItems[row].icon = icon }
+                    if iconIsSet { userInputState.listItems[row].icon = icon; userInputState.listItems[row].iconAlpha = iconAlpha }
                     if statusIsSet { userInputState.listItems[row].statusIcon = statusIcon }
                     if statusTextIsSet { userInputState.listItems[row].statusText = statusText }
                     if progressIsSet { userInputState.listItems[row].progress = listProgressValue }
