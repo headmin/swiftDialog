@@ -101,7 +101,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
             if appArguments.forceOnTop.present || appArguments.blurScreen.present {
                 writeLog("Activating window", logLevel: .debug)
-                NSApp.activate(ignoringOtherApps: true)
+                activateDialog()
             }
         }
     }
@@ -208,7 +208,7 @@ struct dialogApp: App {
         } else {
             // bring to front on launch
             writeLog("Activating", logLevel: .debug)
-            NSApp.activate(ignoringOtherApps: true)
+            activateDialog()
             writeLog("Activated", logLevel: .debug)
         }
     }

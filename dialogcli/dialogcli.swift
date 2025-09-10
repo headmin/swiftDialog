@@ -177,8 +177,10 @@ struct DialogLauncher: ParsableCommand {
                     index += 2
                 }
             } else {
-                reordered.append(arg)
-                index += 1
+                if !arg.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    reordered.append(arg)
+                    index += 1
+                }
             }
         }
 

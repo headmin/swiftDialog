@@ -366,3 +366,10 @@ var isLaptop: Bool {
     // MacBook model identifiers typically start with "MacBook"
     return modelIdentifier.hasPrefix("MacBook")
 }
+
+func activateDialog() {
+    DispatchQueue.main.async {
+        NSApplication.shared.setActivationPolicy(.regular)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+}

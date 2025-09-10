@@ -245,7 +245,7 @@ class FileReader {
                 (observedData.appProperties.windowPositionVertical,
                  observedData.appProperties.windowPositionHorozontal) = windowPosition(argument)
                 processWindow()
-                NSApp.activate(ignoringOtherApps: true)
+                activateDialog()
 
             case "width:":
                 if argument.isNumeric {
@@ -524,7 +524,7 @@ class FileReader {
             // activate
             case "activate:":
                 writeToLog("activating window")
-                NSApp.activate(ignoringOtherApps: true)
+                activateDialog()
 
             // hide
             case "hide:":
@@ -535,7 +535,7 @@ class FileReader {
             case "show:":
                 writeToLog("Showing windows")
                 NSApp.unhide(self)
-                NSApp.activate(ignoringOtherApps: true)
+                activateDialog()
 
             // icon alpha
             case "\(observedData.args.iconAlpha.long):":
@@ -561,14 +561,14 @@ class FileReader {
                     writeToLog("enabling blur screen")
                     observedData.args.blurScreen.present = true
                     blurredScreen.show()
-                    NSApp.activate(ignoringOtherApps: true)
+                    activateDialog()
                 default:
                     observedData.args.blurScreen.present = false
                     blurredScreen.hide()
                     if !observedData.args.forceOnTop.present {
                         NSApp.windows.first?.level = .normal
                     }
-                    NSApp.activate(ignoringOtherApps: true)
+                    activateDialog()
                 }
 
             // web content

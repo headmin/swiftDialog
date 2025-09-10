@@ -63,9 +63,9 @@ struct RadioView: View {
                                             .font(.system(size: observedData.appProperties.labelFontSize))
                                     }
                                 }
-                                .onChange(of: selectedOption[index], perform: { selectedOption in
+                                .onChange(of: selectedOption[index]) { _, selectedOption in
                                     userInputState.dropdownItems[index].selectedValue = selectedOption
-                                })
+                                }
                                 .pickerStyle(RadioGroupPickerStyle())
                                 Spacer()
                             }
