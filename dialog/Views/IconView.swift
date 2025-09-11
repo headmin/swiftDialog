@@ -267,13 +267,7 @@ struct IconView: View {
                                 .foregroundColor(Color.white)
                         }
                         if messageUserImagePath == "default" {
-                            Image(systemName: builtInIconName)
-                                .resizable()
-                                .renderingMode(iconRenderingMode)
-                                .font(Font.title.weight(builtInIconWeight))
-                                .symbolRenderingMode(.monochrome)
-                                .symbolAnimation(effect: sfSymbolAnimation)
-                                .foregroundColor(builtInIconColour)
+                            Image(nsImage: NSImage(named: "AppIcon") ?? NSImage())
                         } else if messageUserImagePath == "computer" {
                             Image(nsImage: NSImage(named: NSImage.computerName) ?? NSImage())
                                 .resizable()

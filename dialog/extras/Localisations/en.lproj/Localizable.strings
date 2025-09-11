@@ -21,8 +21,8 @@
 "button-select" = "Select";
 
 //default text
-"default-title" = "An Important Message";
-"default-message" = "This contains important message content\n\nPlease read";
+"default-title" = "";
+"default-message" = "";
 "help-hover" = "Click for additional information";
 
 "Confirm" = "Confirm";
