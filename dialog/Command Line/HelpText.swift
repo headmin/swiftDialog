@@ -823,10 +823,12 @@ struct SDHelp {
         argument.logFileToTail.helpUsage = "<file>"
         argument.logFileToTail.helpLong = """
         Open a file and display the contents as it is being written
+
+        Can be used with \(argument.logFileHistory.long) to display additional log history for context before watching the file for changes
 """
         
         argument.logFileHistory.helpShort = "Display log file history when used with --\(argument.logFileToTail.long)"
-        argument.logFileHistory.helpUsage = "<int>"
+        argument.logFileHistory.helpUsage = "[<int>]"
         argument.logFileHistory.helpLong = """
         When file contents are being observed for changes, adding this option will pre-populate the display with the previous <int> lines of history.
         Default value is 100
