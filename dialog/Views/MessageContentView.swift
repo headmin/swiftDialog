@@ -13,7 +13,8 @@ struct MessageContent: View {
 
     @ObservedObject var observedData: DialogUpdatableContent
     @State private var messageHeight: CGFloat
-
+    
+    var messageMinHeight: CGFloat = 50
     var fieldPadding: CGFloat = 15
     var dataEntryMaxWidth: CGFloat = 700
     let defaultMessageHeight: CGFloat = 50
@@ -108,14 +109,15 @@ struct MessageContent: View {
                                         }
                                         .padding(.vertical, 2)
                                         .focusable(false)
+                                        .task {
+                                            messageHeight = .infinity
+                                        }
                                     } else {
                                         Markdown(section.content)
                                             .frame(width: messageGeometry.size.width, alignment: observedData.appProperties.messagePosition)
                                             .multilineTextAlignment(observedData.appProperties.messageAlignment)
                                             .lineSpacing(2)
                                             .fixedSize()
-                                            /*
-                                             // Leaving this commented out for now just in case we need it back
                                             .background(GeometryReader {child -> Color in
                                                 DispatchQueue.main.async {
                                                     // update on next cycle with calculated height
@@ -123,7 +125,6 @@ struct MessageContent: View {
                                                 }
                                                 return Color.clear
                                             })
-                                             */
                                             .markdownTheme(.sdMarkdown)
                                             .markdownTextStyle {
                                                 FontSize(appvars.messageFontSize)
@@ -137,8 +138,7 @@ struct MessageContent: View {
                             }
                         }
                 }
-                // Will be interesting is commenting out this line causes issues
-                //.frame(minHeight: 30, maxHeight: messageHeight)
+                .frame(minHeight: messageMinHeight, maxHeight: messageHeight)
                 if !observedData.args.messageVerticalAlignment.present || ["centre", "center", "top"].contains(observedData.args.messageVerticalAlignment.value) {
                     Spacer()
                 }
