@@ -268,6 +268,7 @@ struct IconView: View {
                         }
                         if messageUserImagePath == "default" {
                             Image(nsImage: NSImage(named: "AppIcon") ?? NSImage())
+                                .resizable()
                         } else if messageUserImagePath == "computer" {
                             Image(nsImage: NSImage(named: NSImage.computerName) ?? NSImage())
                                 .resizable()
