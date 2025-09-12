@@ -31,17 +31,17 @@ struct TaskProgressView: View {
 struct TaskProgressViewStyle: ProgressViewStyle {
     func makeBody(configuration: Configuration) -> some View {
 
-        let determinate = (configuration.fractionCompleted == nil) ? 0.0 : 1.0
-        let indeterminate = (configuration.fractionCompleted == nil) ? 1.0 : 0.0
+        let determinate = (configuration.fractionCompleted == nil) ? false : true
 
         ZStack {
-            ProgressView(value: configuration.fractionCompleted)
-                .opacity(determinate)
-
-            ProgressView()
-                .opacity(indeterminate)
+            if determinate {
+                ProgressView(value: configuration.fractionCompleted)
+            } else {
+                IndeterminateProgressView()
+            }
         }
-        .transition(.opacity)
+        .frame(height: 20)
+        .transition(.opacity.animation(.easeInOut(duration: 0.2)))
         .progressViewStyle(.linear)
     }
 }

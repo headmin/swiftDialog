@@ -929,6 +929,9 @@ func processCLOptions(json: JSON = getJSON()) {
                 userInputState.iconItems.append(Icons(value: iconOption))
             }
         }
+        if userInputState.iconItems.isEmpty {
+            userInputState.iconItems.append(Icons(value: "default"))
+        }
     }
 
     // hide the icon if asked to or if banner image is present
