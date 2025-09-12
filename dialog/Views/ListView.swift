@@ -162,7 +162,7 @@ struct ListView: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
-                    .background(Color("editorBackgroundColour"))
+                    .background(Color("listBackgroundColour"))
                     .listStyle(SidebarListStyle())
                 }
                 .onChange(of: observedData.listItemUpdateRow, perform: { _ in

@@ -8,6 +8,7 @@
 import SwiftUI
 
 // This is required as macOS 26 broke the indeterminate progress view animation
+// source https://matthewcodes.uk/articles/indeterminate-linear-progress-view/
 
 struct IndeterminateProgressView: View {
     @State private var width: CGFloat = 0

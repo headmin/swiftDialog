@@ -430,7 +430,6 @@
 		41C8259825F99AF90042DC50 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				419D11452E73E62400298C8C /* IndeterminateProgressView.swift */,
 				BAC04B1D2E2FB3E6006B0F89 /* Inspect */,
 				4116922A28939A6C00A88700 /* ConstructionKit */,
 				414550A927C799D000D756E3 /* BackgroundBlur.swift */,
@@ -449,6 +448,7 @@
 				416DED41261C5FE00049B6B5 /* FullscreenView.swift */,
 				41AD75B526AA81760023EBD8 /* TextEntryView.swift */,
 				41FD45FD26C40366006976FC /* TimerView.swift */,
+				419D11452E73E62400298C8C /* IndeterminateProgressView.swift */,
 				41FD45FF26C8DC5D006976FC /* ImageView.swift */,
 				41876682275D87C70023A6A1 /* ImageSlider.swift */,
 				CC7D44072B9C6FB5004B9E65 /* ImageFader.swift */,
