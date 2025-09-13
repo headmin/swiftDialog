@@ -12,6 +12,8 @@ import SwiftUI
 
 struct IndeterminateProgressView: View {
     @State private var offset: CGFloat = 0
+    @State private var barColour: Color = .accentColor
+    @Environment(\.controlActiveState) var controlActiveState
 
     var body: some View {
         GeometryReader { geometry in
@@ -19,11 +21,11 @@ struct IndeterminateProgressView: View {
                     .foregroundColor(.gray.opacity(0.15))
                     .overlay(
                         Rectangle()
-                            .fill(LinearGradient(colors: [.clear, .accentColor, .clear], startPoint: .leading, endPoint: .trailing))
-                            .frame(width: geometry.size.width * 0.25, height: 8)
+                            .fill(LinearGradient(colors: [.clear, barColour, barColour, .clear], startPoint: .leading, endPoint: .trailing))
+                            .frame(width: geometry.size.width * 0.35, height: 8)
                             .clipShape(Capsule())
-                            .offset(x: -geometry.size.width * 0.6, y: 0)
-                            .offset(x: geometry.size.width * 1.2 * self.offset, y: 0)
+                            .offset(x: -geometry.size.width * 0.7, y: 0)
+                            .offset(x: geometry.size.width * 1.4 * self.offset, y: 0)
                             .animation(.easeInOut.repeatForever().speed(0.25), value: self.offset)
                             .onAppear {
                                 withAnimation {
@@ -34,6 +36,16 @@ struct IndeterminateProgressView: View {
                     .clipShape(Capsule())
                     .frame(height: 8)
                     .padding(.top, 6)
+                    .onChange(of: controlActiveState) { _, newPhase in
+                        if newPhase == .key {
+                            barColour = .accentColor
+                        } else {
+                            barColour = .secondary
+                        }
+                    }
+                    .onAppear {
+                        barColour = controlActiveState == .key ? .accentColor : .secondary
+                    }
             }
     }
 }
