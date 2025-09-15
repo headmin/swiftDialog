@@ -13,17 +13,24 @@ struct TitleView: View {
     @ObservedObject var observedData: DialogUpdatableContent
 
     var body: some View {
-        if observedData.appProperties.titleFontName == "" {
-            Text(observedData.args.titleOption.value)
-                .font(.system(size: observedData.appProperties.titleFontSize, weight: observedData.appProperties.titleFontWeight))
-                .foregroundColor(observedData.appProperties.titleFontColour)
-                .accessibilityHint(observedData.args.titleOption.value)
-        } else {
-            Text(observedData.args.titleOption.value)
-                .font(.custom(observedData.appProperties.titleFontName, size: observedData.appProperties.titleFontSize))
-                .fontWeight(observedData.appProperties.titleFontWeight)
-                .foregroundColor(observedData.appProperties.titleFontColour)
-                .accessibilityHint(observedData.args.titleOption.value)
+        Text(observedData.args.titleOption.value)
+            .titleFont(fontName: observedData.appProperties.titleFontName,
+                       fontSize: observedData.appProperties.titleFontSize,
+                       fontWeight: observedData.appProperties.titleFontWeight
+            )
+            .foregroundColor(observedData.appProperties.titleFontColour)
+            .accessibilityHint(observedData.args.titleOption.value)
+    }
+}
+
+extension Text {
+    func titleFont(fontName: String = "", fontSize: CGFloat = 30, fontWeight: Font.Weight = .bold) -> Text {
+        if fontName.isEmpty {
+            return self
+                .font(.system(size: fontSize, weight: fontWeight))
         }
+        return self
+            .font(.custom(fontName, size: fontSize))
+            .fontWeight(fontWeight)
     }
 }
