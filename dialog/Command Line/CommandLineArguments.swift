@@ -96,6 +96,7 @@ struct CommandLineArguments {
     var preferredAppearance      = CommandlineArgument(long: "appearance")
     var setAppIcon               = CommandlineArgument(long: "seticon")
     var notificationIdentifier   = CommandlineArgument(long: "identifier", short: "id")
+    var callingPid               = CommandlineArgument(long: "pid", defaultValue: 0)
 
     // command line options that take no additional parameters
     var button1Disabled          = CommandlineArgument(long: "button1disabled", isbool: true)
@@ -332,6 +333,7 @@ extension CommandLineArguments {
                     case "notificationIdentifier": self.notificationIdentifier = argument
                     case "inspectMode": self.inspectMode = argument
                     case "inspectConfig": self.inspectConfig = argument
+                    case "callingPid": self.callingPid = argument
                     default: break
                     }
                 }

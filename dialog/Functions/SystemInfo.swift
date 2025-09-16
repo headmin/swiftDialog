@@ -116,3 +116,47 @@ public extension ProcessInfo {
         return "\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)"
     }
 }
+
+class PIDMonitor {
+    private let pid: pid_t
+    private var timer: DispatchSourceTimer?
+    private let onExit: () -> Void
+    
+    init(pid: pid_t, checkInterval: TimeInterval = 1.0, onExit: @escaping () -> Void) {
+        self.pid = pid
+        self.onExit = onExit
+        startMonitoring(interval: checkInterval)
+    }
+    
+    private func startMonitoring(interval: TimeInterval) {
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global())
+        timer.schedule(deadline: .now(),
+                       repeating: interval,
+                       leeway: .milliseconds(200))
+        timer.setEventHandler { [weak self] in
+            guard let self = self else { return }
+            self.checkProcess()
+        }
+        self.timer = timer
+        timer.resume()
+    }
+    
+    private func checkProcess() {
+        if kill(pid, 0) != 0 && errno == ESRCH {
+            writeLog("💀 Process \(pid) is gone", logLevel: .debug)
+            stopMonitoring()
+            DispatchQueue.main.async { [onExit] in
+                onExit()
+            }
+        }
+    }
+    
+    func stopMonitoring() {
+        timer?.cancel()
+        timer = nil
+    }
+    
+    deinit {
+        stopMonitoring()
+    }
+}

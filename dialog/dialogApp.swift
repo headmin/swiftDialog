@@ -16,6 +16,8 @@ var background = BlurWindowController()
 // AppDelegate and extension used for notifications
 class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
 
+    var monitor: PIDMonitor?
+    
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                 didReceive response: UNNotificationResponse,
                 withCompletionHandler completionHandler:
@@ -44,7 +46,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        //var blurredScreen = [BlurWindowController]()
+
+        // Check for calling app pid
+        if appArguments.callingPid.present {
+            monitor = PIDMonitor(pid: Int32(appArguments.callingPid.value) ?? 0) {
+                quitDialog(exitCode: 40, exitMessage: "dialog quit becasue calling process was terminated")
+            }
+            writeLog("Monitoring for calling pid \(appArguments.callingPid.value)", logLevel: .debug)
+        }
 
         if let window = NSApplication.shared.windows.first {
             window.standardWindowButton(.closeButton)?.isHidden = !appArguments.windowButtonsEnabled.present

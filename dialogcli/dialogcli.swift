@@ -40,6 +40,10 @@ struct DialogLauncher: ParsableCommand {
             Darwin.exit(40)
         }
         
+        // get my process id
+        let myPid = getpid()
+        //fputs("my pid \(myPid)\n", stderr)
+        
         // Define default paths and binary locations
         let defaultCommandFile = "/var/tmp/dialog.log"
         let dialogAppPath = "/Library/Application Support/Dialog/Dialog.app"
@@ -76,7 +80,7 @@ struct DialogLauncher: ParsableCommand {
             throw ExitCode(1)
         }
 
-        let reorderedArgs = reorderArguments(passthroughArgs)
+        let reorderedArgs = ["--pid", "\(myPid)"]+reorderArguments(passthroughArgs)
 
         // Run as root if necessary, otherwise directly run the binary
         if getuid() == 0 {
@@ -189,7 +193,7 @@ struct DialogLauncher: ParsableCommand {
                     index += 2
                 }
             } else {
-                if !arg.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if !arg.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && arg.count > 1 {
                     reordered.append(arg)
                     index += 1
                 }
