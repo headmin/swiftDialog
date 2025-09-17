@@ -78,10 +78,10 @@ struct Preset2Layout: View, InspectLayoutProtocol {
                     .animation(.easeInOut(duration: InspectConstants.standardAnimationDuration), value: inspectState.scrollOffset)
                     .animation(.easeInOut(duration: InspectConstants.longAnimationDuration), value: inspectState.completedItems.count)
                     .animation(.easeInOut(duration: InspectConstants.longAnimationDuration), value: inspectState.downloadingItems.count)
-                    .onChange(of: inspectState.completedItems.count) { _ in
+                    .onChange(of: inspectState.completedItems.count) {
                         smartAutoScroll()
                     }
-                    .onChange(of: inspectState.downloadingItems.count) { _ in
+                    .onChange(of: inspectState.downloadingItems.count) {
                         smartAutoScroll()
                     }
                     

@@ -36,7 +36,7 @@ struct CKButtonView: View {
 
 
                          TextField("", text: $observedData.args.buttonSize.value)
-                             .onChange(of: observedData.args.buttonSize.value) { newValue in
+                             .onChange(of: observedData.args.buttonSize.value) { _, newValue in
                                     observedData.appProperties.buttonSize = appDefaults.buttonSizeStates[newValue] ?? .regular
                                 }
                      }
@@ -53,9 +53,9 @@ struct CKButtonView: View {
                 LabelView(label: "ck-button2".localized)
                 HStack {
                     Toggle("ck-visible".localized, isOn: $observedData.args.button2Option.present)
-                        .onChange(of: observedData.args.button2Option.present, perform: { _ in
+                        .onChange(of: observedData.args.button2Option.present) {
                             observedData.args.button2TextOption.present.toggle()
-                        })
+                        }
                         .toggleStyle(.switch)
                     TextField("", text: $observedData.args.button2TextOption.value)
                 }
@@ -64,10 +64,10 @@ struct CKButtonView: View {
                 LabelView(label: "ck-infobuttonlabel".localized)
                 HStack {
                     Toggle("ck-visible".localized, isOn: $observedData.args.infoButtonOption.present)
-                        .onChange(of: observedData.args.infoButtonOption.present, perform: { _ in
+                        .onChange(of: observedData.args.infoButtonOption.present) {
                             observedData.args.infoText.present = !observedData.args.infoButtonOption.present
                             //observedData.args.buttonInfoTextOption.present = true
-                        })
+                        }
                         .toggleStyle(.switch)
                     Toggle("ck-quitoninfo".localized, isOn: $observedData.args.quitOnInfo.present)
                         .toggleStyle(.switch)
@@ -80,9 +80,9 @@ struct CKButtonView: View {
                 HStack {
                     Text("ck-infobuttonaction".localized)
                     TextField("", text: $observedData.args.buttonInfoActionOption.value)
-                        .onChange(of: observedData.args.buttonInfoActionOption.value, perform: { _ in
+                        .onChange(of: observedData.args.buttonInfoActionOption.value) {
                             observedData.args.buttonInfoActionOption.present = true
-                        })
+                        }
                     Spacer()
                 }
             }

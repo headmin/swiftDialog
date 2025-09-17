@@ -101,7 +101,6 @@ func processCLOptions(json: JSON = getJSON()) {
 
     //this method goes through the arguments that are present and performs any processing required before use
     writeLog("Processing Options")
-
     
     // Monitor Mode - Use InspectView for all monitor scenarios (with or without config)
     if appvars.debugMode { print("DEBUG: inspectMode.present = \(appArguments.inspectMode.present)") }
@@ -114,7 +113,7 @@ func processCLOptions(json: JSON = getJSON()) {
         writeLog("  3. Command line: --inspect-config (may cause hang with certain SwiftUI versions)", logLevel: .info)
         
         // Determine config path using same priority as InspectView
-        var configPath: String? = nil
+        var configPath: String?
         
         // Priority 1: Check environment variable DIALOG_INSPECT_CONFIG
         if let envConfigPath = ProcessInfo.processInfo.environment["DIALOG_INSPECT_CONFIG"],

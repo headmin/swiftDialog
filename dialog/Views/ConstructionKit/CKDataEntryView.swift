@@ -54,42 +54,42 @@ struct CKDataEntryView: View {
                     })
                     .disabled(true) // MARK: disabled until I can work out how to delete from the array without causing a crash
                     Toggle("ck-required".localized, isOn: $textfieldContent[item].required)
-                        .onChange(of: textfieldContent[item].required, perform: { textRequired in
+                        .onChange(of: textfieldContent[item].required) { _, textRequired in
                             observedData.requiredFieldsPresent.toggle()
                             userInputState.textFields[item].required = textRequired
-                        })
+                        }
                         .toggleStyle(.switch)
                     Toggle("ck-secure".localized, isOn: $textfieldContent[item].secure)
-                        .onChange(of: textfieldContent[item].secure, perform: { textSecure in
+                        .onChange(of: textfieldContent[item].secure) { _, textSecure in
                             userInputState.textFields[item].secure = textSecure
-                        })
+                        }
                         .toggleStyle(.switch)
                     Spacer()
                 }
                 HStack {
                     TextField("ck-title".localized, text: $textfieldContent[item].title)
-                        .onChange(of: textfieldContent[item].title, perform: { textTitle in
+                        .onChange(of: textfieldContent[item].title) { _, textTitle in
                             userInputState.textFields[item].title = textTitle
-                        })
+                        }
                     TextField("ck-value".localized, text: $textfieldContent[item].value)
-                        .onChange(of: textfieldContent[item].value, perform: { textValue in
+                        .onChange(of: textfieldContent[item].value) { _, textValue in
                             userInputState.textFields[item].value = textValue
-                        })
+                        }
                     TextField("ck-prompt".localized, text: $textfieldContent[item].prompt)
-                        .onChange(of: textfieldContent[item].prompt, perform: { textPrompt in
+                        .onChange(of: textfieldContent[item].prompt) { _, textPrompt in
                             userInputState.textFields[item].prompt = textPrompt
-                        })
+                        }
                 }
                 .padding(.leading, 20)
                 HStack {
                     TextField("ck-regex".localized, text: $textfieldContent[item].regex)
-                        .onChange(of: textfieldContent[item].regex, perform: { textRegex in
+                        .onChange(of: textfieldContent[item].regex) { _, textRegex in
                             userInputState.textFields[item].regex = textRegex
-                        })
+                        }
                     TextField("ck-regexerror".localized, text: $textfieldContent[item].regexError)
-                        .onChange(of: textfieldContent[item].regexError, perform: { textRegexError in
+                        .onChange(of: textfieldContent[item].regexError) { _, textRegexError in
                             userInputState.textFields[item].regexError = textRegexError
-                        })
+                        }
                 }
                 .padding(.leading, 20)
                 Divider()

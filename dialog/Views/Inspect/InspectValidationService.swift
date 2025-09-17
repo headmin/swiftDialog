@@ -53,10 +53,8 @@ class InspectValidationService {
         
         // Check for complex plist sources validation
         if let plistSources = request.plistSources {
-            for source in plistSources {
-                if item.paths.contains(source.path) {
-                    return validateComplexPlistItem(item, source: source)
-                }
+            for source in plistSources where item.paths.contains(source.path) {
+                return validateComplexPlistItem(item, source: source)
             }
         }
         
@@ -101,7 +99,7 @@ class InspectValidationService {
         // Debug logging to understand what's happening
         writeLog("ValidationService: Checking file existence for '\(item.id)'", logLevel: .debug)
         
-        var foundPath: String? = nil
+        var foundPath: String?
         let exists = item.paths.first { path in
             let expandedPath = (path as NSString).expandingTildeInPath
             let fileExists = FileManager.default.fileExists(atPath: expandedPath)
@@ -179,10 +177,8 @@ class InspectValidationService {
         
         // General validation using critical keys
         if let criticalKeys = source.criticalKeys {
-            for key in criticalKeys {
-                if !checkNestedKey(key, in: plist, expectedValues: source.successValues) {
-                    return ValidationResult(itemId: item.id, isValid: false, validationType: .complexPlistValidation, details: nil)
-                }
+            for key in criticalKeys where !checkNestedKey(key, in: plist, expectedValues: source.successValues) {
+                return ValidationResult(itemId: item.id, isValid: false, validationType: .complexPlistValidation, details: nil)
             }
         }
         

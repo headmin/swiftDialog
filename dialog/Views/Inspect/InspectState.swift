@@ -25,21 +25,21 @@ enum ConfigurationSource {
 struct UIConfiguration {
     var windowTitle: String = "System Inspection"
     var statusMessage: String = "Inspection active - Items will appear as they are detected"
-    var iconPath: String? = nil
+    var iconPath: String?
     var sideMessages: [String] = []
     var currentSideMessageIndex: Int = 0
     var popupButtonText: String = "Install details..."
     var preset: String = "preset1"
     var highlightColor: String = "#808080"
     var iconSize: Int = 120
-    var subtitleMessage: String? = nil
+    var subtitleMessage: String?
 }
 
 struct BackgroundConfiguration {
-    var backgroundColor: String? = nil
-    var backgroundImage: String? = nil
+    var backgroundColor: String?
+    var backgroundImage: String?
     var backgroundOpacity: Double = 1.0
-    var textOverlayColor: String? = nil
+    var textOverlayColor: String?
     var gradientColors: [String] = []
 }
 
@@ -65,13 +65,13 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
     @Published var buttonConfiguration = ButtonConfiguration()
     
     // MARK: - Preset-specific State
-    @Published var plistSources: [InspectConfig.PlistSourceConfig]? = nil
+    @Published var plistSources: [InspectConfig.PlistSourceConfig]?
     @Published var colorThresholds: InspectConfig.ColorThresholds = InspectConfig.ColorThresholds.default
     @Published var plistValidationResults: [String: Bool] = [:] // Track plist validation results
     
     // MARK: - View-specific State (Should be @State in views, but keeping for now)
     @Published var scrollOffset: Int = 0 // Manual scroll offset, currently needed in preset3
-    @Published var lastManualScrollTime: Date? = nil // Track manual scrolling
+    @Published var lastManualScrollTime: Date? // Track manual scrolling
     
     // MARK: - Dynamic State (Needs @Published for UI updates)
     @Published var completedItems: Set<String> = []
@@ -375,7 +375,7 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
         }
         
         do {
-            let content = try String(contentsOfFile: commandFilePath)
+            let content = try String(contentsOfFile: commandFilePath, encoding: .utf8)
             let currentSize = content.count
             let lines = content.components(separatedBy: .newlines)
             let currentLineCount = lines.count
@@ -389,10 +389,8 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
                 if !newLines.isEmpty {
                     writeLog("InspectState: Processing \(newLines.count) new command lines", logLevel: .debug)
                     
-                    for line in newLines {
-                        if !line.isEmpty {
+                    for line in newLines where !line.isEmpty {
                             parseCommandLine(line)
-                        }
                     }
                 }
                 

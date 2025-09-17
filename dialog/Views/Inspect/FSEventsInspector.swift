@@ -90,7 +90,7 @@ class FSEventsInspector {
             copyDescription: nil
         )
         
-        let callback: FSEventStreamCallback = { _, clientInfo, numEvents, eventPaths, eventFlags, eventIds in
+        let callback: FSEventStreamCallback = { _, clientInfo, numEvents, eventPaths, eventFlags, _ in
             guard let clientInfo = clientInfo else { return }
             let monitor = Unmanaged<FSEventsInspector>.fromOpaque(clientInfo).takeUnretainedValue()
             
@@ -126,8 +126,12 @@ class FSEventsInspector {
             writeLog("FSEventsInspector: Failed to create FSEventStream", logLevel: .error)
             return
         }
-        
-        FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode.rawValue)
+        // TODO: remove following comments once behaviour is verified
+        // following generates a warning
+        // 'FSEventStreamScheduleWithRunLoop' was deprecated in macOS 13.0: Use FSEventStreamSetDispatchQueue instead.
+        // FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode.rawValue)
+        let queue = DispatchQueue(label: bundleID + ".fsEventStream")
+        FSEventStreamSetDispatchQueue(stream, queue)
         FSEventStreamStart(stream)
         
         writeLog("FSEventsInspector: Started FSEvents monitoring \(pathsArray.count) paths", logLevel: .info)
@@ -180,10 +184,8 @@ class FSEventsInspector {
             return appId
         }
         
-        for (monitoredPath, appId) in pathToAppMap {
-            if path.hasPrefix(monitoredPath) {
-                return appId
-            }
+        for (monitoredPath, appId) in pathToAppMap where path.hasPrefix(monitoredPath) {
+            return appId
         }
         
         return nil

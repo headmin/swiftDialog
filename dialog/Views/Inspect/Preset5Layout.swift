@@ -176,7 +176,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
         .onAppear {
             loadComplianceData()
         }
-        .onChange(of: inspectState.items.count) { _ in
+        .onChange(of: inspectState.items.count) {
             loadComplianceData()
         }
     }
@@ -379,10 +379,8 @@ struct Preset5Layout: View, InspectLayoutProtocol {
         
         // Check category prefixes
         if let categoryPrefix = source.categoryPrefix {
-            for (prefix, category) in categoryPrefix {
-                if key.hasPrefix(prefix) {
-                    return category
-                }
+            for (prefix, category) in categoryPrefix where key.hasPrefix(prefix) {
+                return category
             }
         }
         
@@ -515,11 +513,9 @@ struct Preset5Layout: View, InspectLayoutProtocol {
             for source in plistSources {
                 // Check if this category matches any categoryPrefix from this source
                 if let categoryPrefix = source.categoryPrefix {
-                    for (_, prefixCategory) in categoryPrefix {
-                        if prefixCategory == category {
-                            // Use the icon from plistSources configuration
-                            return source.icon ?? "shield"
-                        }
+                    for (_, prefixCategory) in categoryPrefix where prefixCategory == category {
+                        // Use the icon from plistSources configuration
+                        return source.icon ?? "shield"
                     }
                 }
                 // If category matches the source displayName, use source icon
@@ -1052,11 +1048,9 @@ struct ComplianceDetailsPopoverView: View {
            let firstSource = plistSources.first,
            let categoryPrefix = firstSource.categoryPrefix {
             // Remove category prefixes dynamically
-            for (prefix, _) in categoryPrefix {
-                if id.hasPrefix(prefix) {
-                    cleanedId = String(id.dropFirst(prefix.count))
-                    break
-                }
+            for (prefix, _) in categoryPrefix where id.hasPrefix(prefix) {
+                cleanedId = String(id.dropFirst(prefix.count))
+                break
             }
         }
         

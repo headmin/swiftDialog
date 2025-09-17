@@ -111,7 +111,7 @@ func calculateWindowXPos(screenWidth: CGFloat, position: NSWindow.Position.Horiz
 }
 
 
-func placeWindow(_ window: NSWindow, size: CGSize? = nil, vertical: NSWindow.Position.Vertical, horozontal: NSWindow.Position.Horizontal, offset: CGFloat) {
+func placeWindow(_ window: NSWindow, size: CGSize?, vertical: NSWindow.Position.Vertical, horozontal: NSWindow.Position.Horizontal, offset: CGFloat) {
     let main = NSScreen.main!
     let visibleFrame = main.visibleFrame
     let titleBarOffset: CGFloat = (main.frame.height - visibleFrame.height) + 1

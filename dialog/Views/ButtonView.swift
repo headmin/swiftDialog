@@ -91,8 +91,6 @@ struct ButtonView: View {
                     }
 
                     // default button aka button 1
-                    let button1Text: String = observedData.args.button1TextOption.value
-
                     if !(observedData.args.button1TextOption.value == "none") {
                         Button1(observedDialogContent: observedData)
                     }

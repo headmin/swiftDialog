@@ -50,7 +50,7 @@ struct Preset4Layout: View, InspectLayoutProtocol {
         .onAppear {
             // Validation results are now managed centrally by InspectState
         }
-        .onChange(of: inspectState.items.count) { _ in
+        .onChange(of: inspectState.items.count) {
             // Validation results are now managed centrally by InspectState
         }
     }
@@ -514,7 +514,7 @@ struct InspectionDetailItem: View {
                     
                     let pathsToShow = showFullPaths ? item.paths : Array(item.paths.prefix(1))
                     
-                    ForEach(Array(pathsToShow.enumerated()), id: \.offset) { index, path in
+                    ForEach(Array(pathsToShow.enumerated()), id: \.offset) { _, path in
                         HStack(alignment: .top, spacing: 8) {
                             // Path indicator
                             Circle()

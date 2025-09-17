@@ -136,7 +136,7 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                         }
                         .padding(.horizontal)
                         .padding(.bottom)
-                        .onChange(of: inspectState.completedItems.count) { _ in
+                        .onChange(of: inspectState.completedItems.count) {
                             // Auto-scroll to top when new item completes
                             let sortedItems = getSortedItemsByStatus()
                             if let firstItem = sortedItems.first {
@@ -148,7 +148,7 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                             // Auto-enable button when all items are completed
                             inspectState.checkAndUpdateButtonState()
                         }
-                        .onChange(of: inspectState.downloadingItems.count) { _ in
+                        .onChange(of: inspectState.downloadingItems.count) {
                             // Auto-scroll when installing status changes
                             let sortedItems = getSortedItemsByStatus()
                             if let firstInstalling = sortedItems.first(where: { inspectState.downloadingItems.contains($0.id) }) {

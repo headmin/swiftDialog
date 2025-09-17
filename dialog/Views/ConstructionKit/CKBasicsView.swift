@@ -43,8 +43,8 @@ struct CKBasicsView: View {
                         Text($0)
                     }
                 }
-                .onChange(of: observedData.args.messageAlignment.value) {
-                    observedData.appProperties.messageAlignment = appDefaults.allignmentStates[$0] ?? .leading
+                .onChange(of: observedData.args.messageAlignment.value) { _, state in
+                    observedData.appProperties.messageAlignment = appDefaults.allignmentStates[state] ?? .leading
                     observedData.args.messageAlignment.present = true
                 }
                 Toggle("ck-verticalposition".localized, isOn: $observedData.args.messageVerticalAlignment.present)

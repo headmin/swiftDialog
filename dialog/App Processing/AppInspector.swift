@@ -80,11 +80,9 @@ class AppInspector {
     }
     
     private func checkInstalled(_ paths: [String]) -> Bool {
-        for path in paths {
-            if FileManager.default.fileExists(atPath: path) {
+        for path in paths where FileManager.default.fileExists(atPath: path) {
                 return true
             }
-        }
         return false
     }
     
@@ -207,7 +205,14 @@ class AppInspector {
             InspectConstants.fsEventsLatency,
             FSEventStreamCreateFlags(kFSEventStreamCreateFlagFileEvents)
         ) {
-            FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode.rawValue)
+            // TODO: remove following comments once behaviour is verified
+            // following generates a warning
+            // 'FSEventStreamScheduleWithRunLoop' was deprecated in macOS 13.0: Use FSEventStreamSetDispatchQueue instead.
+            // FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode.rawValue)
+            let queue = DispatchQueue(label: bundleID + ".fsEventStream")
+            FSEventStreamSetDispatchQueue(stream, queue)
+
+            
             FSEventStreamStart(stream)
             fsEventStream = stream
         }

@@ -252,7 +252,7 @@ struct CollapsibleBlock: View {
 
 func parseMarkdownSections(from text: String) -> [MarkdownSection] {
         var sections: [MarkdownSection] = []
-        var lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
         var index = 0
 
         while index < lines.count {
