@@ -1,4 +1,3 @@
-
 //
 //  dialogcli
 //
@@ -17,14 +16,14 @@ struct CommandResult {
     let stderr: String
 }
 
-// Define the process here
-let process = Process()
-
 @main
 struct DialogLauncher: ParsableCommand {
+    static let process = Process()
+    
     // Command-line option for specifying the path to the command file
     @Option(name: .long, help: "Path to the command file")
     var commandfile: String?
+
 
     // Collects all remaining arguments passed to the command
     @Argument(parsing: .captureForPassthrough)
@@ -33,10 +32,10 @@ struct DialogLauncher: ParsableCommand {
     // Main function to run the logic
     func run() throws {
         // Register signal handler
-        signal(SIGINT) { signal in
+        signal(SIGINT) { _ in
             fputs(" Received SIGINT, exiting...\n", stderr)
             // kill the running process
-            kill(process.processIdentifier, SIGTERM)
+            kill(DialogLauncher.process.processIdentifier, SIGTERM)
             Darwin.exit(40)
         }
         
@@ -132,7 +131,7 @@ struct DialogLauncher: ParsableCommand {
 
     // Function to execute the provided command with the specified arguments
     func runCommand(binary: String, args: [String]) -> CommandResult {
-        //let process = Process()
+        let process = DialogLauncher.process
         process.launchPath = binary
         process.arguments = args
 
