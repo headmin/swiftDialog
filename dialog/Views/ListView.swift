@@ -167,8 +167,8 @@ struct ListView: View {
                 }
                 .onChange(of: observedData.listItemUpdateRow) {
                     DispatchQueue.main.async {
-                        withAnimation(.easeInOut(duration: 0.5)) {
-                            proxy.scrollTo(observedData.listItemUpdateRow)
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            proxy.scrollTo(observedData.listItemUpdateRow, anchor: .center)
                         }
                     }
                 }
