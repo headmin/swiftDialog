@@ -136,6 +136,8 @@ struct MessageContent: View {
                 if !observedData.args.messageVerticalAlignment.present || ["centre", "center", "top"].contains(observedData.args.messageVerticalAlignment.value) {
                     Spacer()
                 }
+            } else {
+                Spacer()
             }
 
             Group {
