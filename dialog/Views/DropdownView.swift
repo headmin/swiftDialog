@@ -57,9 +57,11 @@ struct DropdownView: View {
                         HStack {
                             // we could print the title as part of the picker control but then we don't get easy access to swiftui text formatting
                             // so we print it seperatly and use a blank value in the picker
-                            Text(userInputState.dropdownItems[index].title + (userInputState.dropdownItems[index].required ? " *":""))
-                                .frame(idealWidth: fieldwidth*0.20, alignment: .leading)
-                            Spacer()
+                            HStack {
+                                Text(userInputState.dropdownItems[index].title + (userInputState.dropdownItems[index].required ? " *":""))
+                                    .frame(idealWidth: fieldwidth*0.20, alignment: .leading)
+                                Spacer()
+                            }
                             Picker("", selection: $selectedOption[index]) {
                                 if userInputState.dropdownItems[index].defaultValue.isEmpty {
                                     // prevents "Picker: the selection "" is invalid and does not have an associated tag" errors on stdout
@@ -81,6 +83,7 @@ struct DropdownView: View {
                                 userInputState.dropdownItems[index].selectedValue = selectedOption
                             }
                             .frame(idealWidth: fieldwidth*0.50, maxWidth: 350, alignment: .trailing)
+                            .buttonSizeFit()
                             .overlay(RoundedRectangle(cornerRadius: 5)
                                 .stroke(userInputState.dropdownItems[index].requiredfieldHighlight, lineWidth: 2)
                                 .animation(
@@ -97,6 +100,16 @@ struct DropdownView: View {
             .background(Color.background.opacity(0.5))
             .cornerRadius(8)
 
+        }
+    }
+}
+
+extension View {
+    func buttonSizeFit() -> some View {
+        if #available(macOS 26, *) {
+            return buttonSizing(.flexible)
+        } else {
+            return self
         }
     }
 }

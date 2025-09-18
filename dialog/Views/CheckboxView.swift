@@ -56,7 +56,10 @@ struct RenderToggles: View {
                                 userInputState.checkBoxes[index].checked = checked
                             }
                     } else {
-                        Toggle(checkboxContent[index].label, isOn: $checkboxContent[index].checked)
+                        Toggle(isOn: $checkboxContent[index].checked) {
+                            Text(checkboxContent[index].label)
+                                .padding(.leading, 5)
+                        }
                             .toggleStyle(.checkbox)
                             .onChange(of: checkboxContent[index].checked) { _, checked in
                                 userInputState.checkBoxes[index].checked = checked
