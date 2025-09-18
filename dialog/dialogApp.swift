@@ -263,6 +263,9 @@ struct dialogApp: App {
                     }
                     
                 }
+                .onDisappear {
+                    quitDialog(exitCode: appDefaults.exit15.code)
+                }
                 .preferredColorScheme(observedData.args.preferredAppearance.present &&
                                       observedData.args.preferredAppearance.value.lowercased() == "dark" ? .dark
                                       : observedData.args.preferredAppearance.present &&

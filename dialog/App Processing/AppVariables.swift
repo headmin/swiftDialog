@@ -57,6 +57,7 @@ struct AppDefaults {
     let exit4                           = (code: Int32(4),   message: String(""))
     let exit5                           = (code: Int32(5),   message: String("")) // quit via command file
     let exit10                          = (code: Int32(10),  message: String("")) // quit via command + quitKey
+    let exit15                          = (code: Int32(15),  message: String("")) // quit via window close button
     let exit20                          = (code: Int32(20),  message: String("Timeout Exceeded"))
     let exit30                          = (code: Int32(30),  message: String("Key authorisation required"))
     let exit40                          = (code: Int32(40),  message: String("SIGTERM received"))
