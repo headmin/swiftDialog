@@ -115,26 +115,51 @@ func placeWindow(_ window: NSWindow, size: CGSize?, vertical: NSWindow.Position.
     let main = NSScreen.main!
     let visibleFrame = main.visibleFrame
     let titleBarOffset: CGFloat = (main.frame.height - visibleFrame.height) + 1
+    let visibleFrameOriginX = visibleFrame.origin.x
+    let visibleFrameOriginY = visibleFrame.origin.y
+    let visibleFrameWidth = visibleFrame.width
+    let visibleFrameHeight = visibleFrame.height
+    let screenOriginWidth = main.frame.width
+    let screenOriginHeight = main.frame.height
     
     // Set window Size
     var windowSize: CGSize
+    
     if size == nil {
         windowSize = window.frame.size
     } else {
         windowSize = CGSize(width: size?.width ?? window.frame.width, height: (size?.height ?? window.frame.height) + titleBarOffset)
     }
+    writeLog("windowsize = \(String(describing: windowSize))", logLevel: .debug)
+    writeLog("main frame = \(main.frame)", logLevel: .debug)
+    writeLog("screenOriginX = \(main.frame.origin.x)", logLevel: .debug)
+    writeLog("screenOriginY = \(main.frame.origin.y)", logLevel: .debug)
+    writeLog("screenOriginWidth = \(screenOriginWidth)", logLevel: .debug)
+    writeLog("screenOriginHeight = \(screenOriginHeight)", logLevel: .debug)
+    writeLog("visible frame width = \(visibleFrameWidth)", logLevel: .debug)
+    writeLog("visible frame height = \(visibleFrameHeight)", logLevel: .debug)
+    writeLog("visible frame origin x = \(visibleFrameOriginX)", logLevel: .debug)
+    writeLog("visible frame origin y = \(visibleFrameOriginY)", logLevel: .debug)
+    writeLog("visible frame size = \(visibleFrame.size)", logLevel: .debug)
+    
 
     // Set Window x and y Position based on size and offset
-    let windowX = calculateWindowXPos(screenWidth: visibleFrame.width - windowSize.width, position: horozontal, offset: offset)
-    let windowY = calculateWindowYPos(screenHeight: visibleFrame.height - windowSize.height, position: vertical, offset: offset)
+    let windowX = visibleFrameOriginX + calculateWindowXPos(screenWidth: visibleFrameWidth - windowSize.width, position: horozontal, offset: offset)
+    let windowY = visibleFrameOriginY + calculateWindowYPos(screenHeight: visibleFrameHeight - windowSize.height, position: vertical, offset: offset)
+    writeLog("window x = \(windowX)", logLevel: .debug)
+    writeLog("window y = \(windowY)", logLevel: .debug)
     
     // If x or y positions are off the screen (when using explicit coordinates) re-adjust to fit in the visible frame
-    let adjustedWindowX = max(visibleFrame.origin.x, min(windowX, visibleFrame.origin.x + visibleFrame.width - windowSize.width))
-    let adjustedWindowY = max(visibleFrame.origin.y, min(windowY, visibleFrame.origin.y + visibleFrame.height - windowSize.height))
+    let adjustedWindowX = max(windowX, min(windowX, visibleFrameOriginX + visibleFrameWidth - windowSize.width))
+    let adjustedWindowY = max(windowY, min(windowY, visibleFrameOriginY + visibleFrameHeight - windowSize.height))
+
+    writeLog("Adjusted window x = \(adjustedWindowX)", logLevel: .debug)
+    writeLog("Adjusted window y = \(adjustedWindowY)", logLevel: .debug)
     
     // Set window frame
     let newFrame = NSRect(x: adjustedWindowX, y: adjustedWindowY, width: windowSize.width, height: windowSize.height)
     window.setFrame(newFrame, display: true)
+    writeLog("Final window frame is \(window.frame)", logLevel: .debug)
 }
 
 func windowPosition(_ position: String) -> (vertical: NSWindow.Position.Vertical, horozontal: NSWindow.Position.Horizontal) {
