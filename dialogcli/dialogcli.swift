@@ -76,8 +76,16 @@ struct DialogLauncher: ParsableCommand {
                 throw ExitCode(1)
             }
             
+            // Standard bin path
+            let localBinPath = "/usr/local/bin"
+            
+            // Ensure local bin directory exists
+            if !FileManager.default.fileExists(atPath: localBinPath) {
+                try? FileManager.default.createDirectory(atPath: localBinPath, withIntermediateDirectories: true, attributes: nil)
+            }
+            
             // create /usr/local/bin/dialog symlink
-            let symlinkPath = URL(fileURLWithPath: "/usr/local/bin/dialog")
+            let symlinkPath = URL(fileURLWithPath: "\(localBinPath)/dialog")
             // get path to self
             let pathToSelf = URL(fileURLWithPath: CommandLine.arguments[0])
             
