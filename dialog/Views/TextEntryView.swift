@@ -181,7 +181,17 @@ struct TextEntryView: View {
                                                 }
                                             }
                                         }
-                                        
+                                        .onSubmit {
+                                            userInputState.textFields[index].value = textfieldContent[index].value
+                                            // Call the same action as Button1
+                                            let button1action = observedData.args.button1ShellActionOption.present ?
+                                                observedData.args.button1ShellActionOption.value :
+                                                (observedData.args.button1ActionOption.present ? observedData.args.button1ActionOption.value : "")
+                                            let buttonShellAction = observedData.args.button1ShellActionOption.present
+                                            buttonAction(action: button1action, exitCode: 0, executeShell: buttonShellAction, observedObject: observedData)
+                                        }
+                                        .submitLabel(.done)
+                                    
                                         if textfieldContent[index].confirm {
                                             TextField(textfieldContent[index].prompt,
                                                       text: $textfieldContent[index].validationValue)
