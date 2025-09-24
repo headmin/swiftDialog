@@ -1,30 +1,31 @@
 //
-//  Preset5Layout.swift
+//  Preset5View.swift
 //  dialog
 //
-//  Created by Henry Stamerjohann, Declarative IT GmbH, 22/07/2025
-//  Security Compliance Dashboard - Corporate style layout
+//  Created by Henry Stamerjohann, Declarative IT GmbH, 19/07/2025
+//
+//  Compliance Dashboard style, options for file and plist key/value inspection
 //
 
 import SwiftUI
 
-struct Preset5Layout: View, InspectLayoutProtocol {
+struct Preset5View: View, InspectLayoutProtocol {
     @ObservedObject var inspectState: InspectState
-    let isMini: Bool
     @State private var showingAboutPopover = false
     @State private var complianceData: [ComplianceCategory] = []
     @State private var lastCheck: String = ""
     @State private var overallScore: Double = 0.0
     @State private var criticalIssues: [ComplianceItem] = []
     @State private var allFailingItems: [ComplianceItem] = []
-    
-    init(inspectState: InspectState, isMini: Bool = false) {
+    @State private var cachedMainIcon: String? = nil
+
+    init(inspectState: InspectState) {
         self.inspectState = inspectState
-        self.isMini = isMini
     }
-    
+
+
     var body: some View {
-        let scale: CGFloat = isMini ? 0.75 : 1.0
+        let scale: CGFloat = scaleFactor
         
         VStack(spacing: 0) {
             // Header Section - Corporate Style
@@ -32,8 +33,9 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                 // Security Icon and Title
                 HStack(spacing: 12 * scale) {
                     // Icon from configuration
-                    IconView(image: inspectState.uiConfiguration.iconPath ?? "", defaultImage: "shield.checkered", defaultColour: "accent")
+                    IconView(image: getMainIconPath(), defaultImage: "shield.checkered", defaultColour: "accent")
                             .frame(width: 52 * scale, height: 52 * scale)
+                            .onAppear { cacheMainIcon() }
                     
                     VStack(alignment: .leading, spacing: 2 * scale) {
                         Text(inspectState.uiConfiguration.windowTitle)
@@ -59,8 +61,8 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                 // Overall Progress Bar - Cleaner design
                 VStack(spacing: 8 * scale) {
                     HStack {
-                        // Progress fraction - smaller text
-                        Text("\(Int(overallScore * Double(getTotalChecks())))/\(getTotalChecks())")
+                        // Progress fraction - smaller text (live calculation)
+                        Text("\(getLivePassedCount())/\(getLiveTotalCount())")
                             .font(.system(size: 16 * scale, weight: .semibold, design: .monospaced))
                             .foregroundColor(.primary)
                         
@@ -73,10 +75,10 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                                     .frame(height: 4 * scale)
                                     .cornerRadius(2 * scale)
                                 
-                                // Progress fill
+                                // Progress fill (live calculation)
                                 Rectangle()
-                                    .fill(inspectState.colorThresholds.getColor(for: overallScore))
-                                    .frame(width: geometry.size.width * overallScore, height: 4 * scale)
+                                    .fill(inspectState.colorThresholds.getColor(for: getLiveOverallScore()))
+                                    .frame(width: geometry.size.width * getLiveOverallScore(), height: 4 * scale)
                                     .cornerRadius(2 * scale)
                             }
                         }
@@ -90,7 +92,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                                 Circle()
                                     .fill(inspectState.colorThresholds.getPositiveColor())
                                     .frame(width: 8 * scale, height: 8 * scale)
-                                Text("\(getPassedCount())")
+                                Text("\(getLivePassedCount())")
                                     .font(.system(size: 12 * scale, weight: .medium))
                                     .foregroundColor(inspectState.colorThresholds.getPositiveColor())
                             }
@@ -99,7 +101,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                                 Circle()
                                     .fill(inspectState.colorThresholds.getNegativeColor())
                                     .frame(width: 8 * scale, height: 8 * scale)
-                                Text("\(getFailedCount())")
+                                Text("\(getLiveFailedCount())")
                                     .font(.system(size: 12 * scale, weight: .medium))
                                     .foregroundColor(inspectState.colorThresholds.getNegativeColor())
                             }
@@ -151,16 +153,16 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                 HStack(spacing: 12) {
                     if inspectState.buttonConfiguration.button2Visible && !inspectState.buttonConfiguration.button2Text.isEmpty {
                         Button(inspectState.buttonConfiguration.button2Text) {
-                            writeLog("Preset5Layout: User clicked button2 (\(inspectState.buttonConfiguration.button2Text)) - exiting with code 2", logLevel: .info)
+                            writeLog("Preset5View: User clicked button2 (\(inspectState.buttonConfiguration.button2Text)) - exiting with code 2", logLevel: .info)
                             exit(2)
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.large)
-                        .disabled(inspectState.buttonConfiguration.button2Disabled)
+                        // Note: button2 is always enabled when visible
                     }
                     
                     Button(inspectState.buttonConfiguration.button1Text) {
-                        writeLog("Preset5Layout: User clicked button1 (\(inspectState.buttonConfiguration.button1Text)) - exiting with code 0", logLevel: .info)
+                        writeLog("Preset5View: User clicked button1 (\(inspectState.buttonConfiguration.button1Text)) - exiting with code 0", logLevel: .info)
                         exit(0)
                     }
                     .keyboardShortcut(.defaultAction)
@@ -175,12 +177,47 @@ struct Preset5Layout: View, InspectLayoutProtocol {
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             loadComplianceData()
+            cacheMainIcon()
         }
         .onChange(of: inspectState.items.count) {
             loadComplianceData()
         }
+        .onChange(of: inspectState.completedItems) { _ in
+            loadComplianceData()
+        }
+        .onChange(of: inspectState.downloadingItems) { _ in
+            loadComplianceData()
+        }
     }
-    
+
+    // MARK: - Icon Resolution Methods
+
+    private func cacheMainIcon() {
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        if let iconPath = inspectState.uiConfiguration.iconPath {
+            cachedMainIcon = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil)
+        }
+    }
+
+    private func getMainIconPath() -> String {
+        if let cached = cachedMainIcon {
+            return cached
+        }
+
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        if let iconPath = inspectState.uiConfiguration.iconPath {
+            let resolved = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil) ?? ""
+            cachedMainIcon = resolved
+            return resolved
+        }
+
+        return ""
+    }
+
     // MARK: - Private Methods
     
     private func loadComplianceData() {
@@ -190,7 +227,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
         let hasRegularItems = !inspectState.items.isEmpty
         
         guard hasComplexPlist || hasSimpleValidation || hasRegularItems else {
-            writeLog("Preset5Layout: No configuration found", logLevel: .info)
+            writeLog("Preset5View: No configuration found", logLevel: .info)
             return
         }
         
@@ -218,7 +255,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
             let sourcesToProcess = Array(plistSources.prefix(maxSources))
             
             if plistSources.count > maxSources {
-                writeLog("Preset5Layout: Limiting plist processing to \(maxSources) sources", logLevel: .info)
+                writeLog("Preset5View: Limiting plist processing to \(maxSources) sources", logLevel: .info)
             }
             
             for source in sourcesToProcess {
@@ -247,7 +284,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
             criticalIssues = processedData.1
             allFailingItems = processedData.2
             
-            writeLog("Preset5Layout: Loaded \(allItems.count) items from \(sourcesToProcess.count) plist sources", logLevel: .info)
+            writeLog("Preset5View: Loaded \(allItems.count) items from \(sourcesToProcess.count) plist sources", logLevel: .info)
         }
     }
     
@@ -256,21 +293,21 @@ struct Preset5Layout: View, InspectLayoutProtocol {
         let _ = URL(fileURLWithPath: source.path)
         guard let fileAttributes = try? FileManager.default.attributesOfItem(atPath: source.path),
               let fileSize = fileAttributes[.size] as? Int64 else {
-            writeLog("Preset5Layout: Unable to get file attributes for \(source.path)", logLevel: .error)
+            writeLog("Preset5View: Unable to get file attributes for \(source.path)", logLevel: .error)
             return nil
         }
         
         // Prevent loading files larger than 10MB
         let maxFileSize: Int64 = 10 * 1024 * 1024 // 10MB
         if fileSize > maxFileSize {
-            writeLog("Preset5Layout: Plist file too large (\(fileSize) bytes) at \(source.path)", logLevel: .error)
+            writeLog("Preset5View: Plist file too large (\(fileSize) bytes) at \(source.path)", logLevel: .error)
             return nil
         }
         
         // Use autorelease pool for memory management
         return autoreleasepool { () -> (items: [ComplianceItem], lastCheck: String)? in
             guard let fileData = FileManager.default.contents(atPath: source.path) else {
-                writeLog("Preset5Layout: Unable to read plist at \(source.path)", logLevel: .error)
+                writeLog("Preset5View: Unable to read plist at \(source.path)", logLevel: .error)
                 return nil
             }
             
@@ -279,7 +316,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                 let plistObject = try PropertyListSerialization.propertyList(from: fileData, format: nil)
                 
                 guard let plistContents = plistObject as? [String: Any] else {
-                    writeLog("Preset5Layout: Invalid plist format at \(source.path)", logLevel: .error)
+                    writeLog("Preset5View: Invalid plist format at \(source.path)", logLevel: .error)
                     return nil
                 }
                 
@@ -294,7 +331,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                 
                 for (key, value) in plistContents {
                     if processedCount >= maxItems {
-                        writeLog("Preset5Layout: Limiting plist processing to \(maxItems) items for \(source.path)", logLevel: .info)
+                        writeLog("Preset5View: Limiting plist processing to \(maxItems) items for \(source.path)", logLevel: .info)
                         break
                     }
                     
@@ -312,11 +349,11 @@ struct Preset5Layout: View, InspectLayoutProtocol {
                     }
                 }
                 
-                writeLog("Preset5Layout: Successfully processed \(items.count) items from \(source.path) (\(fileSize) bytes)", logLevel: .info)
+                writeLog("Preset5View: Successfully processed \(items.count) items from \(source.path) (\(fileSize) bytes)", logLevel: .info)
                 return (items, lastCheck)
                 
             } catch {
-                writeLog("Preset5Layout: Error parsing plist at \(source.path): \(error)", logLevel: .error)
+                writeLog("Preset5View: Error parsing plist at \(source.path): \(error)", logLevel: .error)
                 return nil
             }
         }
@@ -461,7 +498,7 @@ struct Preset5Layout: View, InspectLayoutProtocol {
         criticalIssues = items.filter { !$0.finding && $0.isCritical }
         allFailingItems = items.filter { !$0.finding }
         
-        writeLog("Preset5Layout: Loaded \(items.count) items from validation (plist + file checks)", logLevel: .info)
+        writeLog("Preset5View: Loaded \(items.count) items from validation (plist + file checks)", logLevel: .info)
     }
     
     private func getCurrentTimestamp() -> String {
@@ -557,6 +594,37 @@ struct Preset5Layout: View, InspectLayoutProtocol {
     private func getFailedCount() -> Int {
         return getTotalChecks() - getPassedCount()
     }
+
+    // Live calculation methods for real-time updates
+    private func getLivePassedCount() -> Int {
+        var passed = 0
+        for item in inspectState.items {
+            let isValid: Bool
+            if item.plistKey != nil {
+                isValid = inspectState.validatePlistItem(item)
+            } else {
+                isValid = item.paths.first(where: { FileManager.default.fileExists(atPath: $0) }) != nil ||
+                         inspectState.completedItems.contains(item.id)
+            }
+            if isValid { passed += 1 }
+        }
+        return passed
+    }
+
+    private func getLiveTotalCount() -> Int {
+        return inspectState.items.count
+    }
+
+    private func getLiveFailedCount() -> Int {
+        return getLiveTotalCount() - getLivePassedCount()
+    }
+
+    private func getLiveOverallScore() -> Double {
+        let total = getLiveTotalCount()
+        guard total > 0 else { return 0.0 }
+        return Double(getLivePassedCount()) / Double(total)
+    }
+
     
     private func formatIssueTitle(_ id: String) -> String {
         return id.replacingOccurrences(of: "_", with: " ")
@@ -619,7 +687,7 @@ struct CategoryCardView: View {
     let category: ComplianceCategory
     let scale: CGFloat
     let colorThresholds: InspectConfig.ColorThresholds
-    let inspectState: InspectState
+    @ObservedObject var inspectState: InspectState  // Changed to ObservedObject
     @State private var showingCategoryHelp = false
     
     var body: some View {

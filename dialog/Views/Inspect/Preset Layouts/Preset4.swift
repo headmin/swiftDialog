@@ -1,25 +1,25 @@
 //
-//  Preset4Layout.swift
+//  Preset4View.swift
 //  dialog
 //
-//  Created by Henry Stamerjohann, Declarative IT GmbH, 22/07/2025
-//  Simple, high-contrast inspection layout for any type of file/folder/setting checks
-//  Use cases: Font installation, template files, compliance settings, app presence
+//  Created by Henry Stamerjohann, Declarative IT GmbH, 19/07/2025
+//
+//  File inspection layout for common type of file/folder/setting checks
+//  Use cases: App presence, Font installation, template files, configs settings
 //
 
 import SwiftUI
 
-struct Preset4Layout: View, InspectLayoutProtocol {
+struct Preset4View: View, InspectLayoutProtocol {
     @ObservedObject var inspectState: InspectState
-    var isMini: Bool
     @State private var showingDetailPopover = false
     @State private var selectedItem: InspectConfig.ItemConfig?
-    
-    // Use centralized validation results from InspectState - no local caching needed
-    
-    private var scaleFactor: CGFloat {
-        return isMini ? 0.75 : 1.0
-    }
+    @State private var cachedMainIcon: String? = nil
+    @State private var cachedItemIcons: [String: String] = [:]
+
+    // scaleFactor is now provided by InspectLayoutProtocol extension
+
+    // scaleFactor is now provided by InspectLayoutProtocol extension
     
     var body: some View {
         VStack(spacing: 0) {
@@ -48,11 +48,81 @@ struct Preset4Layout: View, InspectLayoutProtocol {
         }
         .background(customBackground())
         .onAppear {
-            // Validation results are now managed centrally by InspectState
+            cacheMainIcon()
+            cacheItemIcons()
         }
         .onChange(of: inspectState.items.count) {
-            // Validation results are now managed centrally by InspectState
+            cacheItemIcons()
         }
+        .onChange(of: inspectState.completedItems) { _ in
+            // Re-validate when items complete
+            inspectState.validateAllItems()
+        }
+        .onChange(of: inspectState.downloadingItems) { _ in
+            // Re-validate when download states change
+            inspectState.validateAllItems()
+        }
+    }
+
+    // MARK: - Icon Resolution Methods
+
+    private func cacheMainIcon() {
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        if let iconPath = inspectState.uiConfiguration.iconPath {
+            cachedMainIcon = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil)
+        }
+    }
+
+    private func cacheItemIcons() {
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        for item in inspectState.items {
+            if let icon = item.icon {
+                if let resolvedPath = resolver.resolveImagePath(icon, basePath: basePath, fallbackIcon: nil) {
+                    cachedItemIcons[item.id] = resolvedPath
+                }
+            }
+        }
+    }
+
+    private func getMainIconPath() -> String {
+        if let cached = cachedMainIcon {
+            return cached
+        }
+
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        if let iconPath = inspectState.uiConfiguration.iconPath {
+            let resolved = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil) ?? ""
+            cachedMainIcon = resolved
+            return resolved
+        }
+
+        return ""
+    }
+
+    private func getItemIconPath(for item: InspectConfig.ItemConfig) -> String {
+        // Return cached path if available
+        if let cached = cachedItemIcons[item.id] {
+            return cached
+        }
+
+        // Resolve and cache
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        if let icon = item.icon {
+            if let resolved = resolver.resolveImagePath(icon, basePath: basePath, fallbackIcon: nil) {
+                cachedItemIcons[item.id] = resolved
+                return resolved
+            }
+        }
+
+        return item.icon ?? ""
     }
     
     // MARK: - Header Section
@@ -61,8 +131,9 @@ struct Preset4Layout: View, InspectLayoutProtocol {
         VStack(spacing: 8 * scaleFactor) {
             HStack(spacing: 15 * scaleFactor) {
                 // Compact logo
-                IconView(image: inspectState.uiConfiguration.iconPath ?? "", defaultImage: "apps.iphone.badge.plus", defaultColour: "accent")
+                IconView(image: getMainIconPath(), defaultImage: "apps.iphone.badge.plus", defaultColour: "accent")
                     .frame(width: 40 * scaleFactor, height: 40 * scaleFactor)
+                    .onAppear { cacheMainIcon() }
 
                 // Compact title only
                 Text(inspectState.uiConfiguration.windowTitle)
@@ -158,7 +229,7 @@ struct Preset4Layout: View, InspectLayoutProtocol {
             ForEach(inspectState.items, id: \.id) { item in
                 SimpleInspectionTile(
                     title: item.displayName,
-                    icon: item.icon,
+                    icon: getItemIconPath(for: item),
                     isPresent: inspectState.plistValidationResults[item.id] ?? false,
                     isChecking: inspectState.downloadingItems.contains(item.id),
                     scaleFactor: scaleFactor,
@@ -231,7 +302,7 @@ struct Preset4Layout: View, InspectLayoutProtocol {
     private func buttonArea() -> some View {
         HStack(spacing: 12 * scaleFactor) {
             Button("Continue") {
-                writeLog("Preset4Layout: User clicked Continue button - exiting with code 0", logLevel: .info)
+                writeLog("Preset4View: User clicked Continue button - exiting with code 0", logLevel: .info)
                 exit(0)
             }
             .keyboardShortcut(.defaultAction)
@@ -294,6 +365,7 @@ struct SimpleInspectionTile: View {
                 IconView(image: icon ?? "", defaultImage: getSystemIcon(for: title), defaultColour: "accent")
             }
             .frame(width: 48 * scaleFactor, height: 48 * scaleFactor)
+            .id("icon-\(item?.id ?? title)") // Stable ID to prevent recreation
             
             // Content with status - fixed height container
             VStack(alignment: .leading, spacing: 4 * scaleFactor) {
@@ -440,7 +512,7 @@ struct InspectionDetailPopover: View {
                     ForEach(items, id: \.id) { item in
                         InspectionDetailItem(
                             item: item,
-                            isPresent: inspectState.plistValidationResults[item.id] ?? false,
+                            isPresent: validationResults[item.id] ?? false,
                             isChecking: downloadingItems.contains(item.id),
                             scaleFactor: scaleFactor,
                             hideSystemDetails: hideSystemDetails,

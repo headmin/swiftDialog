@@ -1,24 +1,24 @@
 //
-//  Preset3Layout.swift
+//  Preset3.swift
 //  dialog
 //
 //  Created by Henry Stamerjohann, Declarative IT GmbH, 19/07/2025
-//  Compact list style layout with progress bar at bottom
+//
+//  Compact and ultra-compact list style layout with gradient background and option for banner image
 //
 
 import SwiftUI
 
-struct Preset3Layout: View, InspectLayoutProtocol {
+struct Preset3View: View, InspectLayoutProtocol {
     @ObservedObject var inspectState: InspectState
-    let isMini: Bool
-    
-    init(inspectState: InspectState, isMini: Bool = false) {
+    @State private var cachedMainIcon: String? = nil
+    @State private var cachedItemIcons: [String: String] = [:]
+
+    init(inspectState: InspectState) {
         self.inspectState = inspectState
-        self.isMini = isMini
     }
     
     var body: some View {
-        let scale: CGFloat = isMini ? 0.75 : 1.0
         let textColor = getTextColor()
         
         ZStack {
@@ -40,16 +40,16 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                         if inspectState.completedItems.count == inspectState.items.count && 
                            inspectState.buttonConfiguration.button2Visible && !inspectState.buttonConfiguration.button2Text.isEmpty {
                             Button(inspectState.buttonConfiguration.button2Text) {
-                                writeLog("Preset3Layout: User clicked button2 (\(inspectState.buttonConfiguration.button2Text)) - exiting with code 2", logLevel: .info)
+                                writeLog("Preset3LayoutServiceBased: User clicked button2 (\(inspectState.buttonConfiguration.button2Text)) - exiting with code 2", logLevel: .info)
                                 exit(2)
                             }
                             .buttonStyle(.bordered)
-                            .disabled(inspectState.buttonConfiguration.button2Disabled)
+                            // Note: button2 is always enabled when visible
                         }
                         
                         // Button 1 (Primary) - Exit code 0
                         Button(inspectState.buttonConfiguration.button1Text) {
-                            writeLog("Preset3Layout: User clicked button1 (\(inspectState.buttonConfiguration.button1Text)) - exiting with code 0", logLevel: .info)
+                            writeLog("Preset3LayoutServiceBased: User clicked button1 (\(inspectState.buttonConfiguration.button1Text)) - exiting with code 0", logLevel: .info)
                             exit(0)
                         }
                         .keyboardShortcut(.defaultAction)
@@ -57,46 +57,87 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                         .disabled(inspectState.buttonConfiguration.button1Disabled)
                     }
                 }
-                .padding()
+                .padding(.horizontal)
+                .padding(.vertical, 10)
                 .background(Color.primary.opacity(0.05))
                 
-                // Enlarged company icon section - always visible
-                VStack(spacing: 12) {
-                    IconView(image: inspectState.uiConfiguration.iconPath ?? "", sfPaddingEnabled: false, corners: false, defaultImage: "building.2.fill", defaultColour: "accent")
-                        .frame(maxHeight: 120 * scale)
+                // Banner image at top if available
+                if let bannerImagePath = inspectState.uiConfiguration.bannerImage {
+                    let resolver = ImageResolver.shared
+                    let resolvedPath = resolver.resolveImagePath(bannerImagePath,
+                                                                 basePath: inspectState.uiConfiguration.iconBasePath,
+                                                                 fallbackIcon: nil)
 
-                    // Add subtitle message if available
-                    if let subtitle = inspectState.uiConfiguration.subtitleMessage {
-                        Text(subtitle)
-                            .font(.headline)
-                            .foregroundColor(textColor)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
+                    if let resolvedPath = resolvedPath,
+                       FileManager.default.fileExists(atPath: resolvedPath),
+                       let nsImage = NSImage(contentsOfFile: resolvedPath) {
+                        ZStack(alignment: .bottomLeading) {
+                            Image(nsImage: nsImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(maxHeight: CGFloat(inspectState.uiConfiguration.bannerHeight))
+                                .clipped()
+
+                            // Optional title overlay on banner
+                            if let bannerTitle = inspectState.uiConfiguration.bannerTitle {
+                                Text(bannerTitle)
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .shadow(radius: 2)
+                                    .padding()
+                            }
+                        }
+                        .frame(height: CGFloat(inspectState.uiConfiguration.bannerHeight))
                     }
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 20) // Increased padding for better proportion
-                
-                if let currentMessage = inspectState.getCurrentSideMessage() {
-                    Text(currentMessage)
-                        .font(.body)
-                        .foregroundColor(textColor.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 16) // Add vertical breathing room
-                        .animation(.easeInOut(duration: InspectConstants.standardAnimationDuration), value: inspectState.uiConfiguration.currentSideMessageIndex)
+
+                // Company icon section - more compact
+                HStack(spacing: 12) {
+                    IconView(image: getMainIconPath(), sfPaddingEnabled: false, corners: false, defaultImage: "building.2.fill", defaultColour: "accent")
+                        .frame(width: 80 * scaleFactor, height: 80 * scaleFactor)
+                        // Border removed
+                        .onAppear { cacheMainIcon() }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Add subtitle message if available
+                        if let subtitle = inspectState.uiConfiguration.subtitleMessage {
+                            Text(subtitle)
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(textColor)
+                        }
+
+                        if let currentMessage = inspectState.getCurrentSideMessage() {
+                            Text(currentMessage)
+                                .font(.body)
+                                .foregroundColor(textColor.opacity(0.9))
+                                .lineLimit(2)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                
+                // Removed - message is now inline with logo
                 
                 // Scrollable app list with auto-scrolling
                 ScrollViewReader { proxy in
                     ScrollView(.vertical, showsIndicators: true) {
-                        LazyVStack(spacing: 8) {
+                        // Use two columns in compact mode, one column otherwise
+                        let columns = sizeMode == "compact" ?
+                            [GridItem(.flexible()), GridItem(.flexible())] :
+                            [GridItem(.flexible())]
+
+                        LazyVGrid(columns: columns, spacing: 6) {
                             let sortedItems = getSortedItemsByStatus() // Use simple order: Latest Completed → Installing → Waiting
                             ForEach(sortedItems, id: \.id) { item in
                                 HStack {
-                                    // Small item icon
-                                    IconView(image: item.icon ?? "", sfPaddingEnabled: false, corners: false, defaultImage: "app.badge.fill", defaultColour: "accent")
-                                        .frame(width: 24 * scale, height: 24 * scale)
+                                    // Small item icon - use resolved path from cache
+                                    IconView(image: getItemIconPath(for: item), sfPaddingEnabled: false, corners: false, defaultImage: "app.badge.fill", defaultColour: "accent")
+                                        .frame(width: 24 * scaleFactor, height: 24 * scaleFactor)
+                                        .id("icon-\(item.id)") // Stable ID to prevent recreation
 
                                     // Item name
                                     Text(item.displayName)
@@ -128,14 +169,14 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                                             .cornerRadius(4)
                                     }
                                 }
-                                .padding(.vertical, 6)
-                                .padding(.horizontal, 12)
+                                .padding(.vertical, 3)
+                                .padding(.horizontal, 8)
                                 .background(Color.primary.opacity(0.05))
                                 .cornerRadius(6)
                             }
                         }
-                        .padding(.horizontal)
-                        .padding(.bottom)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
                         .onChange(of: inspectState.completedItems.count) {
                             // Auto-scroll to top when new item completes
                             let sortedItems = getSortedItemsByStatus()
@@ -161,7 +202,7 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                             inspectState.checkAndUpdateButtonState()
                         }
                     }
-                    .frame(maxHeight: .infinity)
+                    .scrollIndicators(.visible, axes: .vertical)
                 }
                 
                 // Progress bar section - moved to bottom as requested
@@ -200,8 +241,73 @@ struct Preset3Layout: View, InspectLayoutProtocol {
                 }
             }
         }
+        .onAppear {
+            cacheMainIcon()
+            cacheItemIcons()
+        }
     }
-    
+
+    // MARK: - Icon Resolution Methods
+
+    private func cacheMainIcon() {
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        if let iconPath = inspectState.uiConfiguration.iconPath {
+            cachedMainIcon = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil)
+        }
+    }
+
+    private func cacheItemIcons() {
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        for item in inspectState.items {
+            if let icon = item.icon {
+                if let resolvedPath = resolver.resolveImagePath(icon, basePath: basePath, fallbackIcon: nil) {
+                    cachedItemIcons[item.id] = resolvedPath
+                }
+            }
+        }
+    }
+
+    private func getMainIconPath() -> String {
+        if let cached = cachedMainIcon {
+            return cached
+        }
+
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        if let iconPath = inspectState.uiConfiguration.iconPath {
+            let resolved = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil) ?? ""
+            cachedMainIcon = resolved
+            return resolved
+        }
+
+        return ""
+    }
+
+    private func getItemIconPath(for item: InspectConfig.ItemConfig) -> String {
+        // Return cached path if available
+        if let cached = cachedItemIcons[item.id] {
+            return cached
+        }
+
+        // Resolve and cache
+        let basePath = inspectState.uiConfiguration.iconBasePath
+        let resolver = ImageResolver.shared
+
+        if let icon = item.icon {
+            if let resolved = resolver.resolveImagePath(icon, basePath: basePath, fallbackIcon: nil) {
+                cachedItemIcons[item.id] = resolved
+                return resolved
+            }
+        }
+
+        return ""
+    }
+
     // MARK: - Private Helper Methods
     
     @ViewBuilder
