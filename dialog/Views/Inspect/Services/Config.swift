@@ -314,6 +314,9 @@ class Config {
 
         if let listIndicatorStyle = config.listIndicatorStyle {
             uiConfig.listIndicatorStyle = listIndicatorStyle
+            print("Config: Setting listIndicatorStyle to '\(listIndicatorStyle)' from JSON")
+        } else {
+            print("Config: No listIndicatorStyle in JSON, using default: '\(uiConfig.listIndicatorStyle)'")
         }
 
         return uiConfig

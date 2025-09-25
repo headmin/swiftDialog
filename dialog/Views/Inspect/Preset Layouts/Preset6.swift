@@ -671,6 +671,7 @@ struct Preset6View: View, InspectLayoutProtocol {
     private func checklistItem(item: InspectConfig.ItemConfig, index: Int, scale: CGFloat) -> some View {
         let stepStyle = inspectState.uiConfiguration.stepStyle
 
+        print("Preset6: stepStyle = '\(stepStyle)'")
         switch stepStyle {
         case "cards":
             // Card style with rounded rectangles (alpha-inspired)
@@ -972,6 +973,9 @@ struct Preset6View: View, InspectLayoutProtocol {
         // Check for listStyle configuration option
         // Default to numbers (1, 2, 3) for clearer ordering
         let listStyle = inspectState.uiConfiguration.listIndicatorStyle ?? "numbers"
+
+        // Debug logging to verify config is loaded
+        print("Preset6: listIndicatorStyle = '\(listStyle)' (from config: '\(inspectState.uiConfiguration.listIndicatorStyle)')")
 
         switch listStyle {
         case "numbers":
