@@ -14,8 +14,7 @@ struct Preset4View: View, InspectLayoutProtocol {
     @ObservedObject var inspectState: InspectState
     @State private var showingDetailPopover = false
     @State private var selectedItem: InspectConfig.ItemConfig?
-    @State private var cachedMainIcon: String? = nil
-    @State private var cachedItemIcons: [String: String] = [:]
+    @StateObject private var iconCache = PresetIconCache()
 
     // scaleFactor is now provided by InspectLayoutProtocol extension
 
@@ -48,11 +47,8 @@ struct Preset4View: View, InspectLayoutProtocol {
         }
         .background(customBackground())
         .onAppear {
-            cacheMainIcon()
-            cacheItemIcons()
-        }
-        .onChange(of: inspectState.items.count) {
-            cacheItemIcons()
+            // Icons are cached on-demand via lazy loading
+            iconCache.cacheMainIcon(for: inspectState)
         }
         .onChange(of: inspectState.completedItems) { _ in
             // Re-validate when items complete
@@ -66,63 +62,14 @@ struct Preset4View: View, InspectLayoutProtocol {
 
     // MARK: - Icon Resolution Methods
 
-    private func cacheMainIcon() {
-        let basePath = inspectState.uiConfiguration.iconBasePath
-        let resolver = ImageResolver.shared
-
-        if let iconPath = inspectState.uiConfiguration.iconPath {
-            cachedMainIcon = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil)
-        }
-    }
-
-    private func cacheItemIcons() {
-        let basePath = inspectState.uiConfiguration.iconBasePath
-        let resolver = ImageResolver.shared
-
-        for item in inspectState.items {
-            if let icon = item.icon {
-                if let resolvedPath = resolver.resolveImagePath(icon, basePath: basePath, fallbackIcon: nil) {
-                    cachedItemIcons[item.id] = resolvedPath
-                }
-            }
-        }
-    }
+    // Icon caching now handled by PresetIconCache
 
     private func getMainIconPath() -> String {
-        if let cached = cachedMainIcon {
-            return cached
-        }
-
-        let basePath = inspectState.uiConfiguration.iconBasePath
-        let resolver = ImageResolver.shared
-
-        if let iconPath = inspectState.uiConfiguration.iconPath {
-            let resolved = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil) ?? ""
-            cachedMainIcon = resolved
-            return resolved
-        }
-
-        return ""
+        return iconCache.getMainIconPath(for: inspectState)
     }
 
     private func getItemIconPath(for item: InspectConfig.ItemConfig) -> String {
-        // Return cached path if available
-        if let cached = cachedItemIcons[item.id] {
-            return cached
-        }
-
-        // Resolve and cache
-        let basePath = inspectState.uiConfiguration.iconBasePath
-        let resolver = ImageResolver.shared
-
-        if let icon = item.icon {
-            if let resolved = resolver.resolveImagePath(icon, basePath: basePath, fallbackIcon: nil) {
-                cachedItemIcons[item.id] = resolved
-                return resolved
-            }
-        }
-
-        return item.icon ?? ""
+        return iconCache.getItemIconPath(for: item, state: inspectState)
     }
     
     // MARK: - Header Section
@@ -133,7 +80,7 @@ struct Preset4View: View, InspectLayoutProtocol {
                 // Compact logo
                 IconView(image: getMainIconPath(), defaultImage: "apps.iphone.badge.plus", defaultColour: "accent")
                     .frame(width: 40 * scaleFactor, height: 40 * scaleFactor)
-                    .onAppear { cacheMainIcon() }
+                    .onAppear { iconCache.cacheMainIcon(for: inspectState) }
 
                 // Compact title only
                 Text(inspectState.uiConfiguration.windowTitle)

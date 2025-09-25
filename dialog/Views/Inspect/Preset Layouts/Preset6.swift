@@ -19,7 +19,7 @@ struct Preset6View: View, InspectLayoutProtocol {
     @State private var imageUpdateTimer: Timer?
     @State private var pendingImageIndex: Int?
     @State private var cachedImagePaths: [String] = []
-    @State private var cachedItemIcons: [String: String] = [:]
+    @StateObject private var iconCache = PresetIconCache()
     @State private var lastDownloadingCount = 0
     @State private var isInitialized = false
     @State private var lastDownloadingItemId: String? = nil
@@ -735,7 +735,8 @@ struct Preset6View: View, InspectLayoutProtocol {
                     Spacer()
 
                     // Display item icon if available (using cached path)
-                    if let resolvedPath = cachedItemIcons[item.id] {
+                    let resolvedPath = iconCache.getItemIconPath(for: item, state: inspectState)
+                    if !resolvedPath.isEmpty {
                         IconView(
                             image: resolvedPath,
                             defaultImage: "folder",
@@ -791,7 +792,8 @@ struct Preset6View: View, InspectLayoutProtocol {
                     Spacer()
 
                     // Display item icon if available (using cached path)
-                    if let resolvedPath = cachedItemIcons[item.id] {
+                    let resolvedPath = iconCache.getItemIconPath(for: item, state: inspectState)
+                    if !resolvedPath.isEmpty {
                         IconView(
                             image: resolvedPath,
                             defaultImage: "folder",
@@ -1005,7 +1007,7 @@ struct Preset6View: View, InspectLayoutProtocol {
         for item in inspectState.items {
             if let icon = item.icon {
                 if let resolvedPath = resolver.resolveImagePath(icon, basePath: basePath) {
-                    cachedItemIcons[item.id] = resolvedPath
+                    // Icon caching handled by PresetIconCache
                 }
             }
         }

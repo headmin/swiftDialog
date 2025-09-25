@@ -17,7 +17,7 @@ struct Preset5View: View, InspectLayoutProtocol {
     @State private var overallScore: Double = 0.0
     @State private var criticalIssues: [ComplianceItem] = []
     @State private var allFailingItems: [ComplianceItem] = []
-    @State private var cachedMainIcon: String? = nil
+    @StateObject private var iconCache = PresetIconCache()
 
     init(inspectState: InspectState) {
         self.inspectState = inspectState
@@ -33,9 +33,9 @@ struct Preset5View: View, InspectLayoutProtocol {
                 // Security Icon and Title
                 HStack(spacing: 12 * scale) {
                     // Icon from configuration
-                    IconView(image: getMainIconPath(), defaultImage: "shield.checkered", defaultColour: "accent")
+                    IconView(image: iconCache.getMainIconPath(for: inspectState), defaultImage: "shield.checkered", defaultColour: "accent")
                             .frame(width: 52 * scale, height: 52 * scale)
-                            .onAppear { cacheMainIcon() }
+                            .onAppear { iconCache.cacheMainIcon(for: inspectState) }
                     
                     VStack(alignment: .leading, spacing: 2 * scale) {
                         Text(inspectState.uiConfiguration.windowTitle)
@@ -177,7 +177,7 @@ struct Preset5View: View, InspectLayoutProtocol {
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             loadComplianceData()
-            cacheMainIcon()
+            iconCache.cacheMainIcon(for: inspectState)
         }
         .onChange(of: inspectState.items.count) {
             loadComplianceData()
@@ -192,31 +192,7 @@ struct Preset5View: View, InspectLayoutProtocol {
 
     // MARK: - Icon Resolution Methods
 
-    private func cacheMainIcon() {
-        let basePath = inspectState.uiConfiguration.iconBasePath
-        let resolver = ImageResolver.shared
-
-        if let iconPath = inspectState.uiConfiguration.iconPath {
-            cachedMainIcon = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil)
-        }
-    }
-
-    private func getMainIconPath() -> String {
-        if let cached = cachedMainIcon {
-            return cached
-        }
-
-        let basePath = inspectState.uiConfiguration.iconBasePath
-        let resolver = ImageResolver.shared
-
-        if let iconPath = inspectState.uiConfiguration.iconPath {
-            let resolved = resolver.resolveImagePath(iconPath, basePath: basePath, fallbackIcon: nil) ?? ""
-            cachedMainIcon = resolved
-            return resolved
-        }
-
-        return ""
-    }
+    // Icon caching now handled by PresetIconCache
 
     // MARK: - Private Methods
     
