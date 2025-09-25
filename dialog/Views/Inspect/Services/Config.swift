@@ -312,6 +312,10 @@ class Config {
             uiConfig.stepStyle = stepStyle
         }
 
+        if let listIndicatorStyle = config.listIndicatorStyle {
+            uiConfig.listIndicatorStyle = listIndicatorStyle
+        }
+
         return uiConfig
     }
     

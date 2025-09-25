@@ -82,11 +82,12 @@ struct InspectConfig: Codable {
     let uiLabels: UILabels?                 // Optional UI text customization
 
     let iconBasePath: String?                // Icon base path for relative loading icon paths
-    let rotatingImages: [String]?            // Array of image paths for image rotation 
+    let rotatingImages: [String]?            // Array of image paths for image rotation
     let imageRotationInterval: Double?      // set interval for auto-rotation
     let imageShape: String?                  // rectangle, square, circle - used in preset6
     let imageSyncMode: String?              // "manual" | "sync" | "auto"
     let stepStyle: String?                  // "plain" | "colored" | "cards"
+    let listIndicatorStyle: String?         // "letters" | "numbers" | "roman" - list indicator format
 
     let items: [ItemConfig]
     
@@ -279,6 +280,7 @@ struct InspectConfig: Codable {
         try container.encodeIfPresent(imageShape, forKey: .imageShape)
         try container.encodeIfPresent(imageSyncMode, forKey: .imageSyncMode)
         try container.encodeIfPresent(stepStyle, forKey: .stepStyle)
+        try container.encodeIfPresent(listIndicatorStyle, forKey: .listIndicatorStyle)
         try container.encode(items, forKey: .items)
     }
 
@@ -336,6 +338,7 @@ struct InspectConfig: Codable {
         imageShape = try container.decodeIfPresent(String.self, forKey: .imageShape)
         imageSyncMode = try container.decodeIfPresent(String.self, forKey: .imageSyncMode)
         stepStyle = try container.decodeIfPresent(String.self, forKey: .stepStyle)
+        listIndicatorStyle = try container.decodeIfPresent(String.self, forKey: .listIndicatorStyle)
 
         // Default to empty array if items not provided
         items = try container.decodeIfPresent([ItemConfig].self, forKey: .items) ?? []
@@ -355,6 +358,6 @@ struct InspectConfig: Codable {
         case buttonStyle  // Deprecated - TODO: Remove
         case autoEnableButton, autoEnableButtonText, hideSystemDetails, colorThresholds, plistSources, categoryHelp, uiLabels, items
         // Preset6 specific properties
-        case iconBasePath, rotatingImages, imageRotationInterval, imageShape, imageSyncMode, stepStyle
+        case iconBasePath, rotatingImages, imageRotationInterval, imageShape, imageSyncMode, stepStyle, listIndicatorStyle
     }
 }
