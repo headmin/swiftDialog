@@ -599,7 +599,7 @@ struct Preset6View: View, InspectLayoutProtocol {
     // MARK: - Banner Image Caching
     private func cacheBannerImage() {
         guard cachedBannerImage == nil,
-              let bannerPath = inspectState.uiConfiguration.bannerImage else {
+              let _ = inspectState.uiConfiguration.bannerImage else {
             return
         }
 
@@ -954,7 +954,7 @@ struct Preset6View: View, InspectLayoutProtocol {
     private func getListIndicator(for index: Int) -> String {
         // Check for listStyle configuration option
         // Default to numbers (1, 2, 3) for clearer ordering
-        let listStyle = inspectState.uiConfiguration.listIndicatorStyle ?? "numbers"
+        let listStyle = inspectState.uiConfiguration.listIndicatorStyle
 
         // Debug logging to verify config is loaded
 
