@@ -25,10 +25,12 @@ struct Preset2View: View, InspectLayoutProtocol {
 
         VStack(spacing: 0) {
             // Top section - either banner or icon
-            if let bannerImage = inspectState.uiConfiguration.bannerImage {
+            if inspectState.uiConfiguration.bannerImage != nil {
                 // Banner display
                 ZStack {
-                    DisplayImage(resolveImagePath(bannerImage), corners: false, showBackgroundOnError: true)
+                    if let bannerNSImage = iconCache.bannerImage {
+                        Image(nsImage: bannerNSImage)
+                            .resizable()
                         .aspectRatio(contentMode: .fill)
                         .scaledToFill()
                         .frame(width: windowSize.width * 0.9, alignment: .topLeading)
@@ -43,8 +45,10 @@ struct Preset2View: View, InspectLayoutProtocol {
                             .foregroundColor(.white)
                             .shadow(color: .black.opacity(0.5), radius: 3, x: 2, y: 2)
                     }
+                    }
                 }
                 .frame(height: CGFloat(inspectState.uiConfiguration.bannerHeight))
+                .onAppear { iconCache.cacheBannerImage(for: inspectState) }
 
                 // Title below banner
                 Text(inspectState.uiConfiguration.windowTitle)
@@ -259,11 +263,6 @@ struct Preset2View: View, InspectLayoutProtocol {
         return iconCache.getMainIconPath(for: inspectState)
     }
 
-    private func resolveImagePath(_ path: String) -> String {
-        let basePath = inspectState.uiConfiguration.iconBasePath
-        let resolver = ImageResolver.shared
-        return resolver.resolveImagePath(path, basePath: basePath, fallbackIcon: nil) ?? path
-    }
 
 
 
