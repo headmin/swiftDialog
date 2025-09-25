@@ -698,9 +698,11 @@ struct Preset6View: View, InspectLayoutProtocol {
                         } else if inspectState.downloadingItems.contains(item.id) {
                             ProgressView()
                                 .scaleEffect(0.5)
+                                .frame(width: 14 * scale, height: 14 * scale)
                                 .tint(.white)
+                                .frame(width: 14 * scale, height: 14 * scale)
                         } else {
-                            Text(String(Character(UnicodeScalar(65 + index) ?? "A")))
+                            Text(getListIndicator(for: index))
                                 .font(.system(size: 12 * scale, weight: .bold))
                                 .foregroundColor(.white)
                         }
@@ -756,8 +758,9 @@ struct Preset6View: View, InspectLayoutProtocol {
                         } else if inspectState.downloadingItems.contains(item.id) {
                             ProgressView()
                                 .scaleEffect(0.5)
+                                .frame(width: 14 * scale, height: 14 * scale)
                         } else {
-                            Text(String(Character(UnicodeScalar(65 + index) ?? "A")))
+                            Text(getListIndicator(for: index))
                                 .font(.system(size: 11 * scale, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
@@ -866,8 +869,9 @@ struct Preset6View: View, InspectLayoutProtocol {
             ProgressView()
                 .scaleEffect(0.6)
                 .tint(.white)
+                .frame(width: 16 * scale, height: 16 * scale)
         } else {
-            Text(String(Character(UnicodeScalar(65 + index) ?? "A")))
+            Text(getListIndicator(for: index))
                 .font(.system(size: 14 * scale, weight: .bold))
                 .foregroundColor(.white)
         }
@@ -962,6 +966,26 @@ struct Preset6View: View, InspectLayoutProtocol {
     private func hasButtons() -> Bool {
         !inspectState.buttonConfiguration.button1Text.isEmpty ||
         !inspectState.buttonConfiguration.button2Text.isEmpty
+    }
+
+    private func getListIndicator(for index: Int) -> String {
+        // Check for listStyle configuration option
+        // Default to letters (A, B, C) but allow numbers (1, 2, 3)
+        let listStyle = inspectState.uiConfiguration.listIndicatorStyle ?? "letters"
+
+        switch listStyle {
+        case "numbers":
+            return String(index + 1)
+        case "letters":
+            return String(Character(UnicodeScalar(65 + index) ?? "A"))
+        case "roman":
+            // Roman numerals for fancy lists
+            let romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+                                "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX"]
+            return index < romanNumerals.count ? romanNumerals[index] : String(index + 1)
+        default:
+            return String(Character(UnicodeScalar(65 + index) ?? "A"))
+        }
     }
 
     private func cacheImagePaths() {
