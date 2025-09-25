@@ -28,11 +28,34 @@ class PresetIconCache: ObservableObject {
         )
     }
 
-    func cacheItemIcons(for state: InspectState) {
+    func cacheItemIcons(for state: InspectState, limit: Int = 20) {
         // Stick to smple synchronous caching !!! - remember to build on lazy loading - the swiftUI way to prevent blocking
+        // Added batch limit to prevent hanging with large item counts
+        let basePath = state.uiConfiguration.iconBasePath
+        let itemsToCache = state.items.prefix(limit)
+
+        for item in itemsToCache {
+            if itemIcons[item.id] == nil,
+               let icon = item.icon {
+                itemIcons[item.id] = resolver.resolveImagePath(
+                    icon,
+                    basePath: basePath,
+                    fallbackIcon: nil
+                )
+            }
+        }
+    }
+
+    // Backwards compatible overload without limit
+    func cacheItemIcons(for state: InspectState) {
+        cacheItemIcons(for: state, limit: 20)
+    }
+
+    // Progressive caching for visible items only
+    func cacheVisibleItemIcons(for items: [InspectConfig.ItemConfig], state: InspectState) {
         let basePath = state.uiConfiguration.iconBasePath
 
-        for item in state.items {
+        for item in items {
             if itemIcons[item.id] == nil,
                let icon = item.icon {
                 itemIcons[item.id] = resolver.resolveImagePath(
