@@ -108,11 +108,17 @@ extension InspectLayoutProtocol {
     @ViewBuilder
     func buttonArea() -> some View {
         HStack(spacing: 12) {
-            if inspectState.completedItems.count == inspectState.items.count && 
+            if (inspectState.configurationSource == .testData || inspectState.completedItems.count == inspectState.items.count) &&
                inspectState.buttonConfiguration.button2Visible && !inspectState.buttonConfiguration.button2Text.isEmpty {
                 Button(inspectState.buttonConfiguration.button2Text) {
-                    writeLog("InspectView: User clicked button2 (\(inspectState.buttonConfiguration.button2Text)) - exiting with code 2", logLevel: .info)
-                    exit(2)
+                    // Check if we're in demo mode and button says "Create Config"
+                    if inspectState.configurationSource == .testData && inspectState.buttonConfiguration.button2Text == "Create Config" {
+                        writeLog("InspectView: Creating sample configuration", logLevel: .info)
+                        inspectState.createSampleConfiguration()
+                    } else {
+                        writeLog("InspectView: User clicked button2 (\(inspectState.buttonConfiguration.button2Text)) - exiting with code 2", logLevel: .info)
+                        exit(2)
+                    }
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)

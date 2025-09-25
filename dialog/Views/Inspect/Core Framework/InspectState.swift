@@ -14,7 +14,7 @@ enum LoadingState: Equatable {
     case failed(String)
 }
 
-enum ConfigurationSource {
+enum ConfigurationSource: Equatable {
     case file(path: String)
     case testData
     case fallback
@@ -97,6 +97,7 @@ class InspectState: ObservableObject, FileMonitorDelegate {
     @Published var downloadingItems: Set<String> = []
     
     private var appInspector: AppInspector?
+    @Published var configurationSource: ConfigurationSource = .testData
     private var configPath: String?
     private var lastCommandFileSize: Int = 0
     private var lastProcessedLineCount: Int = 0
@@ -191,6 +192,7 @@ class InspectState: ObservableObject, FileMonitorDelegate {
                 }
                 
                 // Log configuration source
+                self.configurationSource = configResult.source
                 switch configResult.source {
                 case .file(let path):
                     writeLog("InspectState: Configuration loaded from file: \(path)", logLevel: .info)
@@ -828,6 +830,66 @@ class InspectState: ObservableObject, FileMonitorDelegate {
         return uiConfiguration.sideMessages[index]
     }
     
+    /// Create a sample configuration file on Desktop when in demo mode
+    func createSampleConfiguration() {
+        // Only works in test data mode
+        guard configurationSource == .testData else {
+            writeLog("InspectState: createSampleConfiguration called but not in test mode", logLevel: .debug)
+            return
+        }
+
+        let sampleConfig = """
+        {
+            "title": "My Installation",
+            "message": "Installing required applications",
+            "preset": "preset2",
+            "icon": "sf=app.badge.checkmark.fill",
+            "iconBasePath": "/Users/Shared/dialog/icons",
+            "cachePaths": ["/Users/Shared/dialog/icons"],
+            "button1text": "OK",
+            "button2text": "Cancel",
+            "items": [
+                {
+                    "id": "app1",
+                    "displayName": "Application 1",
+                    "guiIndex": 0,
+                    "paths": ["/Applications/App1.app"],
+                    "icon": "app1.png"
+                },
+                {
+                    "id": "app2",
+                    "displayName": "Application 2",
+                    "guiIndex": 1,
+                    "paths": ["/Applications/App2.app"],
+                    "icon": "app2.png"
+                }
+            ]
+        }
+        """
+
+        let configPath = "/Users/Shared/inspect-config-sample.json"
+
+        do {
+            try sampleConfig.write(toFile: configPath, atomically: true, encoding: .utf8)
+            writeLog("InspectState: Sample configuration created at: \(configPath)", logLevel: .info)
+
+            // Show instructions in terminal
+            print("\nSample configuration created at: \(configPath)")
+            print("\nTo use this configuration:")
+            print("1. Edit the file to match your needs")
+            print("2. Place icon files in /Users/Shared/dialog/icons/ (PNG format recommended)")
+            print("3. Export the environment variable:")
+            print("   export DIALOG_INSPECT_CONFIG=\"\(configPath)\"")
+            print("4. Run swiftDialog with --inspect flag")
+            print("")
+
+            // Exit with special code to indicate config was created
+            exit(10)
+        } catch {
+            writeLog("InspectState: Failed to create sample configuration: \(error)", logLevel: .error)
+        }
+    }
+
     /// For best UX, especially in Enrollment scenarios - check if all apps are completed and update button state accordingly
     func checkAndUpdateButtonState() {
         let totalApps = items.count
