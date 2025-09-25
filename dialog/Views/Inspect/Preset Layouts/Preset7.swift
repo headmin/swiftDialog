@@ -14,7 +14,7 @@ struct Preset7View: View, InspectLayoutProtocol {
     @ObservedObject var inspectState: InspectState
     @State private var completedSteps: Set<String> = []
     @State private var currentStep: Int = 0
-    @State private var loadedImages: [String: NSImage] = [:]
+    @StateObject private var iconCache = PresetIconCache()
     @State private var showSuccess: Bool = false
     @State private var currentPage: Int = 0  // Track which page of cards we're viewing
     @State private var externalMonitoringTimer: Timer?  // Store timer for proper cleanup
@@ -28,7 +28,6 @@ struct Preset7View: View, InspectLayoutProtocol {
         default: return 3  // standard
         }
     }
-    private let imageResolver = ImageResolver.shared
 
     init(inspectState: InspectState) {
         self.inspectState = inspectState
@@ -105,7 +104,7 @@ struct Preset7View: View, InspectLayoutProtocol {
                             item: item,
                             isCompleted: completedSteps.contains(item.id) || inspectState.completedItems.contains(item.id),
                             isActive: globalIndex == currentStep,
-                            image: loadedImages[item.id],
+                            iconCache: iconCache,
                             iconBasePath: inspectState.uiConfiguration.iconBasePath,
                             scaleFactor: scaleFactor
                         )
@@ -193,7 +192,7 @@ struct Preset7View: View, InspectLayoutProtocol {
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             writeLog("Preset7: View appearing, loading state...", logLevel: .info)
-            loadStepImages()
+            iconCache.cacheItemIcons(for: inspectState)
             loadPersistedState()  // Load previous progress (will log launched/resumed)
             setupExternalMonitoring()
 
@@ -478,12 +477,6 @@ struct Preset7View: View, InspectLayoutProtocol {
         }
     }
 
-    private func loadStepImages() {
-        // Images are now loaded on-demand via IconView, similar to other presets
-        // This ensures consistent image loading behavior across all presets
-        writeLog("Preset7: Image loading delegated to IconView for consistency", logLevel: .debug)
-    }
-
     // MARK: - State Persistence
 
     private func savePersistedState() {
@@ -643,11 +636,10 @@ struct StepCard: View {
     let item: InspectConfig.ItemConfig
     let isCompleted: Bool
     let isActive: Bool
-    let image: NSImage?
+    let iconCache: PresetIconCache
     let iconBasePath: String?
     let scaleFactor: CGFloat
 
-    private let imageResolver = ImageResolver.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -679,13 +671,15 @@ struct StepCard: View {
                         Group {
                             if let iconPath = item.icon {
                                 // Use IconView for consistent image loading with other presets
-                                IconView(
-                                    image: imageResolver.resolveImagePath(iconPath, basePath: iconBasePath) ?? "",
-                                    defaultImage: getPlaceholderIcon(),
-                                    defaultColour: isCompleted ? "green" : (isActive ? "blue" : "gray")
-                                )
-                                .frame(width: 180 * scaleFactor, height: 140 * scaleFactor)
-                                .padding(10)
+                                if let resolvedPath = iconCache.resolveImagePath(iconPath, basePath: iconBasePath) {
+                                    IconView(
+                                        image: resolvedPath,
+                                        defaultImage: getPlaceholderIcon(),
+                                        defaultColour: isCompleted ? "green" : (isActive ? "blue" : "gray")
+                                    )
+                                    .frame(width: 180 * scaleFactor, height: 140 * scaleFactor)
+                                    .padding(10)
+                                }
                             } else {
                                 // Fallback placeholder
                                 VStack {
@@ -707,7 +701,7 @@ struct StepCard: View {
 
                 // Optional app context icon bubble (bottom-right) - outside the card
                 if let categoryIcon = item.categoryIcon {
-                    AppIconBubble(iconName: categoryIcon, iconBasePath: iconBasePath, scaleFactor: scaleFactor)
+                    AppIconBubble(iconName: categoryIcon, iconBasePath: iconBasePath, iconCache: iconCache, scaleFactor: scaleFactor)
                         .offset(x: 10, y: 10)
                         .zIndex(10) // High z-index to ensure it's above everything
                 }
@@ -786,9 +780,9 @@ struct StepCard: View {
 struct AppIconBubble: View {
     let iconName: String
     let iconBasePath: String?
+    let iconCache: PresetIconCache
     let scaleFactor: CGFloat
 
-    private let imageResolver = ImageResolver.shared
 
     var body: some View {
         ZStack {
@@ -797,7 +791,7 @@ struct AppIconBubble: View {
                 .frame(width: 36 * scaleFactor, height: 36 * scaleFactor)
                 .shadow(color: Color.black.opacity(0.2), radius: 2 * scaleFactor, x: 0, y: 1 * scaleFactor)
 
-            if let resolvedPath = imageResolver.resolveImagePath(iconName, basePath: iconBasePath),
+            if let resolvedPath = iconCache.resolveImagePath(iconName, basePath: iconBasePath),
                let image = NSImage(contentsOfFile: resolvedPath) {
                 Image(nsImage: image)
                     .resizable()
