@@ -31,23 +31,21 @@ struct Preset2View: View, InspectLayoutProtocol {
                     if let bannerNSImage = iconCache.bannerImage {
                         Image(nsImage: bannerNSImage)
                             .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .scaledToFill()
-                        .frame(width: windowSize.width * 0.9, alignment: .topLeading)
-                        .frame(maxHeight: CGFloat(inspectState.uiConfiguration.bannerHeight))
-                        .clipped()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: windowSize.width, height: CGFloat(inspectState.uiConfiguration.bannerHeight))
+                            .clipped()
 
-                    // Optional title overlay on banner
-                    if let bannerTitle = inspectState.uiConfiguration.bannerTitle {
-                        Text(bannerTitle)
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.5), radius: 3, x: 2, y: 2)
-                    }
+                        // Optional title overlay on banner
+                        if let bannerTitle = inspectState.uiConfiguration.bannerTitle {
+                            Text(bannerTitle)
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.5), radius: 3, x: 2, y: 2)
+                        }
                     }
                 }
-                .frame(height: CGFloat(inspectState.uiConfiguration.bannerHeight))
+                .frame(width: windowSize.width, height: CGFloat(inspectState.uiConfiguration.bannerHeight))
                 .onAppear { iconCache.cacheBannerImage(for: inspectState) }
 
                 // Title below banner
@@ -209,6 +207,7 @@ struct Preset2View: View, InspectLayoutProtocol {
         }
         .frame(width: windowSize.width, height: windowSize.height)
         .background(Color(NSColor.windowBackgroundColor))
+        .ignoresSafeArea()
         .onAppear {
             writeLog("Preset2LayoutServiceBased: Using InspectState", logLevel: .info)
         }
