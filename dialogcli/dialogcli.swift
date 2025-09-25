@@ -81,7 +81,12 @@ struct DialogLauncher: ParsableCommand {
             
             // Ensure local bin directory exists
             if !FileManager.default.fileExists(atPath: localBinPath) {
-                try? FileManager.default.createDirectory(atPath: localBinPath, withIntermediateDirectories: true, attributes: nil)
+                do {
+                    try FileManager.default.createDirectory(atPath: localBinPath, withIntermediateDirectories: true, attributes: nil)
+                } catch {
+                    fputs("ERROR - could not create path at \(localBinPath)\n", stderr)
+                    throw ExitCode(1)
+                }
             }
             
             // create /usr/local/bin/dialog symlink
@@ -97,6 +102,7 @@ struct DialogLauncher: ParsableCommand {
                 fputs("Created symlink to \(pathToSelf.path().replacingOccurrences(of: "%20", with: " ")) at \(symlinkPath.path().replacingOccurrences(of: "%20", with: " "))\n", stdout)
             } catch {
                 fputs("Could not create symlink to \(pathToSelf.path().replacingOccurrences(of: "%20", with: " "))\n", stderr)
+                fputs("Verify path at \(symlinkPath.path().replacingOccurrences(of: "%20", with: " ")) exists\n", stderr)
                 throw ExitCode(1)
             }
             // exit as we don't want to continue launching
