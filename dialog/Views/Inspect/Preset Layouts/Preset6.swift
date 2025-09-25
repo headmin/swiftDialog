@@ -698,8 +698,8 @@ struct Preset6View: View, InspectLayoutProtocol {
                                 .foregroundColor(.white)
                         } else if inspectState.downloadingItems.contains(item.id) {
                             ProgressView()
-                                .scaleEffect(0.5)
-                                .tint(.white)
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.4)
                         } else {
                             Text(getListIndicator(for: index))
                                 .font(.system(size: 12 * scale, weight: .bold))
@@ -756,7 +756,8 @@ struct Preset6View: View, InspectLayoutProtocol {
                                 .foregroundColor(.green)
                         } else if inspectState.downloadingItems.contains(item.id) {
                             ProgressView()
-                                .scaleEffect(0.5)
+                                .progressViewStyle(CircularProgressViewStyle())
+                                .scaleEffect(0.4)
                         } else {
                             Text(getListIndicator(for: index))
                                 .font(.system(size: 11 * scale, weight: .medium))
@@ -865,8 +866,8 @@ struct Preset6View: View, InspectLayoutProtocol {
                 .foregroundColor(.white)
         } else if isInProgress {
             ProgressView()
-                .scaleEffect(0.6)
-                .tint(.white)
+                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .scaleEffect(0.5)
         } else {
             Text(getListIndicator(for: index))
                 .font(.system(size: 14 * scale, weight: .bold))
