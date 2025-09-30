@@ -230,7 +230,7 @@ struct IconView: View {
             writeLog("Using default info icon")
             builtInIconName = "person.fill.questionmark"
             builtInIconPresent = true
-        } else if messageUserImagePath == "default" || (!builtInIconPresent && !FileManager.default.fileExists(atPath: messageUserImagePath) && !imgFromURL && !imgFromBase64 && !imgFromText && !textToQR) {
+        } else if messageUserImagePath == "default" || messageUserImagePath.isEmpty || (!builtInIconPresent && !imgFromURL && !imgFromBase64 && !imgFromText && !textToQR && !FileManager.default.fileExists(atPath: messageUserImagePath)) {
             writeLog("Icon not specified - using default icon")
             iconRenderingMode = Image.TemplateRenderingMode.template //force monochrome
             builtInIconPresent = true

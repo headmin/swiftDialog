@@ -1,5 +1,5 @@
 //
-//  InspectConfigurationService.swift
+//  Config.swift
 //  dialog
 //
 //  Created by Henry Stamerjohann, Declarative IT GmbH, 25/07/2025
@@ -49,7 +49,7 @@ enum ConfigurationError: Error, LocalizedError {
 
 // MARK: - Configuration Service
 
-class InspectConfigurationService {
+class Config {
     
     // MARK: - Isnpect API
     
@@ -107,28 +107,44 @@ class InspectConfigurationService {
     func createTestConfiguration() -> Result<ConfigurationResult, ConfigurationError> {
         let testConfigJSON = """
         {
-            "title": "Test Configuration",
-            "message": "Testing inspect mode",
+            "title": "Software Installation Progress",
+            "message": "Your IT department is installing essential applications. This process may take several minutes.",
             "preset": "preset1",
+            "icon": "default",
+            "button1text": "Continue",
+            "button2text": "Create Sample Config",
+            "button2visible": true,
+            "popupButton": "Installation Details",
+            "highlightColor": "#007AFF",
             "cachePaths": ["/tmp"],
             "items": [
                 {
-                    "id": "test1",
-                    "displayName": "Test Item 1", 
+                    "id": "word",
+                    "displayName": "Microsoft Word",
                     "guiIndex": 0,
-                    "paths": ["/Applications/Test1.app"]
+                    "icon": "sf=doc.fill",
+                    "paths": ["/Applications/Microsoft Word.app"]
                 },
                 {
-                    "id": "test2",
-                    "displayName": "Test Item 2",
-                    "guiIndex": 1, 
-                    "paths": ["/Applications/Test2.app"]
+                    "id": "excel",
+                    "displayName": "Microsoft Excel",
+                    "guiIndex": 1,
+                    "icon": "sf=tablecells.fill",
+                    "paths": ["/Applications/Microsoft Excel.app"]
                 },
                 {
-                    "id": "test3",
-                    "displayName": "Test Item 3",
+                    "id": "teams",
+                    "displayName": "Microsoft Teams",
                     "guiIndex": 2,
-                    "paths": ["/Applications/Test3.app"]
+                    "icon": "sf=person.2.fill",
+                    "paths": ["/Applications/Microsoft Teams.app"]
+                },
+                {
+                    "id": "outlook",
+                    "displayName": "Microsoft Outlook",
+                    "guiIndex": 4,
+                    "icon": "sf=envelope.fill",
+                    "paths": ["/Applications/Microsoft Outlook.app"]
                 }
             ]
         }
@@ -184,7 +200,7 @@ class InspectConfigurationService {
             warnings.append("Configuration has no items or plist sources")
         }
         
-        if let preset = config.preset, !["preset1", "preset2", "preset3", "preset4", "preset5"].contains(preset) {
+        if let preset = config.preset, !["preset1", "preset2", "preset3", "preset4", "preset5", "preset6"].contains(preset) {
             warnings.append("Unknown preset '\(preset)' - will default to preset1")
         }
         
@@ -217,40 +233,108 @@ class InspectConfigurationService {
     
     func extractUIConfiguration(from config: InspectConfig) -> UIConfiguration {
         var uiConfig = UIConfiguration()
-        
+
+        print("Config.swift: extractUIConfiguration called")
+        print("Config.swift: config.banner = \(config.banner ?? "nil")")
+        print("Config.swift: config.bannerHeight = \(config.bannerHeight ?? 0)")
+        print("Config.swift: config.bannerTitle = \(config.bannerTitle ?? "nil")")
+
         if let title = config.title {
             uiConfig.windowTitle = title
         }
-        
+
         if let message = config.message {
             uiConfig.subtitleMessage = message
             uiConfig.statusMessage = message
         }
-        
+
         if let icon = config.icon {
             uiConfig.iconPath = icon
         }
-        
+
         if let sideMessage = config.sideMessage {
             uiConfig.sideMessages = sideMessage
         }
-        
+
         if let popupButton = config.popupButton {
             uiConfig.popupButtonText = popupButton
         }
-        
+
         if let preset = config.preset {
             uiConfig.preset = preset
         }
-        
+
         if let highlightColor = config.highlightColor {
             uiConfig.highlightColor = highlightColor
         }
-        
+
+        // Banner configuration
+        if let banner = config.banner {
+            print("Config.swift: Setting uiConfig.bannerImage = \(banner)")
+            uiConfig.bannerImage = banner
+        }
+
+        if let bannerHeight = config.bannerHeight {
+            print("Config.swift: Setting uiConfig.bannerHeight = \(bannerHeight)")
+            uiConfig.bannerHeight = bannerHeight
+        }
+
+        if let bannerTitle = config.bannerTitle {
+            print("Config.swift: Setting uiConfig.bannerTitle = \(bannerTitle)")
+            uiConfig.bannerTitle = bannerTitle
+        }
+
+        print("Config.swift: After extraction - uiConfig.bannerImage = \(uiConfig.bannerImage ?? "nil")")
+
         if let iconsize = config.iconsize {
             uiConfig.iconSize = iconsize
         }
-        
+
+        // Window sizing configuration
+        if let width = config.width {
+            uiConfig.width = width
+        }
+
+        if let height = config.height {
+            uiConfig.height = height
+        }
+
+        if let size = config.size {
+            uiConfig.size = size
+        }
+
+        // Preset6 specific properties
+        if let iconBasePath = config.iconBasePath {
+            uiConfig.iconBasePath = iconBasePath
+        }
+
+        if let rotatingImages = config.rotatingImages {
+            uiConfig.rotatingImages = rotatingImages
+        }
+
+        if let imageRotationInterval = config.imageRotationInterval {
+            uiConfig.imageRotationInterval = imageRotationInterval
+        }
+
+        if let imageShape = config.imageShape {
+            uiConfig.imageFormat = imageShape  // Map to existing imageFormat property
+        }
+
+        if let imageSyncMode = config.imageSyncMode {
+            uiConfig.imageSyncMode = imageSyncMode
+        }
+
+        if let stepStyle = config.stepStyle {
+            uiConfig.stepStyle = stepStyle
+        }
+
+        if let listIndicatorStyle = config.listIndicatorStyle {
+            uiConfig.listIndicatorStyle = listIndicatorStyle
+            print("Config: Setting listIndicatorStyle to '\(listIndicatorStyle)' from JSON")
+        } else {
+            print("Config: No listIndicatorStyle in JSON, using default: '\(uiConfig.listIndicatorStyle)'")
+        }
+
         return uiConfig
     }
     
@@ -294,18 +378,20 @@ class InspectConfigurationService {
         if let button2Text = config.button2Text {
             buttonConfig.button2Text = button2Text
         }
-        
-        if let button2Disabled = config.button2Disabled {
-            buttonConfig.button2Disabled = button2Disabled
-        }
-        
+
+        // Deprecated: button2Disabled - button2 is always enabled when shown
+        // if let button2Disabled = config.button2Disabled {
+        //     buttonConfig.button2Disabled = button2Disabled
+        // }
+
         if let button2Visible = config.button2Visible {
             buttonConfig.button2Visible = button2Visible
         }
-        
-        if let buttonStyle = config.buttonStyle {
-            buttonConfig.buttonStyle = buttonStyle
-        }
+
+        // Deprecated: buttonStyle - not used in Inspect mode
+        // if let buttonStyle = config.buttonStyle {
+        //     buttonConfig.buttonStyle = buttonStyle
+        // }
         
         if let autoEnableButton = config.autoEnableButton {
             buttonConfig.autoEnableButton = autoEnableButton
