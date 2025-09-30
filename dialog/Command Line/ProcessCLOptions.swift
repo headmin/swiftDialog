@@ -142,44 +142,41 @@ func processCLOptions(json: JSON = getJSON()) {
                     let data = try Data(contentsOf: URL(fileURLWithPath: configPath))
                     let decoder = JSONDecoder()
                     
-                    // Define an enhanced config struct for preset, width, and height
-                    struct InspectConfigForDimensions: Codable {
+                    // Read config for sizing
+                    struct MinimalInspectConfig: Codable {
                         let preset: String?
+                        let size: String?
                         let width: Int?
                         let height: Int?
                     }
-                    
-                    let config = try decoder.decode(InspectConfigForDimensions.self, from: data)
-                    
-                    // Priority 1: Use JSON config width/height if specified
-                    if let configWidth = config.width, let configHeight = config.height {
-                        appvars.windowWidth = CGFloat(configWidth)
-                        appvars.windowHeight = CGFloat(configHeight)
-                        writeLog("Inspect Mode: Using JSON config dimensions (\(configWidth)x\(configHeight))", logLevel: .info)
+
+                    let config = try decoder.decode(MinimalInspectConfig.self, from: data)
+
+                    // Priority 1: Explicit width/height
+                    if let w = config.width, let h = config.height {
+                        appvars.windowWidth = CGFloat(w)
+                        appvars.windowHeight = CGFloat(h)
+                        writeLog("Inspect Mode: Custom size \(w)×\(h)", logLevel: .info)
                     }
-                    // Priority 2: Apply window dimensions based on preset defaults
+                    // Priority 2: Use shared sizing definitions
                     else if let preset = config.preset {
-                        if preset.contains("-mini") {
-                            // Mini presets use smaller window size
-                            appvars.windowWidth = 800
-                            appvars.windowHeight = 450
-                            writeLog("Inspect Mode: Using mini preset size (800x450) for preset: \(preset)", logLevel: .info)
-                        } else {
-                            // Standard presets use larger window size
-                            appvars.windowWidth = 1100
-                            appvars.windowHeight = 600
-                            writeLog("Inspect Mode: Using standard preset size (1100x600) for preset: \(preset)", logLevel: .info)
-                        }
-                    } else {
-                        // Default to standard size if no preset specified
-                        appvars.windowWidth = 1100
-                        appvars.windowHeight = 600
-                        writeLog("Inspect Mode: No preset specified, using default size (1100x600)", logLevel: .info)
+                        let sizeMode = config.size ?? "standard"
+                        let (width, height) = InspectSizes.getSize(preset: preset, mode: sizeMode)
+                        appvars.windowWidth = width
+                        appvars.windowHeight = height
+                        writeLog("Inspect Mode: \(preset) \(sizeMode) (\(Int(width))×\(Int(height)))", logLevel: .info)
+                    }
+                    // Priority 3: Default
+                    else {
+                        let (width, height) = InspectSizes.defaultSize
+                        appvars.windowWidth = width
+                        appvars.windowHeight = height
+                        writeLog("Inspect Mode: Using default size (\(Int(width))×\(Int(height)))", logLevel: .info)
                     }
                 } catch {
                     writeLog("Inspect Mode: Error loading config for dimensions: \(error)", logLevel: .error)
                     // Default to standard size on error
-                    appvars.windowWidth = 1100
+                    appvars.windowWidth = 1000
                     appvars.windowHeight = 600
                 }
             }

@@ -8,13 +8,13 @@
 import Foundation
 import SwiftUI
 
-enum LoadingState {
+enum LoadingState: Equatable {
     case loading
     case loaded
     case failed(String)
 }
 
-enum ConfigurationSource {
+enum ConfigurationSource: Equatable {
     case file(path: String)
     case testData
     case fallback
@@ -26,6 +26,7 @@ struct UIConfiguration {
     var windowTitle: String = "System Inspection"
     var statusMessage: String = "Inspection active - Items will appear as they are detected"
     var iconPath: String?
+    var iconBasePath: String?  // Base path for relative icon paths
     var sideMessages: [String] = []
     var currentSideMessageIndex: Int = 0
     var popupButtonText: String = "Install details..."
@@ -33,6 +34,24 @@ struct UIConfiguration {
     var highlightColor: String = "#808080"
     var iconSize: Int = 120
     var subtitleMessage: String?
+
+    // Window sizing configuration
+    var width: Int?                // Custom width override
+    var height: Int?               // Custom height override
+    var size: String?              // Size mode: "compact", "standard", or "large"
+
+    // Banner configuration (optional - preserves logo display when not set)
+    var bannerImage: String?        // Path to banner image
+    var bannerHeight: Int = 100     // Default banner height
+    var bannerTitle: String?        // Optional title overlay on banner
+
+    // Preset6 specific properties
+    var rotatingImages: [String] = []
+    var imageRotationInterval: Double = 4.0
+    var imageFormat: String = "square"     // "square" | "rectangle" | "round"
+    var imageSyncMode: String = "manual"   // "manual" | "sync" | "auto"
+    var stepStyle: String = "plain"        // "plain" | "colored" | "cards"
+    var listIndicatorStyle: String = "numbers"  // "letters" | "numbers" | "roman" - defaults to "numbers"
 }
 
 struct BackgroundConfiguration {
@@ -44,16 +63,16 @@ struct BackgroundConfiguration {
 }
 
 struct ButtonConfiguration {
-    var button1Text: String = "OK"
+    var button1Text: String = "OK"           // Text during progress/installation
     var button1Disabled: Bool = false
-    var button2Text: String = "Cancel"
-    var button2Disabled: Bool = false
-    var button2Visible: Bool = true
-    var buttonStyle: String = "default"
+    var button2Text: String = "Cancel"       // Optional second button text
+    var button2Visible: Bool = true          // Show second button when complete
     var autoEnableButton: Bool = true
+    // Note: button2Disabled removed - button2 is always enabled when shown
+    // Note: buttonStyle removed - not used in Inspect mode
 }
 
-class InspectState: ObservableObject, FSEventsInspectorDelegate {
+class InspectState: ObservableObject, FileMonitorDelegate {
     // MARK: - Core State (Keep as @Published)
     @Published var loadingState: LoadingState = .loading
     @Published var items: [InspectConfig.ItemConfig] = []
@@ -78,6 +97,7 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
     @Published var downloadingItems: Set<String> = []
     
     private var appInspector: AppInspector?
+    @Published var configurationSource: ConfigurationSource = .testData
     private var configPath: String?
     private var lastCommandFileSize: Int = 0
     private var lastProcessedLineCount: Int = 0
@@ -87,14 +107,18 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
     private var sideMessageTimer: Timer?
     private var debouncedUpdater = DebouncedUpdater()
     private let fileSystemCache = FileSystemCache()
-    
-    private let fsEventsMonitor = FSEventsInspector()
+
+    // FSEvents priority tracking - prevent timer interference
+    private var fsEventsTimestamps: [String: Date] = [:]
+    private let fsEventsPriorityWindow: TimeInterval = 10.0 // 10 seconds
+
+    private let fsEventsMonitor = FileMonitor()
     private var lastFSEventTime: Date?
     private var lastLogTime: Date = Date()
     
     // MARK: - Base Business Logic Services initialize
-    private let validationService = InspectValidationService()
-    private let configurationService = InspectConfigurationService()
+    private let validationService = Validation()
+    private let configurationService = Config()
     
     func initialize() {
         writeLog("InspectState.initialize() - Starting initialization", logLevel: .info)
@@ -139,7 +163,15 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
                 }
                 
                 // Use configuration service to extract grouped configurations
+                print("InspectState: About to extract configurations")
+                print("InspectState: loadedConfig.banner = \(loadedConfig.banner ?? "nil")")
+                print("InspectState: loadedConfig.listIndicatorStyle = \(loadedConfig.listIndicatorStyle ?? "nil")")
+                print("InspectState: loadedConfig.stepStyle = \(loadedConfig.stepStyle ?? "nil")")
                 self.uiConfiguration = self.configurationService.extractUIConfiguration(from: loadedConfig)
+                print("InspectState: After extraction - uiConfiguration.bannerImage = \(self.uiConfiguration.bannerImage ?? "nil")")
+                print("InspectState: After extraction - uiConfiguration.iconBasePath = \(self.uiConfiguration.iconBasePath ?? "nil")")
+                print("InspectState: After extraction - uiConfiguration.listIndicatorStyle = \(self.uiConfiguration.listIndicatorStyle)")
+                print("InspectState: After extraction - uiConfiguration.stepStyle = \(self.uiConfiguration.stepStyle)")
                 self.backgroundConfiguration = self.configurationService.extractBackgroundConfiguration(from: loadedConfig)
                 self.buttonConfiguration = self.configurationService.extractButtonConfiguration(from: loadedConfig)
                 
@@ -160,6 +192,7 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
                 }
                 
                 // Log configuration source
+                self.configurationSource = configResult.source
                 switch configResult.source {
                 case .file(let path):
                     writeLog("InspectState: Configuration loaded from file: \(path)", logLevel: .info)
@@ -175,9 +208,12 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
                 
                 // Validate items to populate results dict
                 self.validateAllItems()
-                
+
                 // Once config is loaded, start FSEvents monitoring for UI updates
-                self.setupOptimizedFSEventsInspectoring()
+                self.setupOptimizedFileMonitoring()
+
+                // Initialize progress tracker
+                self.initializeProgressTracker()
             }
             
         case .failure(let error):
@@ -213,10 +249,10 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
         
         // Setup periodic updates as backup detection method
         setupOptimizedPeriodicUpdates()
-        
-        // Setup FSEvents monitoring for cache file detection
-        setupOptimizedFSEventsInspectoring()
-        
+
+        // Note: FSEvents monitoring is setup in loadConfiguration() after config is loaded
+        // Don't call setupOptimizedFileMonitoring() here as config isn't loaded yet
+
         writeLog("InspectState: All monitoring components started successfully", logLevel: .info)
     }
     
@@ -276,7 +312,7 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
         writeLog("Timer-based monitoring active", logLevel: .info)
     }
     
-    private func setupOptimizedFSEventsInspectoring() {
+    private func setupOptimizedFileMonitoring() {
         // Instantiate FSEvents monitoring setup
         let cachePaths = config?.cachePaths ?? []
         
@@ -287,7 +323,7 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
         
         // Set up FSEvents monitor with our delegate pattern
         fsEventsMonitor.delegate = self
-        fsEventsMonitor.startMonitoring(apps: items, cachePaths: cachePaths)
+        fsEventsMonitor.startMonitoring(items: items, cachePaths: cachePaths)
         
         writeLog("FSEvents monitoring active", logLevel: .info)
     }
@@ -309,7 +345,7 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
         checkDirectInstallationStatus()
     }
     
-    // MARK: - FSEventsInspectorDelegate Implementation (Cache-only)
+    // MARK: - FileMonitorDelegate Implementation (Cache-only)
     
     func appInstalled(_ appId: String, at path: String) {
         // App installations are handled by robust timer polling
@@ -325,40 +361,56 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
     
     func cacheFileCreated(_ path: String) {
         lastFSEventTime = Date()
-        
-        // Check if this cache file indicates an app is downloading in our pre-loaded cachePaths
-        for item in items {
-            if !completedItems.contains(item.id) && cacheFileMatchesItem(path, item: item) {
-                debouncedUpdater.debounce(key: "fsevents-download-\(item.id)") { [weak self] in
-                    guard let self = self else { return }
-                    if !self.downloadingItems.contains(item.id) {
-                        self.downloadingItems.insert(item.id)
-                        writeLog("InspectState: FSEvents detected item downloading - \(item.id) from cache file \(path)", logLevel: .info)
-                    }
-                }
-                break
-            }
+
+        // Extract just the filename from the full path for logging
+        let filename = (path as NSString).lastPathComponent
+        writeLog("InspectState: FSEvents detected new cache file: '\(filename)' at path: \(path)", logLevel: .info)
+
+        // Simply invalidate cache - let timer polling handle state updates
+        // This prevents race conditions between FSEvents and timer
+        let parentPath = (path as NSString).deletingLastPathComponent
+        fileSystemCache.invalidateCache(for: parentPath)
+        writeLog("InspectState: Invalidated cache for directory: \(parentPath) - timer will update status", logLevel: .debug)
+
+        // Optionally trigger immediate timer check for responsiveness
+        DispatchQueue.main.async { [weak self] in
+            self?.performRobustAppCheck()
         }
     }
     
     func cacheFileRemoved(_ path: String) {
         lastFSEventTime = Date()
-        writeLog("InspectState: FSEvents detected cache file removal - \(path)", logLevel: .debug)
+
+        // Extract just the filename from the full path for logging
+        let filename = (path as NSString).lastPathComponent
+        writeLog("InspectState: FSEvents detected cache file removal: '\(filename)' at path: \(path)", logLevel: .info)
+
+        // Simply invalidate cache - let timer polling handle state updates
+        // This prevents race conditions between FSEvents and timer
+        let parentPath = (path as NSString).deletingLastPathComponent
+        fileSystemCache.invalidateCache(for: parentPath)
+        writeLog("InspectState: Invalidated cache for directory: \(parentPath) - timer will update status", logLevel: .debug)
+
+        // Optionally trigger immediate timer check for responsiveness
+        DispatchQueue.main.async { [weak self] in
+            self?.performRobustAppCheck()
+        }
     }
     
     private func cacheFileMatchesItem(_ filePath: String, item: InspectConfig.ItemConfig) -> Bool {
-        let lowercaseFile = filePath.lowercased()
-        let itemIdLower = item.id.lowercased()
-        let itemNameLower = item.displayName.lowercased().replacingOccurrences(of: " ", with: "")
-        
-        let itemIdMatch = lowercaseFile.contains(itemIdLower)
-        let nameMatch = lowercaseFile.contains(itemNameLower)
-        
-        let isDownloadFile = lowercaseFile.hasSuffix(".download") || 
-                            lowercaseFile.hasSuffix(".pkg") || 
+        let filename = (filePath as NSString).lastPathComponent
+        let lowercaseFile = filename.lowercased()
+        _ = item.id.lowercased()
+        _ = item.displayName.lowercased().replacingOccurrences(of: " ", with: "")
+
+        let isDownloadFile = lowercaseFile.hasSuffix(".download") ||
+                            lowercaseFile.hasSuffix(".pkg") ||
                             lowercaseFile.hasSuffix(".dmg")
-        
-        return (itemIdMatch || nameMatch) && isDownloadFile
+
+        guard isDownloadFile else { return false }
+
+        // Use smart matching for better detection
+        return smartFilenameMatch(itemId: item.id, displayName: item.displayName, filename: filename)
     }
     
     private func updateAppStatus() {
@@ -423,10 +475,11 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
             
             // Apply changes only if status actually changed
             if isInstalled && !wasCompleted {
-                self.debouncedUpdater.debounce(key: "item-install-\(item.id)") {
+                self.debouncedUpdater.debounce(key: "item-install-\(item.id)") { [weak self] in
+                    guard let self = self else { return }
                     self.completedItems.insert(item.id)
                     self.downloadingItems.remove(item.id)
-                    
+
                     // Check if this was the last item to complete
                     if self.completedItems.count == self.items.count {
                         writeLog("InspectState: All items completed - triggering button state update", logLevel: .info)
@@ -438,37 +491,48 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
                 }
                 writeLog("InspectState: FILESYSTEM - \(item.displayName) detection completed", logLevel: .info)
                 changesDetected = true
-                
+
             } else if !isInstalled && wasCompleted {
                 // App was installed but now deleted - check if still downloading
                 if isDownloading {
-                    self.debouncedUpdater.debounce(key: "item-download-\(item.id)") {
+                    self.debouncedUpdater.debounce(key: "item-download-\(item.id)") { [weak self] in
+                        guard let self = self else { return }
                         self.completedItems.remove(item.id)
                         self.downloadingItems.insert(item.id)
                     }
                     writeLog("InspectState: FILESYSTEM - \(item.displayName) deleted but still downloading", logLevel: .info)
                 } else {
-                    self.debouncedUpdater.debounce(key: "item-remove-\(item.id)") {
+                    self.debouncedUpdater.debounce(key: "item-remove-\(item.id)") { [weak self] in
+                        guard let self = self else { return }
                         self.completedItems.remove(item.id)
                         self.downloadingItems.remove(item.id)
                     }
                     writeLog("InspectState: FILESYSTEM - \(item.displayName) deleted, reset to pending", logLevel: .info)
                 }
                 changesDetected = true
-                
+
             } else if isDownloading && !wasDownloading {
-                self.debouncedUpdater.debounce(key: "item-downloading-\(item.id)") {
+                self.debouncedUpdater.debounce(key: "item-downloading-\(item.id)") { [weak self] in
+                    guard let self = self else { return }
                     self.downloadingItems.insert(item.id)
+                    writeLog("InspectState: Added \(item.id) to downloadingItems (cache detected)", logLevel: .info)
                 }
                 writeLog("InspectState: FILESYSTEM - \(item.displayName) downloading", logLevel: .info)
                 changesDetected = true
                 
             } else if !isDownloading && !isInstalled && (wasDownloading || wasCompleted) {
-                self.debouncedUpdater.debounce(key: "item-pending-\(item.id)") {
-                    self.downloadingItems.remove(item.id)
-                    self.completedItems.remove(item.id)
+                // Simplified state management - single source of truth
+                // Only reset to pending if cache file doesn't exist
+                if !checkCacheForItem(item) {
+                    self.debouncedUpdater.debounce(key: "item-pending-\(item.id)") { [weak self] in
+                        guard let self = self else { return }
+                        self.downloadingItems.remove(item.id)
+                        self.completedItems.remove(item.id)
+                        // Clear any tracking timestamps
+                        self.fsEventsTimestamps.removeValue(forKey: item.id)
+                        writeLog("InspectState: \(item.displayName) reset to pending (no cache file)", logLevel: .info)
+                    }
                 }
-                writeLog("InspectState: FILESYSTEM - \(item.displayName) reset to pending", logLevel: .info)
                 changesDetected = true
             }
         }
@@ -523,28 +587,138 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
     
     private func checkCacheForItem(_ item: InspectConfig.ItemConfig) -> Bool {
         guard let config = config, let cachePaths = config.cachePaths else { return false }
-        
-        let itemIdLower = item.id.lowercased()
-        let itemNameLower = item.displayName.lowercased().replacingOccurrences(of: " ", with: "")
-        
+
+        writeLog("InspectState: Checking cache for item '\(item.id)' (display: '\(item.displayName)')", logLevel: .debug)
+
         // Use the optimized containsMatchingFile method to avoid unnecessary memory allocations
         for cachePath in cachePaths {
-            let hasMatchingFile = fileSystemCache.containsMatchingFile(in: cachePath) { file in
-                let lowercaseFile = file.lowercased()
-                let itemIdMatch = lowercaseFile.contains(itemIdLower)
-                let nameMatch = lowercaseFile.contains(itemNameLower)
-                let isDownloadFile = lowercaseFile.hasSuffix(".download") || 
-                                    lowercaseFile.hasSuffix(".pkg") || 
-                                    lowercaseFile.hasSuffix(".dmg")
-                
-                return (itemIdMatch || nameMatch) && isDownloadFile
+            // ALWAYS invalidate and re-read the cache to ensure we have fresh data
+            fileSystemCache.invalidateCache(for: cachePath)
+            let cacheContents = fileSystemCache.cacheDirectoryContents(cachePath)
+
+            // Log what's actually in the cache for debugging
+            if cacheContents.isEmpty {
+                writeLog("InspectState:   Cache directory '\(cachePath)' is empty", logLevel: .debug)
+            } else {
+                writeLog("InspectState:   Files in cache (\(cacheContents.count) total): \(cacheContents.prefix(3).joined(separator: ", "))\(cacheContents.count > 3 ? "..." : "")", logLevel: .debug)
             }
-            
+
+            // Filter for download files
+            let downloadFiles = cacheContents.filter { file in
+                // Skip hidden files like .DS_Store
+                guard !file.hasPrefix(".") else { return false }
+
+                return file.lowercased().hasSuffix(".download") ||
+                       file.lowercased().hasSuffix(".pkg") ||
+                       file.lowercased().hasSuffix(".dmg")
+            }
+
+            if downloadFiles.isEmpty {
+                writeLog("InspectState:   No package files found (looked for .pkg, .dmg, .download)", logLevel: .debug)
+            } else {
+                for file in downloadFiles {
+                    writeLog("InspectState:   Found package: '\(file)'", logLevel: .debug)
+                }
+            }
+
+            // Now check if any match this item
+            let hasMatchingFile = downloadFiles.contains { file in
+                let matches = smartFilenameMatch(itemId: item.id, displayName: item.displayName, filename: file)
+
+                if matches {
+                    writeLog("InspectState:   ✓ SMART MATCH: '\(file)' matches item '\(item.id)'", logLevel: .info)
+                } else {
+                    writeLog("InspectState:   ✗ No match: '\(file)' vs item '\(item.id)'", logLevel: .debug)
+                }
+
+                return matches
+            }
+
             if hasMatchingFile {
+                writeLog("InspectState: ✓ Cache match found for '\(item.id)' in \(cachePath)", logLevel: .info)
                 return true
             }
         }
+        writeLog("InspectState: No cache match for '\(item.id)'", logLevel: .debug)
         return false
+    }
+
+    /// Smart filename matching algorithm for package cache detection
+    /// Handles cases like: microsoft_outlook → Microsoft_Outlook_16.101.25091314_Installer.pkg
+    private func smartFilenameMatch(itemId: String, displayName: String, filename: String) -> Bool {
+        let cleanFilename = filename.lowercased()
+        let cleanItemId = itemId.lowercased()
+        let cleanDisplayName = displayName.lowercased().replacingOccurrences(of: " ", with: "")
+
+        // Additional normalization: also remove underscores from display name for better matching
+        let cleanDisplayNameNoUnderscore = displayName.lowercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "_", with: "")
+
+        // Strategy 1: Direct substring match (current approach - fast path)
+        let strategy1Match = cleanFilename.contains(cleanItemId) ||
+                           cleanFilename.contains(cleanDisplayName) ||
+                           cleanFilename.contains(cleanDisplayNameNoUnderscore)
+        if strategy1Match {
+            writeLog("InspectState:     ✓ Strategy 1 match: '\(filename)' matched", logLevel: .info)
+            return true
+        }
+
+        // Strategy 2: Split and match components (handle underscores/spaces)
+        // microsoft_outlook → ["microsoft", "outlook"]
+        let itemComponents = cleanItemId.components(separatedBy: CharacterSet(charactersIn: "_- "))
+            .filter { !$0.isEmpty && $0.count > 2 }  // Filter out small words
+
+        let displayComponents = cleanDisplayName.components(separatedBy: CharacterSet(charactersIn: "_- "))
+            .filter { !$0.isEmpty && $0.count > 2 }
+
+        // Check if all significant components from item ID are present in filename
+        let allItemComponentsMatch = !itemComponents.isEmpty && itemComponents.allSatisfy { component in
+            cleanFilename.contains(component)
+        }
+
+        let allDisplayComponentsMatch = !displayComponents.isEmpty && displayComponents.allSatisfy { component in
+            cleanFilename.contains(component)
+        }
+
+        let strategy2Match = allItemComponentsMatch || allDisplayComponentsMatch
+        if strategy2Match {
+            writeLog("InspectState:     ✓ Strategy 2 match: '\(filename)' component match", logLevel: .info)
+            return true
+        }
+
+        // Strategy 3: Handle common patterns
+        // microsoft_outlook → microsoftoutlook, microsoft.outlook, Microsoft_Outlook, etc.
+        let condensedItemId = cleanItemId.replacingOccurrences(of: "_", with: "")
+        let condensedDisplayName = cleanDisplayName.replacingOccurrences(of: "_", with: "")
+
+        let strategy3Match = cleanFilename.contains(condensedItemId) || cleanFilename.contains(condensedDisplayName)
+        if strategy3Match {
+            writeLog("InspectState:     ✓ Strategy 3 match: '\(filename)' contains condensed form", logLevel: .debug)
+            return true
+        }
+
+        // Strategy 4: Fuzzy matching for brand names
+        // Handle cases where "microsoft_office" should match "Office_365" packages
+        if let primaryComponent = itemComponents.first, primaryComponent.count >= 4 {
+            // For microsoft_*, look for the main app name (second component)
+            if primaryComponent == "microsoft" && itemComponents.count > 1 {
+                let appName = itemComponents[1]
+                let strategy4Match = cleanFilename.contains(appName)
+                if strategy4Match {
+                    writeLog("InspectState:     ✓ Strategy 4 match: '\(filename)' contains app name '\(appName)'", logLevel: .debug)
+                    return true
+                }
+            }
+        }
+
+        // No match found - only log this at debug level
+        return false
+    }
+
+    private func fsEventsRecentlyDetected(_ itemId: String) -> Bool {
+        guard let timestamp = fsEventsTimestamps[itemId] else { return false }
+        return Date().timeIntervalSince(timestamp) < fsEventsPriorityWindow
     }
     
     /// This works but might be a bit solved too complex - 
@@ -622,19 +796,32 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
     private func startSideMessageRotation(interval: TimeInterval) {
         // Stop existing timer if any
         sideMessageTimer?.invalidate()
-        
-        // Start new timer
-        sideMessageTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            guard let self = self, self.uiConfiguration.sideMessages.count > 1 else { return }
-            
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
+
+        writeLog("InspectState: Starting side message rotation with \(uiConfiguration.sideMessages.count) messages, interval: \(interval)s", logLevel: .info)
+
+        // Start new timer - ensure it runs on the main run loop
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            self.sideMessageTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+                guard let self = self, self.uiConfiguration.sideMessages.count > 1 else {
+                    writeLog("InspectState: Timer fired but no messages to rotate (count: \(self?.uiConfiguration.sideMessages.count ?? 0))", logLevel: .debug)
+                    return
+                }
+
                 self.uiConfiguration.currentSideMessageIndex = (self.uiConfiguration.currentSideMessageIndex + 1) % self.uiConfiguration.sideMessages.count
-                writeLog("InspectState: Rotating to side message \(self.uiConfiguration.currentSideMessageIndex)", logLevel: .debug)
+                writeLog("InspectState: Rotated to side message index \(self.uiConfiguration.currentSideMessageIndex) of \(self.uiConfiguration.sideMessages.count)", logLevel: .info)
+            }
+
+            // Also fire immediately to start rotation
+            if self.uiConfiguration.sideMessages.count > 1 {
+                Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { _ in
+                    writeLog("InspectState: Initial rotation trigger", logLevel: .info)
+                }
             }
         }
-        
-        writeLog("InspectState: Started side message rotation with interval \(interval)s", logLevel: .info)
+
+        writeLog("InspectState: Side message rotation timer configured", logLevel: .info)
     }
     
     func getCurrentSideMessage() -> String? {
@@ -643,6 +830,66 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
         return uiConfiguration.sideMessages[index]
     }
     
+    /// Create a sample configuration file on Desktop when in demo mode
+    func createSampleConfiguration() {
+        // Only works in test data mode
+        guard configurationSource == .testData else {
+            writeLog("InspectState: createSampleConfiguration called but not in test mode", logLevel: .debug)
+            return
+        }
+
+        let sampleConfig = """
+        {
+            "title": "My Installation",
+            "message": "Installing required applications",
+            "preset": "preset2",
+            "icon": "sf=app.badge.checkmark.fill",
+            "iconBasePath": "/Users/Shared/dialog/icons",
+            "cachePaths": ["/Users/Shared/dialog/icons"],
+            "button1text": "OK",
+            "button2text": "Cancel",
+            "items": [
+                {
+                    "id": "app1",
+                    "displayName": "Application 1",
+                    "guiIndex": 0,
+                    "paths": ["/Applications/App1.app"],
+                    "icon": "app1.png"
+                },
+                {
+                    "id": "app2",
+                    "displayName": "Application 2",
+                    "guiIndex": 1,
+                    "paths": ["/Applications/App2.app"],
+                    "icon": "app2.png"
+                }
+            ]
+        }
+        """
+
+        let configPath = "/Users/Shared/inspect-config-sample.json"
+
+        do {
+            try sampleConfig.write(toFile: configPath, atomically: true, encoding: .utf8)
+            writeLog("InspectState: Sample configuration created at: \(configPath)", logLevel: .info)
+
+            // Show instructions in terminal
+            print("\nSample configuration created at: \(configPath)")
+            print("\nTo use this configuration:")
+            print("1. Edit the file to match your needs")
+            print("2. Place icon files in /Users/Shared/dialog/icons/ (PNG format recommended)")
+            print("3. Export the environment variable:")
+            print("   export DIALOG_INSPECT_CONFIG=\"\(configPath)\"")
+            print("4. Run swiftDialog with --inspect flag")
+            print("")
+
+            // Exit with special code to indicate config was created
+            exit(10)
+        } catch {
+            writeLog("InspectState: Failed to create sample configuration: \(error)", logLevel: .error)
+        }
+    }
+
     /// For best UX, especially in Enrollment scenarios - check if all apps are completed and update button state accordingly
     func checkAndUpdateButtonState() {
         let totalApps = items.count
@@ -658,9 +905,9 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + InspectConstants.debounceDelay) { [weak self] in
                 guard let self = self else { return }
                 if self.buttonConfiguration.autoEnableButton {
-                    self.buttonConfiguration.button1Text = "Continue"
+                    self.buttonConfiguration.button1Text = self.config?.autoEnableButtonText ?? "OK"
                     self.buttonConfiguration.button1Disabled = false
-                    writeLog("InspectState: Auto-enabling Continue button", logLevel: .info)
+                    writeLog("InspectState: Auto-enabling button with text: \(self.buttonConfiguration.button1Text)", logLevel: .info)
                 }
             }
         }
@@ -698,14 +945,20 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
     
     /// Validate all items to populate the validation results dictionary
     func validateAllItems() {
-        writeLog("InspectState: Validating all \(items.count) items", logLevel: .debug)
-        
-        for item in items {
-            let isValid = validatePlistItem(item)
-            writeLog("InspectState: Validated '\(item.id)': \(isValid)", logLevel: .debug)
+        writeLog("InspectState: Starting async validation of \(items.count) items", logLevel: .debug)
+
+        // Use optimized async validation
+        Validation.shared.validateItemsBatch(items, plistSources: plistSources) { [weak self] results in
+            guard let self = self else { return }
+
+            DispatchQueue.main.async {
+                self.plistValidationResults = results
+                writeLog("InspectState: Async validation complete. \(results.filter { $0.value }.count) valid items", logLevel: .info)
+
+                // Update UI if needed
+                self.objectWillChange.send()
+            }
         }
-        
-        writeLog("InspectState: Validation complete. Results: \(plistValidationResults)", logLevel: .debug)
     }
     
     
@@ -725,7 +978,10 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
     
     deinit {
         writeLog("InspectState.deinit() - Starting resource cleanup", logLevel: .info)
-        
+
+        // Stop progress tracking
+        // Progress tracking removed - no longer needed
+
         // Stop all timers
         updateTimer?.invalidate()
         updateTimer = nil
@@ -754,6 +1010,84 @@ class InspectState: ObservableObject, FSEventsInspectorDelegate {
         writeLog("InspectState.deinit() - Resource cleanup completed", logLevel: .info)
     }
     
+    // MARK: - Progress Tracking
+
+    private func initializeProgressTracker() {
+        let preset = uiConfiguration.preset.lowercased()
+        let totalItems = items.count
+
+        // Progress tracking removed - no longer needed
+
+        // Set initial state for all items
+        for item in items {
+            _ = getItemStatus(item)
+            // Progress tracking removed - no longer needed
+        }
+
+        // Update preset-specific data
+        updatePresetSpecificProgress()
+
+        writeLog("InspectState: Progress tracker initialized for \(preset) with \(totalItems) items", logLevel: .info)
+    }
+
+    private func updateProgressForItem(_ itemId: String, status: String) {
+        // Progress tracking removed - no longer needed
+        updatePresetSpecificProgress()
+    }
+
+    private func updatePresetSpecificProgress() {
+        // Progress tracking removed - no longer needed
+
+        switch uiConfiguration.preset.lowercased() {
+        case "preset1":
+            // Progress tracking removed - no longer needed
+            break
+
+        case "preset6":
+            // Progress tracking removed - no longer needed
+            break
+
+        default:
+            break
+        }
+    }
+
+    private func getItemStatus(_ item: InspectConfig.ItemConfig) -> String {
+        if completedItems.contains(item.id) {
+            return "complete"
+        } else if downloadingItems.contains(item.id) {
+            return "downloading"
+        } else {
+            return "pending"
+        }
+    }
+
+    private func getCurrentImageIndex() -> Int {
+        // This would need to be tracked if implementing image rotation
+        return 0
+    }
+
     // MARK: - Helper Functions
-    
+
+    // MARK: - FileMonitorDelegate
+
+    func fileMonitor(_ monitor: FileMonitor, didDetectInstallation itemId: String, at path: String) {
+        // Handle installation detection if needed
+        writeLog("InspectState: Installation detected for \(itemId)", logLevel: .debug)
+    }
+
+    func fileMonitor(_ monitor: FileMonitor, didDetectRemoval itemId: String, at path: String) {
+        // Handle removal detection if needed
+        writeLog("InspectState: Removal detected for \(itemId)", logLevel: .debug)
+    }
+
+    func fileMonitor(_ monitor: FileMonitor, didDetectDownload itemId: String, at path: String) {
+        // Handle download detection if needed
+        writeLog("InspectState: Download detected for \(itemId)", logLevel: .debug)
+    }
+
+    func fileMonitorDidDetectChanges(_ monitor: FileMonitor) {
+        // Handle general changes if needed
+        writeLog("InspectState: File monitor detected changes", logLevel: .debug)
+    }
 }

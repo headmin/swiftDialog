@@ -1,12 +1,14 @@
 //
-//  InspectValidationService.swift
+//  Validation.swift
 //  dialog
 //
 //  Created by Henry Stamerjohann, Declarative IT GmbH, 25/07/2025
-//  Business logic service for plist and file validation
+//  Centralized validation service for all file and plist validation logic
+//  Integrates caching, batch processing, and async validation
 //
 
 import Foundation
+import Combine
 
 // MARK: - Validation Models
 
@@ -38,11 +40,109 @@ struct ValidationDetails {
 
 // MARK: - Validation Service
 
-class InspectValidationService {
+class Validation: ObservableObject {
+
+    // MARK: - Singleton
+    static let shared = Validation()
+
+    // MARK: - Caching
+    private struct CachedPlist {
+        let data: [String: Any]
+        let lastModified: Date
+        let fileSize: Int64
+    }
+
+    private var plistCache = [String: CachedPlist]()
+    private let cacheQueue = DispatchQueue(label: "validation.cache", attributes: .concurrent)
+    private let validationQueue = DispatchQueue(label: "validation.queue", qos: .userInitiated, attributes: .concurrent)
+
+    // MARK: - Publishers
+    @Published var validationProgress: Double = 0.0
+    @Published var isValidating: Bool = false
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Public API
-    
-    /// Main validation entry point - determines validation type and delegates
+
+    /// Batch validation with progress reporting
+    func validateItemsBatch(_ items: [InspectConfig.ItemConfig],
+                           plistSources: [InspectConfig.PlistSourceConfig]? = nil,
+                           completion: @escaping ([String: Bool]) -> Void) {
+
+        DispatchQueue.main.async {
+            self.isValidating = true
+            self.validationProgress = 0.0
+        }
+
+        validationQueue.async { [weak self] in
+            guard let self = self else { return }
+
+            var results = [String: Bool]()
+            let totalItems = items.count
+            var completed = 0
+
+            // Pre-cache all unique plist files
+            self.preCachePlists(from: items, and: plistSources)
+
+            // Process items concurrently with limited width
+            let semaphore = DispatchSemaphore(value: 4)
+            let resultQueue = DispatchQueue(label: "results", attributes: .concurrent)
+            let group = DispatchGroup()
+
+            for item in items {
+                group.enter()
+                self.validationQueue.async {
+                    semaphore.wait()
+                    defer {
+                        semaphore.signal()
+                        group.leave()
+                    }
+
+                    let request = ValidationRequest(item: item, plistSources: plistSources)
+                    let result = self.validateItemCached(request)
+
+                    resultQueue.async(flags: .barrier) {
+                        results[item.id] = result.isValid
+                        completed += 1
+                        let progress = Double(completed) / Double(totalItems)
+
+                        DispatchQueue.main.async {
+                            self.validationProgress = progress
+                        }
+                    }
+                }
+            }
+
+            group.wait()
+
+            DispatchQueue.main.async {
+                self.isValidating = false
+                self.validationProgress = 1.0
+                completion(results)
+            }
+        }
+    }
+
+    /// Single item validation (cached)
+    func validateItemCached(_ request: ValidationRequest) -> ValidationResult {
+        let item = request.item
+
+        // Check for simplified plist validation first
+        if item.plistKey != nil {
+            return validateSimplePlistItemCached(item)
+        }
+
+        // Check for complex plist sources validation
+        if let plistSources = request.plistSources {
+            for source in plistSources where item.paths.contains(source.path) {
+                return validateComplexPlistItemCached(item, source: source)
+            }
+        }
+
+        // Fallback to file existence validation
+        return validateFileExistence(item)
+    }
+
+    /// Main validation entry point (synchronous for backward compatibility)
     func validateItem(_ request: ValidationRequest) -> ValidationResult {
         let item = request.item
         
@@ -126,6 +226,183 @@ class InspectValidationService {
         )
     }
     
+    // MARK: - Cache Management
+
+    private func preCachePlists(from items: [InspectConfig.ItemConfig],
+                                and sources: [InspectConfig.PlistSourceConfig]?) {
+        var uniquePaths = Set<String>()
+
+        // Collect all unique plist paths
+        for item in items {
+            for path in item.paths {
+                let expandedPath = (path as NSString).expandingTildeInPath
+                if expandedPath.hasSuffix(".plist") {
+                    uniquePaths.insert(expandedPath)
+                }
+            }
+        }
+
+        // Add paths from plist sources
+        if let sources = sources {
+            for source in sources {
+                let expandedPath = (source.path as NSString).expandingTildeInPath
+                uniquePaths.insert(expandedPath)
+            }
+        }
+
+        // Load all plists into cache
+        for path in uniquePaths {
+            _ = loadPlistCached(at: path)
+        }
+
+        writeLog("ValidationService: Pre-cached \(uniquePaths.count) plist files", logLevel: .debug)
+    }
+
+    private func loadPlistCached(at path: String) -> [String: Any]? {
+        let expandedPath = (path as NSString).expandingTildeInPath
+
+        // Check cache first
+        return cacheQueue.sync {
+            if let cached = plistCache[expandedPath] {
+                // Check if file has been modified
+                if let attributes = try? FileManager.default.attributesOfItem(atPath: expandedPath),
+                   let modifiedDate = attributes[.modificationDate] as? Date,
+                   let fileSize = attributes[.size] as? NSNumber {
+
+                    if cached.lastModified == modifiedDate && cached.fileSize == fileSize.int64Value {
+                        return cached.data // Cache is still valid
+                    }
+                }
+            }
+
+            // Load from disk
+            guard let data = FileManager.default.contents(atPath: expandedPath),
+                  let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+                  let attributes = try? FileManager.default.attributesOfItem(atPath: expandedPath),
+                  let modifiedDate = attributes[.modificationDate] as? Date,
+                  let fileSize = attributes[.size] as? NSNumber else {
+                return nil
+            }
+
+            // Update cache
+            let cached = CachedPlist(data: plist, lastModified: modifiedDate, fileSize: fileSize.int64Value)
+
+            cacheQueue.async(flags: .barrier) {
+                self.plistCache[expandedPath] = cached
+            }
+
+            return plist
+        }
+    }
+
+    func clearCache() {
+        cacheQueue.async(flags: .barrier) {
+            self.plistCache.removeAll()
+        }
+        writeLog("ValidationService: Cache cleared", logLevel: .debug)
+    }
+
+    func invalidateCacheForPath(_ path: String) {
+        let expandedPath = (path as NSString).expandingTildeInPath
+        cacheQueue.async(flags: .barrier) {
+            self.plistCache.removeValue(forKey: expandedPath)
+        }
+    }
+
+    // MARK: - Cached Validation Methods
+
+    private func validateSimplePlistItemCached(_ item: InspectConfig.ItemConfig) -> ValidationResult {
+        guard let plistKey = item.plistKey else {
+            return ValidationResult(itemId: item.id, isValid: false, validationType: .plistValidation, details: nil)
+        }
+
+        for path in item.paths {
+            if let plist = loadPlistCached(at: path) {
+                let result = validatePlistValue(plist: plist, key: plistKey,
+                                               expectedValue: item.expectedValue,
+                                               evaluation: item.evaluation)
+                if result {
+                    let actualValue = extractPlistValue(from: plist, key: plistKey)
+                    return ValidationResult(
+                        itemId: item.id,
+                        isValid: true,
+                        validationType: .plistValidation,
+                        details: ValidationDetails(
+                            path: path,
+                            key: plistKey,
+                            expectedValue: item.expectedValue,
+                            actualValue: formatValueForDisplay(actualValue),
+                            evaluationType: item.evaluation
+                        )
+                    )
+                }
+            }
+        }
+
+        return ValidationResult(
+            itemId: item.id,
+            isValid: false,
+            validationType: .plistValidation,
+            details: nil
+        )
+    }
+
+    private func validateComplexPlistItemCached(_ item: InspectConfig.ItemConfig, source: InspectConfig.PlistSourceConfig) -> ValidationResult {
+        guard let plist = loadPlistCached(at: source.path) else {
+            return ValidationResult(itemId: item.id, isValid: false, validationType: .complexPlistValidation, details: nil)
+        }
+
+        // General validation using critical keys
+        if let criticalKeys = source.criticalKeys {
+            for key in criticalKeys where !checkNestedKey(key, in: plist, expectedValues: source.successValues) {
+                return ValidationResult(itemId: item.id, isValid: false, validationType: .complexPlistValidation, details: nil)
+            }
+        }
+
+        return ValidationResult(itemId: item.id, isValid: true, validationType: .complexPlistValidation, details: nil)
+    }
+
+    private func validatePlistValue(plist: [String: Any], key: String, expectedValue: String?, evaluation: String?) -> Bool {
+        // Navigate nested keys
+        let keyParts = key.components(separatedBy: ".")
+        var current: Any = plist
+
+        for keyPart in keyParts {
+            if let dict = current as? [String: Any] {
+                guard let next = dict[keyPart] else { return false }
+                current = next
+            } else if let array = current as? [Any], let index = Int(keyPart), index < array.count {
+                current = array[index]
+            } else {
+                return false
+            }
+        }
+
+        return performSmartEvaluation(
+            value: current,
+            evaluationType: evaluation ?? "equals",
+            expectedValue: expectedValue,
+            key: key
+        )
+    }
+
+    private func extractPlistValue(from plist: [String: Any], key: String) -> Any {
+        let keyParts = key.components(separatedBy: ".")
+        var current: Any = plist
+
+        for keyPart in keyParts {
+            if let dict = current as? [String: Any] {
+                current = dict[keyPart] ?? NSNull()
+            } else if let array = current as? [Any], let index = Int(keyPart), index < array.count {
+                current = array[index]
+            } else {
+                return NSNull()
+            }
+        }
+
+        return current
+    }
+
     private func validateSimplePlistItem(_ item: InspectConfig.ItemConfig) -> ValidationResult {
         guard let plistKey = item.plistKey else {
             return ValidationResult(itemId: item.id, isValid: false, validationType: .plistValidation, details: nil)

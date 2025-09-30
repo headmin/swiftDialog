@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0E97D6F92AD54BE3B1A5467D /* InspectValidationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */; };
-		159C2690A9E64B5C96D813E8 /* InspectConfigurationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */; };
 		41005AA927CEF81A0065F323 /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = 41005AA827CEF81A0065F323 /* SwiftyJSON */; };
 		41005AAA27CEF8250065F323 /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4114E1E827153FEE00388274 /* AVKit.framework */; };
 		41110A2825F9E79E008171D2 /* License.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41110A2725F9E79E008171D2 /* License.swift */; };
@@ -65,20 +63,35 @@
 		41D81E6C25F8209F00D1F7E1 /* CLOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E6B25F8209F00D1F7E1 /* CLOptions.swift */; };
 		41D81E7125F845D200D1F7E1 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E7025F845D200D1F7E1 /* AppState.swift */; };
 		41D81E7925F870A500D1F7E1 /* System.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E7825F870A500D1F7E1 /* System.swift */; };
-		600393D08F1240E680E37402 /* Preset5Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 600393D08F1240E680E37403 /* Preset5Layout.swift */; };
 		927EC2B71BCB4E698795A084 /* DebouncedUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F660819C6A4FBC8F1D8BAB /* DebouncedUpdater.swift */; };
 		94072E492AFE931300B2A5C3 /* Font+Additions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94072E482AFE931300B2A5C3 /* Font+Additions.swift */; };
 		B4608E5B819446BC9AADDC8F /* FileSystemCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9F647DDE9CB42EBA9D931B9 /* FileSystemCache.swift */; };
-		BAC04B1E2E2FB3E6006B0F89 /* Preset3Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B1B2E2FB3E6006B0F89 /* Preset3Layout.swift */; };
-		BAC04B1F2E2FB3E6006B0F89 /* Preset2Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B1A2E2FB3E6006B0F89 /* Preset2Layout.swift */; };
-		BAC04B202E2FB3E6006B0F89 /* Preset1Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B192E2FB3E6006B0F89 /* Preset1Layout.swift */; };
-		BAC04B212E2FB3E6006B0F89 /* InspectLayoutProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B162E2FB3E6006B0F89 /* InspectLayoutProtocol.swift */; };
-		BAC04B222E2FB3E6006B0F89 /* InspectState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B172E2FB3E6006B0F89 /* InspectState.swift */; };
-		BAC04B232E2FB3E6006B0F89 /* Preset4Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B1C2E2FB3E6006B0F89 /* Preset4Layout.swift */; };
-		BAC04B242E2FB3E6006B0F89 /* FSEventsInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B152E2FB3E6006B0F89 /* FSEventsInspector.swift */; };
-		BAC04B252E2FB3E6006B0F89 /* InspectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B182E2FB3E6006B0F89 /* InspectView.swift */; };
 		BAC04B282E2FB401006B0F89 /* AppInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B262E2FB401006B0F89 /* AppInspector.swift */; };
 		BAC04B292E2FB401006B0F89 /* InspectConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04B272E2FB401006B0F89 /* InspectConstants.swift */; };
+		BAEFDFE12E83FB310017CFC2 /* ErrorHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFD62E83FB310017CFC2 /* ErrorHandling.swift */; };
+		BAEFDFE22E83FB310017CFC2 /* InstallationInfoPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFDF2E83FB310017CFC2 /* InstallationInfoPopoverView.swift */; };
+		BAEFDFE32E83FB310017CFC2 /* Preset4.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFCF2E83FB310017CFC2 /* Preset4.swift */; };
+		BAEFDFE42E83FB310017CFC2 /* PresetCommonHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFCA2E83FB310017CFC2 /* PresetCommonHelpers.swift */; };
+		BAEFDFE52E83FB310017CFC2 /* DialogCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFDB2E83FB310017CFC2 /* DialogCache.swift */; };
+		BAEFDFE62E83FB310017CFC2 /* Preset5.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFD02E83FB310017CFC2 /* Preset5.swift */; };
+		BAEFDFE72E83FB310017CFC2 /* Preset2.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFCD2E83FB310017CFC2 /* Preset2.swift */; };
+		BAEFDFE82E83FB310017CFC2 /* InspectState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFC82E83FB310017CFC2 /* InspectState.swift */; };
+		BAEFDFE92E83FB310017CFC2 /* InspectSizes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFC72E83FB310017CFC2 /* InspectSizes.swift */; };
+		BAEFDFEA2E83FB310017CFC2 /* InspectConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFC52E83FB310017CFC2 /* InspectConfig.swift */; };
+		BAEFDFEB2E83FB310017CFC2 /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFD92E83FB310017CFC2 /* Validation.swift */; };
+		BAEFDFEC2E83FB310017CFC2 /* Preset6.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFD12E83FB310017CFC2 /* Preset6.swift */; };
+		BAEFDFED2E83FB310017CFC2 /* Preset7.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFD22E83FB310017CFC2 /* Preset7.swift */; };
+		BAEFDFEE2E83FB310017CFC2 /* InspectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFC92E83FB310017CFC2 /* InspectView.swift */; };
+		BAEFDFEF2E83FB310017CFC2 /* Preset7Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFD32E83FB310017CFC2 /* Preset7Persistence.swift */; };
+		BAEFDFF02E83FB310017CFC2 /* InspectCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFDE2E83FB310017CFC2 /* InspectCoordinator.swift */; };
+		BAEFDFF12E83FB310017CFC2 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFD52E83FB310017CFC2 /* Config.swift */; };
+		BAEFDFF22E83FB310017CFC2 /* Preset3.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFCE2E83FB310017CFC2 /* Preset3.swift */; };
+		BAEFDFF32E83FB310017CFC2 /* Preset1.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFCC2E83FB310017CFC2 /* Preset1.swift */; };
+		BAEFDFF42E83FB310017CFC2 /* ImageResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFDD2E83FB310017CFC2 /* ImageResolver.swift */; };
+		BAEFDFF52E83FB310017CFC2 /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFD82E83FB310017CFC2 /* Progress.swift */; };
+		BAEFDFF62E83FB310017CFC2 /* FileMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFDC2E83FB310017CFC2 /* FileMonitor.swift */; };
+		BAEFDFF72E83FB310017CFC2 /* InspectLayoutProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFC62E83FB310017CFC2 /* InspectLayoutProtocol.swift */; };
+		BAEFDFF82E83FB310017CFC2 /* Monitoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEFDFD72E83FB310017CFC2 /* Monitoring.swift */; };
 		CC21904B2A7B994A00269525 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC21904A2A7B994A00269525 /* Preferences.swift */; };
 		CC21904E2A7BC3E000269525 /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC21904D2A7BC3E000269525 /* Strings.swift */; };
 		CC2190502A7BC9FE00269525 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC21904F2A7BC9FE00269525 /* Log.swift */; };
@@ -157,8 +170,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectValidationService.swift; sourceTree = "<group>"; };
-		159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectConfigurationService.swift; sourceTree = "<group>"; };
 		41110A2725F9E79E008171D2 /* License.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = License.swift; sourceTree = "<group>"; };
 		4114E1E827153FEE00388274 /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
 		4114E1EA27154B2200388274 /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
@@ -227,19 +238,34 @@
 		41D81E7825F870A500D1F7E1 /* System.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = System.swift; sourceTree = "<group>"; };
 		41FD45FD26C40366006976FC /* TimerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
 		41FD45FF26C8DC5D006976FC /* ImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageView.swift; sourceTree = "<group>"; };
-		600393D08F1240E680E37403 /* Preset5Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset5Layout.swift; sourceTree = "<group>"; };
 		94072E482AFE931300B2A5C3 /* Font+Additions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Font+Additions.swift"; sourceTree = "<group>"; };
 		A4F660819C6A4FBC8F1D8BAB /* DebouncedUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebouncedUpdater.swift; sourceTree = "<group>"; };
-		BAC04B152E2FB3E6006B0F89 /* FSEventsInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FSEventsInspector.swift; sourceTree = "<group>"; };
-		BAC04B162E2FB3E6006B0F89 /* InspectLayoutProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectLayoutProtocol.swift; sourceTree = "<group>"; };
-		BAC04B172E2FB3E6006B0F89 /* InspectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectState.swift; sourceTree = "<group>"; };
-		BAC04B182E2FB3E6006B0F89 /* InspectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectView.swift; sourceTree = "<group>"; };
-		BAC04B192E2FB3E6006B0F89 /* Preset1Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset1Layout.swift; sourceTree = "<group>"; };
-		BAC04B1A2E2FB3E6006B0F89 /* Preset2Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset2Layout.swift; sourceTree = "<group>"; };
-		BAC04B1B2E2FB3E6006B0F89 /* Preset3Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset3Layout.swift; sourceTree = "<group>"; };
-		BAC04B1C2E2FB3E6006B0F89 /* Preset4Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset4Layout.swift; sourceTree = "<group>"; };
 		BAC04B262E2FB401006B0F89 /* AppInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInspector.swift; sourceTree = "<group>"; };
 		BAC04B272E2FB401006B0F89 /* InspectConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectConstants.swift; sourceTree = "<group>"; };
+		BAEFDFC52E83FB310017CFC2 /* InspectConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectConfig.swift; sourceTree = "<group>"; };
+		BAEFDFC62E83FB310017CFC2 /* InspectLayoutProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectLayoutProtocol.swift; sourceTree = "<group>"; };
+		BAEFDFC72E83FB310017CFC2 /* InspectSizes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectSizes.swift; sourceTree = "<group>"; };
+		BAEFDFC82E83FB310017CFC2 /* InspectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectState.swift; sourceTree = "<group>"; };
+		BAEFDFC92E83FB310017CFC2 /* InspectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectView.swift; sourceTree = "<group>"; };
+		BAEFDFCA2E83FB310017CFC2 /* PresetCommonHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetCommonHelpers.swift; sourceTree = "<group>"; };
+		BAEFDFCC2E83FB310017CFC2 /* Preset1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset1.swift; sourceTree = "<group>"; };
+		BAEFDFCD2E83FB310017CFC2 /* Preset2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset2.swift; sourceTree = "<group>"; };
+		BAEFDFCE2E83FB310017CFC2 /* Preset3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset3.swift; sourceTree = "<group>"; };
+		BAEFDFCF2E83FB310017CFC2 /* Preset4.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset4.swift; sourceTree = "<group>"; };
+		BAEFDFD02E83FB310017CFC2 /* Preset5.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset5.swift; sourceTree = "<group>"; };
+		BAEFDFD12E83FB310017CFC2 /* Preset6.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset6.swift; sourceTree = "<group>"; };
+		BAEFDFD22E83FB310017CFC2 /* Preset7.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset7.swift; sourceTree = "<group>"; };
+		BAEFDFD32E83FB310017CFC2 /* Preset7Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preset7Persistence.swift; sourceTree = "<group>"; };
+		BAEFDFD52E83FB310017CFC2 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		BAEFDFD62E83FB310017CFC2 /* ErrorHandling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHandling.swift; sourceTree = "<group>"; };
+		BAEFDFD72E83FB310017CFC2 /* Monitoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Monitoring.swift; sourceTree = "<group>"; };
+		BAEFDFD82E83FB310017CFC2 /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
+		BAEFDFD92E83FB310017CFC2 /* Validation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validation.swift; sourceTree = "<group>"; };
+		BAEFDFDB2E83FB310017CFC2 /* DialogCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialogCache.swift; sourceTree = "<group>"; };
+		BAEFDFDC2E83FB310017CFC2 /* FileMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMonitor.swift; sourceTree = "<group>"; };
+		BAEFDFDD2E83FB310017CFC2 /* ImageResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageResolver.swift; sourceTree = "<group>"; };
+		BAEFDFDE2E83FB310017CFC2 /* InspectCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectCoordinator.swift; sourceTree = "<group>"; };
+		BAEFDFDF2E83FB310017CFC2 /* InstallationInfoPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallationInfoPopoverView.swift; sourceTree = "<group>"; };
 		CC21904A2A7B994A00269525 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		CC21904D2A7BC3E000269525 /* Strings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
 		CC21904F2A7BC9FE00269525 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
@@ -492,19 +518,72 @@
 		BAC04B1D2E2FB3E6006B0F89 /* Inspect */ = {
 			isa = PBXGroup;
 			children = (
-				BAC04B152E2FB3E6006B0F89 /* FSEventsInspector.swift */,
-				BAC04B162E2FB3E6006B0F89 /* InspectLayoutProtocol.swift */,
-				BAC04B172E2FB3E6006B0F89 /* InspectState.swift */,
-				BAC04B182E2FB3E6006B0F89 /* InspectView.swift */,
-				0E97D6F92AD54BE3B1A5466D /* InspectValidationService.swift */,
-				159C2690A9E64B5C96D813D8 /* InspectConfigurationService.swift */,
-				BAC04B192E2FB3E6006B0F89 /* Preset1Layout.swift */,
-				BAC04B1A2E2FB3E6006B0F89 /* Preset2Layout.swift */,
-				BAC04B1B2E2FB3E6006B0F89 /* Preset3Layout.swift */,
-				BAC04B1C2E2FB3E6006B0F89 /* Preset4Layout.swift */,
-				600393D08F1240E680E37403 /* Preset5Layout.swift */,
+				BAEFDFC42E83FB310017CFC2 /* Components */,
+				BAEFDFCB2E83FB310017CFC2 /* Core Framework */,
+				BAEFDFD42E83FB310017CFC2 /* Preset Layouts */,
+				BAEFDFDA2E83FB310017CFC2 /* Services */,
+				BAEFDFE02E83FB310017CFC2 /* Utilities */,
 			);
 			path = Inspect;
+			sourceTree = "<group>";
+		};
+		BAEFDFC42E83FB310017CFC2 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		BAEFDFCB2E83FB310017CFC2 /* Core Framework */ = {
+			isa = PBXGroup;
+			children = (
+				BAEFDFC52E83FB310017CFC2 /* InspectConfig.swift */,
+				BAEFDFC62E83FB310017CFC2 /* InspectLayoutProtocol.swift */,
+				BAEFDFC72E83FB310017CFC2 /* InspectSizes.swift */,
+				BAEFDFC82E83FB310017CFC2 /* InspectState.swift */,
+				BAEFDFC92E83FB310017CFC2 /* InspectView.swift */,
+				BAEFDFCA2E83FB310017CFC2 /* PresetCommonHelpers.swift */,
+			);
+			path = "Core Framework";
+			sourceTree = "<group>";
+		};
+		BAEFDFD42E83FB310017CFC2 /* Preset Layouts */ = {
+			isa = PBXGroup;
+			children = (
+				BAEFDFCC2E83FB310017CFC2 /* Preset1.swift */,
+				BAEFDFCD2E83FB310017CFC2 /* Preset2.swift */,
+				BAEFDFCE2E83FB310017CFC2 /* Preset3.swift */,
+				BAEFDFCF2E83FB310017CFC2 /* Preset4.swift */,
+				BAEFDFD02E83FB310017CFC2 /* Preset5.swift */,
+				BAEFDFD12E83FB310017CFC2 /* Preset6.swift */,
+				BAEFDFD22E83FB310017CFC2 /* Preset7.swift */,
+				BAEFDFD32E83FB310017CFC2 /* Preset7Persistence.swift */,
+			);
+			path = "Preset Layouts";
+			sourceTree = "<group>";
+		};
+		BAEFDFDA2E83FB310017CFC2 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				BAEFDFD52E83FB310017CFC2 /* Config.swift */,
+				BAEFDFD62E83FB310017CFC2 /* ErrorHandling.swift */,
+				BAEFDFD72E83FB310017CFC2 /* Monitoring.swift */,
+				BAEFDFD82E83FB310017CFC2 /* Progress.swift */,
+				BAEFDFD92E83FB310017CFC2 /* Validation.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		BAEFDFE02E83FB310017CFC2 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				BAEFDFDB2E83FB310017CFC2 /* DialogCache.swift */,
+				BAEFDFDC2E83FB310017CFC2 /* FileMonitor.swift */,
+				BAEFDFDD2E83FB310017CFC2 /* ImageResolver.swift */,
+				BAEFDFDE2E83FB310017CFC2 /* InspectCoordinator.swift */,
+				BAEFDFDF2E83FB310017CFC2 /* InstallationInfoPopoverView.swift */,
+			);
+			path = Utilities;
 			sourceTree = "<group>";
 		};
 		CC21904C2A7BC3BC00269525 /* Functions */ = {
@@ -812,6 +891,30 @@
 				41876684275D88D60023A6A1 /* ImageSlider.swift in Sources */,
 				414550AA27C799D000D756E3 /* BackgroundBlur.swift in Sources */,
 				418A7B512759949A00E4D6F1 /* VideoView.swift in Sources */,
+				BAEFDFE12E83FB310017CFC2 /* ErrorHandling.swift in Sources */,
+				BAEFDFE22E83FB310017CFC2 /* InstallationInfoPopoverView.swift in Sources */,
+				BAEFDFE32E83FB310017CFC2 /* Preset4.swift in Sources */,
+				BAEFDFE42E83FB310017CFC2 /* PresetCommonHelpers.swift in Sources */,
+				BAEFDFE52E83FB310017CFC2 /* DialogCache.swift in Sources */,
+				BAEFDFE62E83FB310017CFC2 /* Preset5.swift in Sources */,
+				BAEFDFE72E83FB310017CFC2 /* Preset2.swift in Sources */,
+				BAEFDFE82E83FB310017CFC2 /* InspectState.swift in Sources */,
+				BAEFDFE92E83FB310017CFC2 /* InspectSizes.swift in Sources */,
+				BAEFDFEA2E83FB310017CFC2 /* InspectConfig.swift in Sources */,
+				BAEFDFEB2E83FB310017CFC2 /* Validation.swift in Sources */,
+				BAEFDFEC2E83FB310017CFC2 /* Preset6.swift in Sources */,
+				BAEFDFED2E83FB310017CFC2 /* Preset7.swift in Sources */,
+				BAEFDFEE2E83FB310017CFC2 /* InspectView.swift in Sources */,
+				BAEFDFEF2E83FB310017CFC2 /* Preset7Persistence.swift in Sources */,
+				BAEFDFF02E83FB310017CFC2 /* InspectCoordinator.swift in Sources */,
+				BAEFDFF12E83FB310017CFC2 /* Config.swift in Sources */,
+				BAEFDFF22E83FB310017CFC2 /* Preset3.swift in Sources */,
+				BAEFDFF32E83FB310017CFC2 /* Preset1.swift in Sources */,
+				BAEFDFF42E83FB310017CFC2 /* ImageResolver.swift in Sources */,
+				BAEFDFF52E83FB310017CFC2 /* Progress.swift in Sources */,
+				BAEFDFF62E83FB310017CFC2 /* FileMonitor.swift in Sources */,
+				BAEFDFF72E83FB310017CFC2 /* InspectLayoutProtocol.swift in Sources */,
+				BAEFDFF82E83FB310017CFC2 /* Monitoring.swift in Sources */,
 				418A7B522759949A00E4D6F1 /* WatermarkView.swift in Sources */,
 				418A7B532759949A00E4D6F1 /* TextEntryView.swift in Sources */,
 				CCB334702B2320F20079FB83 /* SolidColourView.swift in Sources */,
@@ -827,17 +930,6 @@
 				CC7D44082B9C6FB5004B9E65 /* ImageFader.swift in Sources */,
 				418A7B572759949B00E4D6F1 /* ProcessCLOptions.swift in Sources */,
 				411692382893A21500A88700 /* CKImageView.swift in Sources */,
-				BAC04B1E2E2FB3E6006B0F89 /* Preset3Layout.swift in Sources */,
-				BAC04B1F2E2FB3E6006B0F89 /* Preset2Layout.swift in Sources */,
-				BAC04B202E2FB3E6006B0F89 /* Preset1Layout.swift in Sources */,
-				BAC04B212E2FB3E6006B0F89 /* InspectLayoutProtocol.swift in Sources */,
-				BAC04B222E2FB3E6006B0F89 /* InspectState.swift in Sources */,
-				BAC04B232E2FB3E6006B0F89 /* Preset4Layout.swift in Sources */,
-				600393D08F1240E680E37402 /* Preset5Layout.swift in Sources */,
-				BAC04B242E2FB3E6006B0F89 /* FSEventsInspector.swift in Sources */,
-				BAC04B252E2FB3E6006B0F89 /* InspectView.swift in Sources */,
-				0E97D6F92AD54BE3B1A5467D /* InspectValidationService.swift in Sources */,
-				159C2690A9E64B5C96D813E8 /* InspectConfigurationService.swift in Sources */,
 				CC2190522A7BCC3A00269525 /* Images.swift in Sources */,
 				418A7B582759949B00E4D6F1 /* NSWindow+Additions.swift in Sources */,
 				418A7B592759949B00E4D6F1 /* HelpText.swift in Sources */,
