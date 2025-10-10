@@ -128,13 +128,24 @@ struct DialogLauncher: ParsableCommand {
         // Get the current user info (username and UID)
         let (user, userUID) = getConsoleUserInfo()
 
-        // Ensure the user is valid
-        guard !user.isEmpty && userUID != 0 else {
+        // Check if --loginwindow flag is present
+        let hasLoginwindowFlag = passthroughArgs.contains("--loginwindow")
+
+        // Ensure the user is valid, unless using --loginwindow at the loginwindow (console user is root)
+        guard (!user.isEmpty && userUID != 0) || hasLoginwindowFlag else {
             fputs("ERROR: Unable to determine current GUI user\n", stderr)
             throw ExitCode(1)
         }
 
         let reorderedArgs = ["--pid", "\(myPid)"]+reorderArguments(passthroughArgs)
+
+        // If at loginwindow (root user with --loginwindow flag), run Dialog directly as root
+        if hasLoginwindowFlag && userUID == 0 {
+            let result = runCommand(binary: dialogBinary, args: reorderedArgs)
+            print(result.stdout, terminator: "")
+            fputs(result.stderr, stderr)
+            throw ExitCode(result.status)
+        }
 
         // Run as root if necessary, otherwise directly run the binary
         if getuid() == 0 {
