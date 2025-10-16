@@ -425,6 +425,8 @@ func processCLOptions(json: JSON = getJSON()) {
                             dropdownRequired = true
                         case "radio":
                             dropdownStyle = "radio"
+                        case "searchable":
+                            dropdownStyle = "searchable"
                         case "name":
                             dropdownName = itemValue
                         default: ()
