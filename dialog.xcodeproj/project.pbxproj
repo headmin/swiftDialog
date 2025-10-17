@@ -60,6 +60,7 @@
 		41A679D32962494B000BFFCE /* InfoBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A679D22962494B000BFFCE /* InfoBoxView.swift */; };
 		41BD41C02EA1B6E000DA7124 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41BD41BF2EA1B6DB00DA7124 /* AudioManager.swift */; };
 		41BD41C22EA1B71200DA7124 /* AudioControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41BD41C12EA1B70700DA7124 /* AudioControl.swift */; };
+		41BD41C52EA1FAF500DA7124 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 41BD41C42EA1FAF500DA7124 /* SDWebImageSwiftUI */; };
 		41D81E5725F7929800D1F7E1 /* DialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E5625F7929800D1F7E1 /* DialogView.swift */; };
 		41D81E5C25F817BF00D1F7E1 /* ButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E5B25F817BF00D1F7E1 /* ButtonView.swift */; };
 		41D81E6C25F8209F00D1F7E1 /* CLOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E6B25F8209F00D1F7E1 /* CLOptions.swift */; };
@@ -299,6 +300,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41BD41C52EA1FAF500DA7124 /* SDWebImageSwiftUI in Frameworks */,
 				41005AAA27CEF8250065F323 /* AVKit.framework in Frameworks */,
 				41005AA927CEF81A0065F323 /* SwiftyJSON in Frameworks */,
 				418A7B5D275994BB00E4D6F1 /* MarkdownUI in Frameworks */,
@@ -692,6 +694,7 @@
 				418A7B5C275994BB00E4D6F1 /* MarkdownUI */,
 				41005AA827CEF81A0065F323 /* SwiftyJSON */,
 				41A5A6A328E5468100BD3D5E /* WebViewKit */,
+				41BD41C42EA1FAF500DA7124 /* SDWebImageSwiftUI */,
 			);
 			productName = dialog;
 			productReference = 4154C2DA25F76BDB00A3D373 /* Dialog.app */;
@@ -820,6 +823,7 @@
 				414CBAE9278913BA00A1A980 /* XCRemoteSwiftPackageReference "SwiftyJSON" */,
 				41A5A6A228E5468100BD3D5E /* XCRemoteSwiftPackageReference "WebViewKit" */,
 				CC72EBA62E1BE48800CF0DA1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+				41BD41C32EA1FAF500DA7124 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4154C2DB25F76BDB00A3D373 /* Products */;
@@ -1505,6 +1509,14 @@
 				kind = branch;
 			};
 		};
+		41BD41C32EA1FAF500DA7124 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.3;
+			};
+		};
 		41E4BC9526AEDB130042A0A3 /* XCRemoteSwiftPackageReference "MarkdownUI" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/gonzalezreal/MarkdownUI";
@@ -1543,6 +1555,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 41A5A6A228E5468100BD3D5E /* XCRemoteSwiftPackageReference "WebViewKit" */;
 			productName = WebViewKit;
+		};
+		41BD41C42EA1FAF500DA7124 /* SDWebImageSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 41BD41C32EA1FAF500DA7124 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;
+			productName = SDWebImageSwiftUI;
 		};
 		CC72EBA72E1BE48800CF0DA1 /* ArgumentParser */ = {
 			isa = XCSwiftPackageProductDependency;

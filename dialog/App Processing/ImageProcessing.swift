@@ -10,6 +10,7 @@ import Combine
 import SwiftUI
 //import WebViewKit
 import WebKit
+import SDWebImageSwiftUI
 
 enum ImageSource {
     case remote(url: URL?)
@@ -88,9 +89,9 @@ struct DisplayImage: View {
                         .interpolation(.high)
                 // Reserved for future use
                 } else if ["gif"].contains(imgPath.split(separator: ".").last) {
-                    AnimatedGIFViewBlocked(url: asyncURL)
-                    .frame(width: .infinity, height: .infinity)
-                    //.scaledToFit()
+                    AnimatedImage(url: asyncURL)
+                        .resizable()
+                        .scaledToFit()
                 } else {
                     AsyncImage(url: asyncURL) { phase in
                         if let image = phase.image {
