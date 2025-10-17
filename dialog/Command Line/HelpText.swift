@@ -1100,6 +1100,8 @@ struct SDHelp {
 
         example:
             --\(argument.playSound.long) /System/Library/Sounds/Glass.aiff
+        json:
+            '{"\(argument.playSound.long)" : "/System/Library/Sounds/Glass.aiff"}'
 """
         
         argument.showSoundControls.helpShort = "Show sound playback controls"

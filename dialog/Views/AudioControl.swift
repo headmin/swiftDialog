@@ -23,10 +23,10 @@ struct AudioControl: View {
                         .foregroundColor(.white.opacity(0.5))
                     
                 case .downloading:
-                    Image(systemName: "arrow.down.circle")
+                    Image(systemName: "hourglass.circle")
                         .font(.system(size: 40))
                         .foregroundColor(.white)
-                        .symbolEffect(.pulse)
+                        .symbolEffect(.rotate.byLayer, options: .repeat(.periodic(delay: 1.0)))
                     
                 case .ready:
                     Image(systemName: "waveform")
@@ -113,7 +113,7 @@ struct AudioControl: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.black.opacity(0.8))
         )
-        //.frame(width: 160)
+        .frame(width: .infinity)
     }
     
     private func progress(in width: CGFloat) -> CGFloat {
