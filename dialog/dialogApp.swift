@@ -221,6 +221,11 @@ struct dialogApp: App {
             activateDialog()
             writeLog("Activated", logLevel: .debug)
         }
+        
+        // If an audio file is passed in, play it
+        if appArguments.playSound.present {
+            AudioManager.shared.playAudio(from: appArguments.playSound.value)
+        }
     }
 
     var body: some Scene {

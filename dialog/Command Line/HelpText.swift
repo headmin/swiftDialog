@@ -1091,6 +1091,25 @@ struct SDHelp {
 
         This option also implies the --\(argument.forceOnTop.long) flag
 """
+        
+        argument.playSound.helpShort = "Play an audio file on launch"
+        argument.playSound.helpUsage = "<file|url>"
+        argument.playSound.helpLong = """
+        The specified audio file will start playing when swiftDialog launches
+        If the file is sourced from a URL then it will start playing once the file has downloaded.
+
+        example:
+            --\(argument.playSound.long) /System/Library/Sounds/Glass.aiff
+"""
+        
+        argument.showSoundControls.helpShort = "Show sound playback controls"
+        argument.showSoundControls.helpUsage = ""
+        argument.showSoundControls.helpLong = """
+        When used with --\(argument.playSound.long), playback controls will be shown containing
+        play/pause, mute and audio timeline. Playback position can be changed by clicking the timeline.
+        
+        This may be useful when playing longer audio files.
+"""
 
         argument.debug.helpShort = "Enable debug mode"
         argument.debug.helpUsage = "(<colour>)"

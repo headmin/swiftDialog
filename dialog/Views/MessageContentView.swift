@@ -139,6 +139,11 @@ struct MessageContent: View {
             } else {
                 Spacer()
             }
+            
+            // Show Audio Controls
+            if observedData.args.showSoundControls.present && observedData.args.playSound.present {
+                AudioControl()
+            }
 
             Group {
                 ForEach(Array(observedData.appProperties.viewOrder.indices), id: \.self) { index in

@@ -97,6 +97,7 @@ struct CommandLineArguments {
     var setAppIcon               = CommandlineArgument(long: "seticon")
     var notificationIdentifier   = CommandlineArgument(long: "identifier", short: "id")
     var callingPid               = CommandlineArgument(long: "pid", defaultValue: 0)
+    var playSound                = CommandlineArgument(long: "sound")
 
     // command line options that take no additional parameters
     var button1Disabled          = CommandlineArgument(long: "button1disabled", isbool: true)
@@ -143,6 +144,7 @@ struct CommandLineArguments {
     var hideDefaultKeyboardAction = CommandlineArgument(long: "hidedefaultkeyboardaction", isbool: true)
     var alwaysReturnUserInput      = CommandlineArgument(long: "alwaysreturninput", isbool: true)
     var removeNotification        = CommandlineArgument(long: "remove", isbool: true)
+    var showSoundControls         = CommandlineArgument(long: "showsoundcontrols", isbool: true)
 
     // Inspect Mode Arguments
     var inspectMode               = CommandlineArgument(long: "inspect-mode", isbool: true)
@@ -334,6 +336,8 @@ extension CommandLineArguments {
                     case "inspectMode": self.inspectMode = argument
                     case "inspectConfig": self.inspectConfig = argument
                     case "callingPid": self.callingPid = argument
+                    case "playSound": self.playSound = argument
+                    case "showSoundControls": self.showSoundControls = argument
                     default: break
                     }
                 }
