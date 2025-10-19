@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 struct TextEntryView: View {
 
     @ObservedObject var observedData: DialogUpdatableContent
-    @State var textfieldContent: [TextFieldState]
+    //@State var textfieldContent: [TextFieldState]
     @State var datepickerID: [Int]
 
     var fieldwidth: CGFloat = 0
@@ -33,7 +33,7 @@ struct TextEntryView: View {
             writeLog("Displaying text entry")
             writeLog("\(userInputState.textFields.count) textfields detected")
         }
-        self.textfieldContent = textfieldContent
+        //self.textfieldContent = textfieldContent
         datepickerID = Array(0...textfieldContent.count)
 
         if observedDialogContent.args.textFieldLiveValidation.present {
@@ -83,16 +83,16 @@ struct TextEntryView: View {
     var body: some View {
         if observedData.args.textField.present {
             VStack {
-                ForEach(0..<textfieldContent.count, id: \.self) {index in
-                    if textfieldContent[index].editor {
+                ForEach(0..<observedData.textFieldArray.count, id: \.self) {index in
+                    if observedData.textFieldArray[index].editor {
                         VStack {
                             HStack {
-                                Text(textfieldContent[index].title + (textfieldContent[index].required ? " *":""))
+                                Text(observedData.textFieldArray[index].title + (observedData.textFieldArray[index].required ? " *":""))
                                     .frame(alignment: .leading)
                                 Spacer()
                             }
-                            TextEditor(text: $textfieldContent[index].value)
-                                .onChange(of: textfieldContent[index].value) { _, textContent in
+                            TextEditor(text: $observedData.textFieldArray[index].value)
+                                .onChange(of: observedData.textFieldArray[index].value) { _, textContent in
                                     userInputState.textFields[index].value = textContent
                                 }
                                 .background(Color("editorBackgroundColour"))
@@ -113,12 +113,12 @@ struct TextEntryView: View {
                         HStack {
                             VStack {
                                 HStack {
-                                    Text(textfieldContent[index].title + (textfieldContent[index].required ? " *":""))
+                                    Text(observedData.textFieldArray[index].title + (observedData.textFieldArray[index].required ? " *":""))
                                     Spacer()
                                 }
-                                if textfieldContent[index].confirm {
+                                if observedData.textFieldArray[index].confirm {
                                     HStack {
-                                        Text("Confirm".localized + " \(textfieldContent[index].title)")
+                                        Text("Confirm".localized + " \(observedData.textFieldArray[index].title)")
                                             .foregroundStyle(.secondary)
                                             .padding(.top, 5)
                                         Spacer()
@@ -128,31 +128,31 @@ struct TextEntryView: View {
                             .frame(idealWidth: fieldwidth*0.20, alignment: .leading)
                             Spacer()
 
-                            if textfieldContent[index].fileSelect {
+                            if observedData.textFieldArray[index].fileSelect {
                                 Button("button-select".localized) {
-                                    openFilePanel(fileType: textfieldContent[index].fileType, initialPath: textfieldContent[index].initialPath) { selectedPath in
-                                         textfieldContent[index].value = selectedPath
+                                    openFilePanel(fileType: observedData.textFieldArray[index].fileType, initialPath: observedData.textFieldArray[index].initialPath) { selectedPath in
+                                         observedData.textFieldArray[index].value = selectedPath
                                     }
                                 }
                             }
                             HStack {
-                                if textfieldContent[index].secure {
+                                if observedData.textFieldArray[index].secure {
                                     VStack {
                                         ZStack {
-                                            SecureField(textfieldContent[index].prompt, text: $textfieldContent[index].value)
+                                            SecureField(observedData.textFieldArray[index].prompt, text: $observedData.textFieldArray[index].value)
                                                 .disableAutocorrection(true)
-                                                .textContentType(textfieldContent[index].passwordFill ? .password: .none)
-                                                .onChange(of: textfieldContent[index].value,) { _, textContent in
+                                                .textContentType(observedData.textFieldArray[index].passwordFill ? .password: .none)
+                                                .onChange(of: observedData.textFieldArray[index].value,) { _, textContent in
                                                     userInputState.textFields[index].value = textContent
                                                 }
                                             Image(systemName: "lock.fill")
                                                 .foregroundColor(Color(argument: "#008815")).opacity(0.5)
                                                 .frame(idealWidth: fieldwidth*0.50, maxWidth: 350, alignment: .trailing)
                                         }
-                                        if textfieldContent[index].confirm {
+                                        if observedData.textFieldArray[index].confirm {
                                             ZStack {
-                                                SecureField(textfieldContent[index].prompt, text: $textfieldContent[index].validationValue)
-                                                    .onChange(of: textfieldContent[index].validationValue) { _, textContent in
+                                                SecureField(observedData.textFieldArray[index].prompt, text: $observedData.textFieldArray[index].validationValue)
+                                                    .onChange(of: observedData.textFieldArray[index].validationValue) { _, textContent in
                                                         userInputState.textFields[index].validationValue = textContent
                                                     }
                                                 Image(systemName: "lock.fill")
@@ -164,25 +164,25 @@ struct TextEntryView: View {
                                     }
                                 } else {
                                     VStack {
-                                        TextField(textfieldContent[index].prompt,
-                                                  text: $textfieldContent[index].value)
-                                        .onChange(of: textfieldContent[index].value) { _, textContent in
+                                        TextField(observedData.textFieldArray[index].prompt,
+                                                  text: $observedData.textFieldArray[index].value)
+                                        .onChange(of: observedData.textFieldArray[index].value) { _, textContent in
                                             userInputState.textFields[index].value = textContent
                                             
                                             // live regex checking
-                                            if textfieldContent[index].regex != "" && observedData.args.textFieldLiveValidation.present {
-                                                if checkRegexPattern(regexPattern: textfieldContent[index].regex, textToValidate: textfieldContent[index].value) {
-                                                    textfieldContent[index].backgroundColour = Color.green
+                                            if observedData.textFieldArray[index].regex != "" && observedData.args.textFieldLiveValidation.present {
+                                                if checkRegexPattern(regexPattern: observedData.textFieldArray[index].regex, textToValidate: observedData.textFieldArray[index].value) {
+                                                    observedData.textFieldArray[index].backgroundColour = Color.green
                                                 } else {
-                                                    textfieldContent[index].backgroundColour = Color.red
+                                                    observedData.textFieldArray[index].backgroundColour = Color.red
                                                 }
-                                                if textfieldContent[index].value == "" {
-                                                    textfieldContent[index].backgroundColour = Color.clear
+                                                if observedData.textFieldArray[index].value == "" {
+                                                    observedData.textFieldArray[index].backgroundColour = Color.clear
                                                 }
                                             }
                                         }
                                         .onSubmit {
-                                            userInputState.textFields[index].value = textfieldContent[index].value
+                                            userInputState.textFields[index].value = observedData.textFieldArray[index].value
                                             // Call the same action as Button1
                                             let button1action = observedData.args.button1ShellActionOption.present ?
                                                 observedData.args.button1ShellActionOption.value :
@@ -192,22 +192,22 @@ struct TextEntryView: View {
                                         }
                                         .submitLabel(.done)
                                     
-                                        if textfieldContent[index].confirm {
-                                            TextField(textfieldContent[index].prompt,
-                                                      text: $textfieldContent[index].validationValue)
-                                            .onChange(of: textfieldContent[index].validationValue) { _, confirmed in
+                                        if observedData.textFieldArray[index].confirm {
+                                            TextField(observedData.textFieldArray[index].prompt,
+                                                      text: $observedData.textFieldArray[index].validationValue)
+                                            .onChange(of: observedData.textFieldArray[index].validationValue) { _, confirmed in
                                                 userInputState.textFields[index].validationValue = confirmed
                                             }
                                         }
                                     }
 
 
-                                    if textfieldContent[index].isDate {
-                                        DatePicker("", selection: $textfieldContent[index].date, displayedComponents: [.date])
-                                            .onChange(of: textfieldContent[index].date) { _, dateContent in
+                                    if observedData.textFieldArray[index].isDate {
+                                        DatePicker("", selection: $observedData.textFieldArray[index].date, displayedComponents: [.date])
+                                            .onChange(of: observedData.textFieldArray[index].date) { _, dateContent in
                                                 dateFormatter.timeStyle = .none
                                                 dateFormatter.dateStyle = .short
-                                                textfieldContent[index].value = dateFormatter.string(from: dateContent)
+                                                observedData.textFieldArray[index].value = dateFormatter.string(from: dateContent)
                                                 datepickerID[index] += 1 // stupid hack to make the picker disappear when a date is selected
                                             }
                                             .labelsHidden()
@@ -224,7 +224,7 @@ struct TextEntryView: View {
                                             .repeatCount(3, autoreverses: true),
                                             value: observedData.showSheet
                                         )
-                                            .background(textfieldContent[index].backgroundColour.opacity(textFieldValidationOpacity))
+                                            .background(observedData.textFieldArray[index].backgroundColour.opacity(textFieldValidationOpacity))
                                             .allowsHitTesting(false)
                                      )
                         }

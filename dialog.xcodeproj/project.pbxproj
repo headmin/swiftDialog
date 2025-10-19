@@ -61,6 +61,7 @@
 		41BD41C02EA1B6E000DA7124 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41BD41BF2EA1B6DB00DA7124 /* AudioManager.swift */; };
 		41BD41C22EA1B71200DA7124 /* AudioControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41BD41C12EA1B70700DA7124 /* AudioControl.swift */; };
 		41BD41C52EA1FAF500DA7124 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 41BD41C42EA1FAF500DA7124 /* SDWebImageSwiftUI */; };
+		41BD41C72EA5771C00DA7124 /* CKIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41BD41C62EA5771600DA7124 /* CKIconView.swift */; };
 		41D81E5725F7929800D1F7E1 /* DialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E5625F7929800D1F7E1 /* DialogView.swift */; };
 		41D81E5C25F817BF00D1F7E1 /* ButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E5B25F817BF00D1F7E1 /* ButtonView.swift */; };
 		41D81E6C25F8209F00D1F7E1 /* CLOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D81E6B25F8209F00D1F7E1 /* CLOptions.swift */; };
@@ -235,6 +236,7 @@
 		41AD75B526AA81760023EBD8 /* TextEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextEntryView.swift; sourceTree = "<group>"; };
 		41BD41BF2EA1B6DB00DA7124 /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
 		41BD41C12EA1B70700DA7124 /* AudioControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioControl.swift; sourceTree = "<group>"; };
+		41BD41C62EA5771600DA7124 /* CKIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CKIconView.swift; sourceTree = "<group>"; };
 		41D6FE8426DB11BA0083BE61 /* jamfHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = jamfHelper.swift; sourceTree = "<group>"; };
 		41D81E5625F7929800D1F7E1 /* DialogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialogView.swift; sourceTree = "<group>"; };
 		41D81E5B25F817BF00D1F7E1 /* ButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonView.swift; sourceTree = "<group>"; };
@@ -352,6 +354,7 @@
 		4116922A28939A6C00A88700 /* ConstructionKit */ = {
 			isa = PBXGroup;
 			children = (
+				41BD41C62EA5771600DA7124 /* CKIconView.swift */,
 				41512CC1286C77F200F22B86 /* ConstructionKitView.swift */,
 				4116922B28939B4500A88700 /* CKBasicsView.swift */,
 				4116922E28939C2A00A88700 /* CKWindowProperties.swift */,
@@ -942,6 +945,7 @@
 				411692382893A21500A88700 /* CKImageView.swift in Sources */,
 				CC2190522A7BCC3A00269525 /* Images.swift in Sources */,
 				418A7B582759949B00E4D6F1 /* NSWindow+Additions.swift in Sources */,
+				41BD41C72EA5771C00DA7124 /* CKIconView.swift in Sources */,
 				418A7B592759949B00E4D6F1 /* HelpText.swift in Sources */,
 				4116923528939E4D00A88700 /* CKButtonView.swift in Sources */,
 				417BD471279CB658009AE34A /* CheckboxView.swift in Sources */,
@@ -1204,7 +1208,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 3.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1234,7 +1238,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 3.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1341,7 +1345,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialogcli;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1367,7 +1371,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = au.csiro.dialogcli;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

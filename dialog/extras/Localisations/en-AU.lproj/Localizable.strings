@@ -35,6 +35,7 @@
 "ck-welcomeinfo"        = "Select properties on the left to modify. swiftDialog will update to show the changes in realtime";
 "ck-basic"              = "Basic";
 "ck-content"            = "Content";
+"ck-icon"               = "Icon";
 "ck-window"             = "Window";
 "ck-sidebar"            = "Sidebar";
 "ck-dataentry"          = "Data Entry";

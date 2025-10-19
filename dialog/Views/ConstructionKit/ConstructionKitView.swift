@@ -137,6 +137,9 @@ struct JSONView: View {
             .padding(.leading, 10)
             Spacer()
         }
+        .onAppear {
+            jsonText = exportJSON()
+        }
     }
 }
 
@@ -187,6 +190,9 @@ struct ConstructionKitView: View {
                     NavigationLink(destination: CKWindowProperties(observedDialogContent: observedData)) {
                         Text("ck-window".localized)
                     }
+                    NavigationLink(destination: CKIconView(observedDialogContent: observedData)) {
+                        Text("ck-icon".localized)
+                    }
                     NavigationLink(destination: CKSidebarView(observedDialogContent: observedData)) {
                         Text("ck-sidebar".localized)
                     }
@@ -220,7 +226,7 @@ struct ConstructionKitView: View {
             WelcomeView()
         }
         .listStyle(SidebarListStyle())
-        .frame(minWidth: 800, minHeight: 800)
+        .frame(idealWidth: 800, idealHeight: 600)
         Divider()
         ZStack {
             Spacer()

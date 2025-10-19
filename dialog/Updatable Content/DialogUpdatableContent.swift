@@ -621,6 +621,7 @@ final class DialogUpdatableContent: ObservableObject {
     @Published var iconAlpha: Double
 
     @Published var imageArray: [MainImage]
+    @Published var textFieldArray: [TextFieldState]
 
     @Published var listItemsArray: [ListItems]
     @Published var listItemUpdateRow: Int
@@ -664,6 +665,7 @@ final class DialogUpdatableContent: ObservableObject {
         iconAlpha = Double(appArguments.iconAlpha.value) ?? 1.0
 
         imageArray = appvars.imageArray
+        textFieldArray = userInputState.textFields
 
         listItemsArray = userInputState.listItems
 

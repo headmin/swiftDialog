@@ -10,15 +10,15 @@ import SwiftUI
 struct CKDataEntryView: View {
 
     @ObservedObject var observedData: DialogUpdatableContent
-    @State var textfieldContent: [TextFieldState]
+    //@State var textfieldContent: [TextFieldState]
 
     init(observedDialogContent: DialogUpdatableContent) {
         self.observedData = observedDialogContent
-        textfieldContent = userInputState.textFields
+        //textfieldContent = userInputState.textFields
     }
 
     var body: some View {
-        VStack {
+        ScrollView {
             HStack {
                 Toggle("Format output as JSON", isOn: $observedData.args.jsonOutPut.present)
                 .toggleStyle(.switch)
@@ -28,7 +28,7 @@ struct CKDataEntryView: View {
             HStack {
                 Button(action: {
                     userInputState.textFields.append(TextFieldState(title: ""))
-                    textfieldContent.append(TextFieldState(title: ""))
+                    observedData.textFieldArray.append(TextFieldState(title: ""))
                     observedData.args.textField.present = true
                     appArguments.textField.present = true
                 }, label: {
@@ -48,46 +48,52 @@ struct CKDataEntryView: View {
             ForEach(0..<userInputState.textFields.count, id: \.self) { item in
                 HStack {
                     Button(action: {
-                        //observedData.listItemsArray.remove(at: i)
+                        guard item >= 0 && item < observedData.textFieldArray.count else {
+                            writeLog("Could not delete textfield at position \(item)", logLevel: .info)
+                            return
+                        }
+                        writeLog("Delete textfield at position \(item)", logLevel: .info)
+                        userInputState.textFields.remove(at: item)
+                        observedData.textFieldArray.remove(at: item)
                     }, label: {
                         Image(systemName: "trash")
                     })
-                    .disabled(true) // MARK: disabled until I can work out how to delete from the array without causing a crash
-                    Toggle("ck-required".localized, isOn: $textfieldContent[item].required)
-                        .onChange(of: textfieldContent[item].required) { _, textRequired in
+                    
+                    Toggle("ck-required".localized, isOn: $observedData.textFieldArray[item].required)
+                        .onChange(of: observedData.textFieldArray[item].required) { _, textRequired in
                             observedData.requiredFieldsPresent.toggle()
                             userInputState.textFields[item].required = textRequired
                         }
                         .toggleStyle(.switch)
-                    Toggle("ck-secure".localized, isOn: $textfieldContent[item].secure)
-                        .onChange(of: textfieldContent[item].secure) { _, textSecure in
+                    Toggle("ck-secure".localized, isOn: $observedData.textFieldArray[item].secure)
+                        .onChange(of: observedData.textFieldArray[item].secure) { _, textSecure in
                             userInputState.textFields[item].secure = textSecure
                         }
                         .toggleStyle(.switch)
                     Spacer()
                 }
                 HStack {
-                    TextField("ck-title".localized, text: $textfieldContent[item].title)
-                        .onChange(of: textfieldContent[item].title) { _, textTitle in
+                    TextField("ck-title".localized, text: $observedData.textFieldArray[item].title)
+                        .onChange(of: observedData.textFieldArray[item].title) { _, textTitle in
                             userInputState.textFields[item].title = textTitle
                         }
-                    TextField("ck-value".localized, text: $textfieldContent[item].value)
-                        .onChange(of: textfieldContent[item].value) { _, textValue in
+                    TextField("ck-value".localized, text: $observedData.textFieldArray[item].value)
+                        .onChange(of: observedData.textFieldArray[item].value) { _, textValue in
                             userInputState.textFields[item].value = textValue
                         }
-                    TextField("ck-prompt".localized, text: $textfieldContent[item].prompt)
-                        .onChange(of: textfieldContent[item].prompt) { _, textPrompt in
+                    TextField("ck-prompt".localized, text: $observedData.textFieldArray[item].prompt)
+                        .onChange(of: observedData.textFieldArray[item].prompt) { _, textPrompt in
                             userInputState.textFields[item].prompt = textPrompt
                         }
                 }
                 .padding(.leading, 20)
                 HStack {
-                    TextField("ck-regex".localized, text: $textfieldContent[item].regex)
-                        .onChange(of: textfieldContent[item].regex) { _, textRegex in
+                    TextField("ck-regex".localized, text: $observedData.textFieldArray[item].regex)
+                        .onChange(of: observedData.textFieldArray[item].regex) { _, textRegex in
                             userInputState.textFields[item].regex = textRegex
                         }
-                    TextField("ck-regexerror".localized, text: $textfieldContent[item].regexError)
-                        .onChange(of: textfieldContent[item].regexError) { _, textRegexError in
+                    TextField("ck-regexerror".localized, text: $observedData.textFieldArray[item].regexError)
+                        .onChange(of: observedData.textFieldArray[item].regexError) { _, textRegexError in
                             userInputState.textFields[item].regexError = textRegexError
                         }
                 }
