@@ -1,4 +1,24 @@
-LabelView(label: "ck-message".localized)
+//
+//  CKMessageView.swift
+//  dialog
+//
+//  Created by Reardon, Bart (IM&T, Black Mountain) on 23/10/2025.
+//
+
+import SwiftUI
+
+
+struct CKMessageView: View {
+    @ObservedObject var observedData: DialogUpdatableContent
+
+
+    init(observedDialogContent: DialogUpdatableContent) {
+        self.observedData = observedDialogContent
+    }
+    
+    var body: some View {
+        LabelView(label: "ck-message".localized)
+        VStack {
             HStack {
                 Picker("ck-textalignmnet".localized, selection: $observedData.args.messageAlignment.value) {
                     Text("").tag("")
@@ -17,6 +37,14 @@ LabelView(label: "ck-message".localized)
                     observedData.appProperties.messageFontColour = .primary
                 }
             }
+            Text("Use markdown formatting to style the text")
+                .frame(width: .infinity, alignment: .leading)
             TextEditor(text: $observedData.args.messageOption.value)
                 .frame(minHeight: 50)
                 .background(Color("editorBackgroundColour"))
+                .border(.primary, width: 0.5)
+        }
+        .padding(20)
+    }
+    
+}

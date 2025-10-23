@@ -90,6 +90,9 @@ struct ConstructionKitView: View {
                     NavigationLink(destination: CKTitleView(observedDialogContent: observedData)) {
                         Text("Title Bar".localized)
                     }
+                    NavigationLink(destination: CKMessageView(observedDialogContent: observedData)) {
+                        Text("Message".localized)
+                    }
                     NavigationLink(destination: CKWindowProperties(observedDialogContent: observedData)) {
                         Text("ck-window".localized)
                     }
