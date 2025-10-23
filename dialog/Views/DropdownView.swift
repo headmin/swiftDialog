@@ -191,15 +191,20 @@ struct SearchablePicker: View {
                                     VStack(alignment: .leading, spacing: 0) {
                                         ForEach(filteredItems.indices, id: \.self) { index in
                                             let item = filteredItems[index]
-                                            Text(item)
-                                                .id(index)
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .padding(.vertical, 4)
-                                                .padding(.horizontal, 8)
-                                                .background(selectedIndex == index ? Color.accentColor.opacity(0.2) : Color.clear)
-                                                .onTapGesture {
-                                                    select(item)
-                                                }
+                                            if item.hasPrefix("---") {
+                                                Divider()
+                                                    .padding([.top,.bottom], 5)
+                                            } else {
+                                                Text(item)
+                                                    .id(index)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.vertical, 4)
+                                                    .padding(.horizontal, 8)
+                                                    .background(selectedIndex == index ? Color.accentColor.opacity(0.2) : Color.clear)
+                                                    .onTapGesture {
+                                                        select(item)
+                                                    }
+                                            }
                                         }
                                     }
                                 }
