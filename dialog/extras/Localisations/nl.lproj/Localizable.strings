@@ -4,13 +4,13 @@
 
   Created by Bart Reardon on 29/5/2022.
   
-  Dutch Translation by Henk Codfried
+  Dutch Translation by Henk Codfried & Jacob Burley
 */
 
 // error sheet
 "One or more input fields are incorrect" = "Een of meer invoervelden zijn onjuist";
 "is required" = "is verplicht";
-"doesn't match the required format" = "niet overeenkomt met het vereiste formaat";
+"doesn't match the required format" = "komt niet overeen met het vereiste formaat";
 
 // required fields text
 "* Required Fields" = "* Verplichte Velden";
@@ -27,7 +27,7 @@
 "Click for additional information" = "Klik voor aanvullende informatie";
 
 "Confirm" = "Bevestigen";
-"Downloading" = "Downloaden";
+"Downloading" = "Aan het downloaden";
 
 "confirmation failed  <br>values do not match" = "bevestiging mislukt <br>waarden komen niet overeen";
 
@@ -36,21 +36,22 @@
 "Select properties on the left to modify. swiftDialog will update to show the changes in realtime"        = "Selecteer eigenschappen aan de linkerkant om te wijzigen. swiftDialog wordt bijgewerkt om de wijzigingen in realtime weer te geven";
 "Basic"              = "Basis";
 "Content"            = "Inhoud";
-"Window"             = "Raam";
+"Window"             = "Venster";
 "Sidebar"            = "Zijbalk";
 "Data Entry"          = "Gegevensinvoer";
-"Buttons"            = "Toetsen";
+"Buttons"            = "Knoppen";
+"Button Size"       = "Knopgrootte";
 "Advanced"           = "Geavanceerd";
 "List Items"          = "Lijstitems";
 "Images"             = "Afbeeldingen";
 "Media"              = "Media";
-"Output"             = "Uitvoer";
-"JSON Output"         = "JSON-uitvoer";
-"Quit"              = "Ontslag nemen";
+"Output"             = "Output";
+"JSON Output"         = "JSON-output";
+"Quit"              = "Afsluiten";
 "Export Command"      = "Exportopdracht";
 "Title"              = "Titel";
-"Colour"             = "Kleur";
-"Reset"              = "Terugstellen";
+"Color"             = "Kleur";
+"Reset"              = "Resetten";
 "Font Size: "           = "Lettertypegrootte: ";
 "value:"              = "waarde:";
 "Message"           = "Bericht";
@@ -66,7 +67,7 @@
 "Big"                = "Groot";
 "Screen Background Blur"         = "Schermachtergrond vervagen";
 "Movable"            = "Beweegbaar";
-"Force on Top"         = "Kracht op de top";
+"Force on Top"         = "Dwing om bovenop te blijven";
 "Progress Bar"        = "Voortgangsbalk";
 "Progress value:"      = "Voortgangswaarde:";
 "Progress Text:"       = "Voortgangstekst:";
@@ -74,7 +75,7 @@
 "Select"             = "Selecteer";
 "Watermark"          = "Watermerk";
 "Fill"               = "Vullen";
-"Opacity"              = "Alfa";
+"Opacity"              = "Opaciteit";
 "Scale"              = "Schaal";
 "Position"           = "Positie";
 "Icon"               = "Icoon";
@@ -90,7 +91,7 @@
 "Button1"            = "Knop1";
 "Button2"            = "Knop2";
 "Info Button"    = "Info-knop";
-"Quit on Info"         = "Stop op info";
+"Quit on Info"         = "Afsluiten op info";
 "Label: "              = "Etiket: ";
 "Info Button Action: "   = "Actie infoknop: ";
 "AutoPlay"           = "Automatisch afspelen";
@@ -99,11 +100,11 @@
 "Caption"            = "Ondertiteling";
 "Status Text"         = "Statustekst";
 "Status"             = "Toestand";
-"Format output as JSON"         = "Uitvoer formatteren als JSON";
+"Format output as JSON"         = "Output als JSON formatteren";
 "Textfields"         = "Tekstvelden";
 "Show"               = "Tonen";
 "Required"           = "Vereist";
-"Secure"             = "Zeker";
+"Secure"             = "Beveiligd";
 "Prompt"             = "Snel";
 "Regex"              = "Regex";
 "Regex Error"         = "Regex-fout";
@@ -113,5 +114,5 @@
 "Filename"           = "Bestandsnaam";
 "Web"                = "Web";
 "URL"                = "URL";
-"Disabled"           = "Gehandicapt";
+"Disabled"           = "Uitgeschakeld";
 "Enabled"            = "Ingeschakeld";
