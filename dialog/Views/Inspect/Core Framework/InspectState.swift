@@ -131,7 +131,8 @@ class InspectState: ObservableObject, FileMonitorDelegate {
     
     private func loadConfiguration() {
         // Use configuration service to load config
-        let result = configurationService.loadConfiguration()
+        // TODO: this works when calling the global appvars but really should be passed in as a config item.
+        let result = configurationService.loadConfiguration(fromFile: appvars.inspectConfigPath)
         
         switch result {
         case .success(let configResult):

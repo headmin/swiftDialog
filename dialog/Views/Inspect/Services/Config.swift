@@ -54,11 +54,17 @@ class Config {
     // MARK: - Isnpect API
     
     /// Load configuration from environment variable or fallback to test data
-    func loadConfiguration(_ request: ConfigurationRequest = .default) -> Result<ConfigurationResult, ConfigurationError> {
+    func loadConfiguration(_ request: ConfigurationRequest = .default, fromFile: String = "") -> Result<ConfigurationResult, ConfigurationError> {
         // Required: get config path from environment
         if let configPath = getConfigPath(from: request.environmentVariable) {
             writeLog("ConfigurationService: Using config from environment: \(configPath)", logLevel: .info)
             return loadConfigurationFromFile(at: configPath)
+        }
+        
+        // Check if a file path was supplied
+        if !fromFile.isEmpty {
+            writeLog("ConfigurationService: Using config from provided file: \(fromFile)", logLevel: .info)
+            return loadConfigurationFromFile(at: fromFile)
         }
         
         // Check if fallback is allowed
