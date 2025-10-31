@@ -200,6 +200,9 @@ struct NewButton: View {
     
     let timer = Timer.publish(every: 3.0, on: .main, in: .common).autoconnect()
     
+    @FocusState private var isFocused: Bool
+    @State private var needsFocusRefresh = false
+    
     var body: some View {
         // .top and .bottom force VStack, otherwise HStack
         let symbolLayout = (symbolPosition == .top || symbolPosition == .bottom) ? AnyLayout(VStackLayout()) : AnyLayout(HStackLayout())
@@ -230,6 +233,7 @@ struct NewButton: View {
             .frame(maxWidth: isStacked ? .infinity: nil)
             .environment(\.layoutDirection, (symbolPosition == .leading) ? .leftToRight : .rightToLeft)
         })
+        .focused($isFocused)
         .keyboardShortcut(keyboardShortcut)
         .controlSize(buttonStyle)
         .disabled(isDisabled)
@@ -277,6 +281,16 @@ struct NewButton: View {
                         self.symbolColour3 = Color(argument: paletteColours[2])
                     }
                     
+                }
+            }
+            needsFocusRefresh = true
+        }
+        .onChange(of: needsFocusRefresh) { _, refresh in
+            if refresh {
+                isFocused = false
+                DispatchQueue.main.async {
+                    isFocused = true
+                    needsFocusRefresh = false
                 }
             }
         }
