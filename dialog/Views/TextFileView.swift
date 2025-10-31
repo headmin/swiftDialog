@@ -116,12 +116,13 @@ extension FileHandle {
                 }
             }
 
-            if let character = String(data: data, encoding: .utf8) {
-                if character == "\n" {
-                    return String(data: lineData, encoding: .utf8)
-                } else {
-                    lineData.append(data)
-                }
+            lineData.append(data)
+            
+            // Check if we've hit a newline by looking at the accumulated data
+            if data.first == 0x0A { // \n is 0x0A in ASCII/UTF-8
+                // Remove the trailing newline before converting
+                lineData.removeLast()
+                return String(data: lineData, encoding: .utf8)
             }
         }
     }
