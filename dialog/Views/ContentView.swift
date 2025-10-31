@@ -64,7 +64,7 @@ struct ContentView: View {
                 Spacer()
 
                 // Buttons
-                ButtonView(observedDialogContent: observedData)
+                ButtonBarView(observedDialogContent: observedData)
                     .padding(.leading, appDefaults.sidePadding)
                     .padding(.trailing, appDefaults.sidePadding)
                     .padding(.bottom, appDefaults.bottomPadding)

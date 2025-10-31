@@ -36,7 +36,7 @@ struct MiniView: View {
                 VStack {
                     Spacer() //push button bar to the bottom of the window
                     HStack {
-                        ButtonView(observedDialogContent: observedData)
+                        ButtonBarView(observedDialogContent: observedData)
                             .padding(.bottom, appDefaults.bottomPadding)
                             .padding(.trailing, appDefaults.sidePadding)
                     }

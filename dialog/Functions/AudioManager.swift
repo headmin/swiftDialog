@@ -44,7 +44,7 @@ class AudioManager: ObservableObject {
     
     private func playFromURL(urlString: String) {
         guard let url = URL(string: urlString) else {
-            loadingState = .error("Invalid URL")
+            loadingState = .error("Invalid URL".localized)
             print("Invalid URL: \(urlString)")
             return
         }
@@ -55,7 +55,7 @@ class AudioManager: ObservableObject {
             
             if let error = error {
                 DispatchQueue.main.async {
-                    self.loadingState = .error("Download failed")
+                    self.loadingState = .error("Download failed".localized)
                     print("Failed to download audio: \(error.localizedDescription)")
                 }
                 return
@@ -63,7 +63,7 @@ class AudioManager: ObservableObject {
             
             guard let data = data else {
                 DispatchQueue.main.async {
-                    self.loadingState = .error("No data received")
+                    self.loadingState = .error("No data received".localized)
                 }
                 return
             }
@@ -90,7 +90,7 @@ class AudioManager: ObservableObject {
         }
         
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            loadingState = .error("File not found")
+            loadingState = .error("File not found".localized)
             print("Audio file not found at: \(fileURL.path)")
             return
         }
@@ -99,7 +99,7 @@ class AudioManager: ObservableObject {
             audioPlayer = try AVAudioPlayer(contentsOf: fileURL)
             setupPlayer()
         } catch {
-            loadingState = .error("Invalid audio file")
+            loadingState = .error("Invalid audio file".localized)
             print("Failed to play audio: \(error.localizedDescription)")
         }
     }
@@ -109,7 +109,7 @@ class AudioManager: ObservableObject {
             audioPlayer = try AVAudioPlayer(data: data)
             setupPlayer()
         } catch {
-            loadingState = .error("Invalid audio format")
+            loadingState = .error("Invalid audio format".localized)
             print("Failed to play audio data: \(error.localizedDescription)")
         }
     }

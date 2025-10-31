@@ -101,7 +101,7 @@ struct PresentationView: View {
                     Text(observedData.args.progressText.value)
                         .lineLimit(1)
                     // Buttons
-                    ButtonView(observedDialogContent: observedData)
+                    ButtonBarView(observedDialogContent: observedData)
                         .padding(.leading, appDefaults.sidePadding)
                         .padding(.trailing, appDefaults.sidePadding)
                         .padding(.bottom, appDefaults.bottomPadding)

@@ -32,6 +32,7 @@ struct AppDefaults {
                                                       "regular": .regular,
                                                       "large": .large]
     let buttonSize                      = String("regular")
+    //let buttonFontSize: CGFloat?
 
 
     // Content padding
@@ -94,6 +95,7 @@ struct AppVariables {
     // work out how to define a default width button that does what you tell it to. in the meantime, diry hack with spaces
     var button1DefaultAction            = KeyboardShortcut.defaultAction
     var button2DefaultAction            = KeyboardShortcut.cancelAction
+    var buttonTextSize: CGFloat?
 
     var helpButtonHoverText             = String("Click for additional information".localized)
 

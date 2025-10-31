@@ -367,6 +367,10 @@ func processCLOptions(json: JSON = getJSON()) {
     if appArguments.buttonSize.present {
         appvars.buttonSize = appDefaults.buttonSizeStates[appArguments.buttonSize.value] ?? .regular
     }
+    
+    if appArguments.buttonTextSize.present {
+        appvars.buttonTextSize = appArguments.buttonTextSize.value.floatValue()
+    }
 
     if appArguments.dropdownValues.present {
         writeLog("\(appArguments.dropdownValues.long) present")
