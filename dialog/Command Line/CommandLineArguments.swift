@@ -88,6 +88,7 @@ struct CommandLineArguments {
     var statusLogFile            = CommandlineArgument(long: "commandfile")
     var listItem                 = CommandlineArgument(long: "listitem")
     var listStyle                = CommandlineArgument(long: "liststyle")
+    var listSelectionEnabled     = CommandlineArgument(long: "enablelistselect", isbool: true)
     var infoText                 = CommandlineArgument(long: "infotext", defaultValue: "swiftDialog \(getVersionString())")
     var infoBox                  = CommandlineArgument(long: "infobox")
     var quitKey                  = CommandlineArgument(long: "quitkey", defaultValue: appvars.quitKeyCharacter)
@@ -286,6 +287,7 @@ extension CommandLineArguments {
                     case "statusLogFile": self.statusLogFile = argument
                     case "listItem": self.listItem = argument
                     case "listStyle": self.listStyle = argument
+                    case "listSelectionEnabled": self.listSelectionEnabled = argument
                     case "infoText": self.infoText = argument
                     case "infoBox": self.infoBox = argument
                     case "quitKey": self.quitKey = argument

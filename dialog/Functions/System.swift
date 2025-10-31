@@ -188,6 +188,13 @@ func quitDialog(exitCode: Int32, exitMessage: String? = "", observedObject: Dial
                 }
             }
         }
+        
+        if observedObject?.args.listSelectionEnabled.present ?? false {
+            for item in userInputState.listItems {
+                outputArray.append("\"\(item.title)\" : \"\(item.selected)\"")
+                json[item.title].bool = item.selected
+            }
+        }
 
         if dontQuit {
             writeLog("Requirements were not met. Dialog will not quit at this time")

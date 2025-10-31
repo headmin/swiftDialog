@@ -34,7 +34,9 @@ struct ListView: View {
     @ObservedObject var observedData: DialogUpdatableContent
 
     @State var isHovering = false
-
+    //@State private var selection = Set<String>()
+    @State private var selection = Set<Int>()
+    
     var rowHeight: CGFloat
     var rowStatusHeight: CGFloat
     var rowFontSize: CGFloat
@@ -83,9 +85,19 @@ struct ListView: View {
             let _ = writeLog("Displaying listitems")
             ScrollViewReader { proxy in
                 VStack {
-                    List(0..<userInputState.listItems.count, id: \.self) {index in
+                    List(0..<userInputState.listItems.count, id: \.self, selection: $selection) {index in
                         Button(action: {
-                            handleClick(userInputState.listItems[index].action)
+                            if observedData.args.listSelectionEnabled.present {
+                                if selection.contains(index) {
+                                    selection.remove(index)
+                                    userInputState.listItems[index].selected = false
+                                } else {
+                                    selection.insert(index)
+                                    userInputState.listItems[index].selected = true
+                                }
+                            } else {
+                                handleClick(userInputState.listItems[index].action)
+                            }
                         }) {
                             VStack {
                                 HStack {
@@ -161,9 +173,14 @@ struct ListView: View {
                             }
                         }
                         .buttonStyle(PlainButtonStyle())
+                        //.listRowBackground(
+                        //    selection.contains(index) ? Color.accentColor.opacity(0.3) : Color.clear
+                        //)
                     }
                     .background(Color("listBackgroundColour"))
                     .listStyle(SidebarListStyle())
+                    //.listStyle(.plain)
+                    
                 }
                 .onChange(of: observedData.listItemUpdateRow) {
                     DispatchQueue.main.async {

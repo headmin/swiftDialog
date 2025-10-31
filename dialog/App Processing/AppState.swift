@@ -139,6 +139,7 @@ struct ListItems: Codable {
     var statusIcon: String = ""
     var progress: CGFloat = 0
     var action: String = ""
+    var selected: Bool = false
     var dictionary: [String: Any] {
             return ["title": title,
                     "subtitle": subTitle,
