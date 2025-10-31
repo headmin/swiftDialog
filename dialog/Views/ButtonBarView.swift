@@ -49,7 +49,7 @@ struct ButtonBarView: View {
                                observedData.args.buttonInfoTextOption.present) &&
                                 !observedData.args.miniMode.present {
 
-                        NewButton(label: observedData.args.buttonInfoTextOption.value,
+                        NewButton(label: observedData.args.buttonInfoTextOption.value == "nil" ? "" : observedData.args.buttonInfoTextOption.value,
                                     symbolName: observedData.args.buttonInfoSymbol.value,
                                     symbolIsVisible: observedData.args.buttonInfoSymbol.present,
                                     buttonFontSize: observedData.appProperties.buttonTextSize,
@@ -74,7 +74,7 @@ struct ButtonBarView: View {
             
             // Default Cancel button
             if observedData.args.button2TextOption.present || observedData.args.button2Option.present {
-                NewButton(label: observedData.args.button2TextOption.value,
+                NewButton(label: observedData.args.button2TextOption.value == "nil" ? "" : observedData.args.button2TextOption.value,
                           isDisabled: observedData.args.button2Disabled.present,
                           enableOnChangeOf: $observedData.args.button2Disabled.present,
                           isStacked: buttonStackStyle,
@@ -91,7 +91,7 @@ struct ButtonBarView: View {
             
             // Default Primary button
             if observedData.args.button1TextOption.value != "none" {
-                NewButton(label: observedData.args.button1TextOption.value,
+                NewButton(label: observedData.args.button1TextOption.value == "nil" ? "" : observedData.args.button1TextOption.value,
                           isDisabled: observedData.args.button1Disabled.present,
                           enableOnTimer: (observedData.args.timerBar.present && !observedData.args.hideTimerBar.present),
                           enableOnChangeOf: $observedData.args.button1Disabled.present,
