@@ -203,6 +203,40 @@ struct NewButton: View {
     @FocusState private var isFocused: Bool
     @State private var needsFocusRefresh = false
     
+    private func symbolProcessing() {
+        // Populate symbol properties from name
+        let symbolParts = symbolName.split(separator: ",").map { $0.lowercased() }
+        guard let firstName = symbolParts.first else { return }
+        symbolName = firstName
+
+        // Check last two parts for position and rendering mode
+        for part in symbolParts.dropFirst() {
+            if let position = part.toSymbolPosition {
+                self.symbolPosition = position
+            }
+            if let renderingMode = part.toSymbolRenderingMode {
+                self.symbolRenderingMode = renderingMode
+            }
+            if part.starts(with: "size=") {
+                self.symbolSize = Double(part.split(separator: "=").last ?? "16") ?? 16
+            }
+            if part.prefixMatch(of: /colou?r=/) != nil {
+                self.symbolColour = Color(argument: part.split(separator: "=").last?.lowercased() ?? "primary")
+            }
+            if part.starts(with: "palette=") {
+                self.symbolRenderingMode = .palette
+                let paletteColours = part.split(separator: "=").last!.split(separator: "-").map { $0.lowercased() }
+                switch paletteColours.count {
+                    case 1: self.symbolColour = Color(argument: paletteColours[0])
+                    case 2: self.symbolColour = Color(argument: paletteColours[0]); self.symbolColour2 = Color(argument: paletteColours[1])
+                    case 3: self.symbolColour = Color(argument: paletteColours[0]); self.symbolColour2 = Color(argument: paletteColours[1]); self.symbolColour3 = Color(argument: paletteColours[2])
+                    default: break
+                }
+            }
+        }
+        needsFocusRefresh = true
+    }
+    
     var body: some View {
         // .top and .bottom force VStack, otherwise HStack
         let symbolLayout = (symbolPosition == .top || symbolPosition == .bottom) ? AnyLayout(VStackLayout()) : AnyLayout(HStackLayout())
@@ -249,41 +283,7 @@ struct NewButton: View {
             buttonFontSize = String(value).floatValue()
         }
         .onAppear {
-            // Populate symbol properties from name
-            let symbolParts = symbolName.split(separator: ",").map { $0.lowercased() }
-            guard let firstName = symbolParts.first else { return }
-            symbolName = firstName
-
-            // Check last two parts for position and rendering mode
-            for part in symbolParts.dropFirst() {
-                if let position = part.toSymbolPosition {
-                    self.symbolPosition = position
-                }
-                if let renderingMode = part.toSymbolRenderingMode {
-                    self.symbolRenderingMode = renderingMode
-                }
-                if part.starts(with: "size=") {
-                    self.symbolSize = Double(part.split(separator: "=").last ?? "16") ?? 16
-                }
-                if part.prefixMatch(of: /colou?r=/) != nil {
-                    self.symbolColour = Color(argument: part.split(separator: "=").last?.lowercased() ?? "primary")
-                }
-                if part.starts(with: "palette=") {
-                    self.symbolRenderingMode = .palette
-                    let paletteColours = part.split(separator: "=").last!.split(separator: "-").map { $0.lowercased() }
-                    if paletteColours.count > 0 {
-                        self.symbolColour = Color(argument: paletteColours[0])
-                    }
-                    if paletteColours.count > 1 {
-                        self.symbolColour2 = Color(argument: paletteColours[1])
-                    }
-                    if paletteColours.count > 2 {
-                        self.symbolColour3 = Color(argument: paletteColours[2])
-                    }
-                    
-                }
-            }
-            needsFocusRefresh = true
+            symbolProcessing()
         }
         .onChange(of: needsFocusRefresh) { _, refresh in
             if refresh {
