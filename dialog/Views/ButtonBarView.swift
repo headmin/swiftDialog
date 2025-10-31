@@ -255,7 +255,7 @@ struct NewButton: View {
                 if part.starts(with: "size=") {
                     self.symbolSize = Double(part.split(separator: "=").last ?? "16") ?? 16
                 }
-                if part.starts(with: "colour=") {
+                if part.prefixMatch(of: /colou?r=/) != nil {
                     self.symbolColour = Color(argument: part.split(separator: "=").last?.lowercased() ?? "primary")
                 }
             }
