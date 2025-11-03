@@ -72,11 +72,11 @@ struct ButtonBarView: View {
             }
             
             // Additional Buttons can go here if we implement it
-            
-            
-            // Default Cancel button
-            if observedData.args.button2TextOption.present || observedData.args.button2Option.present {
-                NewButton(label: observedData.args.button2TextOption.value == "nil" ? "" : observedData.args.button2TextOption.value,
+           
+            // Define an array of buttons for display
+            let buttonArray: [AnyView]   = [
+                // Default Cancel button
+                AnyView(NewButton(label: observedData.args.button2TextOption.value == "nil" ? "" : observedData.args.button2TextOption.value,
                           isDisabled: observedData.args.button2Disabled.present,
                           enableOnChangeOf: $observedData.args.button2Disabled.present,
                           isStacked: buttonStackStyle,
@@ -88,12 +88,9 @@ struct ButtonBarView: View {
                           shouldQuit: true,
                           exitCode: 2,
                           observedData: observedData
-                )
-            }
-            
-            // Default Primary button
-            if observedData.args.button1TextOption.value != "none" {
-                NewButton(label: observedData.args.button1TextOption.value == "nil" ? "" : observedData.args.button1TextOption.value,
+                )),
+                // Default Primary button
+                AnyView(NewButton(label: observedData.args.button1TextOption.value == "nil" ? "" : observedData.args.button1TextOption.value,
                           isDisabled: observedData.args.button1Disabled.present,
                           enableOnTimer: (observedData.args.timerBar.present && !observedData.args.hideTimerBar.present),
                           enableOnChangeOf: $observedData.args.button1Disabled.present,
@@ -106,7 +103,12 @@ struct ButtonBarView: View {
                           shouldQuit: true,
                           exitCode: 0,
                           observedData: observedData
-                )
+                ))
+            ]
+            
+            // if displaying stack style, reverse the order so the default button is at the bottom
+            ForEach(buttonStackStyle ? buttonArray.indices.reversed() : Array(buttonArray.indices), id: \.self) { index in
+                buttonArray[index]
             }
             
             // Help Button
