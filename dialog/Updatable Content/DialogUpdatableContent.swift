@@ -533,11 +533,17 @@ class FileReader {
             // hide
             case "hide:":
                 writeToLog("hiding windows")
+                if observedData.args.blurScreen.present {
+                    blurredScreen.hide()
+                }
                 NSApp.hide(self)
 
             // hide
             case "show:":
                 writeToLog("Showing windows")
+                if observedData.args.blurScreen.present {
+                    blurredScreen.show()
+                }
                 NSApp.unhide(self)
                 activateDialog()
 
