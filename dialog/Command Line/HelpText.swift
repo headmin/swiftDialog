@@ -753,8 +753,11 @@ struct SDHelp {
           ]
         }
 
-        <status> can be one of "wait", "success", "fail", "error" or "pending"
+        <status> can be one of the provided keywords "wait", "success", "fail", "error" or "pending"
         and will display an appropriate icon in the status area.
+        Alternatly specify a desired SF symbol name and optional colour seperated by a hyphen
+        Example:
+            lock.shield.fill-green
 
         You can include a URL action to perform when a list item is clicked with the "action" property
         Example:
