@@ -93,13 +93,43 @@ extension InspectLayoutProtocol {
         }
     }
     
+    /// Returns the display text for an item's current status
+    /// 
+    /// Uses a three-tier customization system:
+    /// 1. Item-specific status text (highest priority)
+    /// 2. Global UILabels configuration 
+    /// 3. Default hardcoded text (fallback)
+    ///
+    /// This allows for both global customization (e.g., changing "Installed" to "Complete" app-wide)
+    /// and item-specific customization (e.g., different terminology for different workflow types)
     func getItemStatus(for item: InspectConfig.ItemConfig) -> String {
         if inspectState.completedItems.contains(item.id) {
-            return "Installed"
+            // Priority: item-specific > global UILabels > default
+            if let customStatus = item.completedStatus {
+                return customStatus
+            } else if let globalStatus = inspectState.config?.uiLabels?.completedStatus {
+                return globalStatus
+            } else {
+                return "Completed"
+            }
         } else if inspectState.downloadingItems.contains(item.id) {
-            return "Installing..."
+            // Priority: item-specific > global UILabels > default
+            if let customStatus = item.downloadingStatus {
+                return customStatus
+            } else if let globalStatus = inspectState.config?.uiLabels?.downloadingStatus {
+                return globalStatus
+            } else {
+                return "Installing..."
+            }
         } else {
-            return "Waiting"
+            // Priority: item-specific > global UILabels > default
+            if let customStatus = item.pendingStatus {
+                return customStatus
+            } else if let globalStatus = inspectState.config?.uiLabels?.pendingStatus {
+                return globalStatus
+            } else {
+                return "Waiting"
+            }
         }
     }
     
