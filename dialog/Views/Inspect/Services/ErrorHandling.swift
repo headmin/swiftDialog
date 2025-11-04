@@ -179,8 +179,9 @@ class ErrorHandling: ObservableObject {
         writeLog("ErrorRecovery: Attempting to recover from file system error", logLevel: .info)
 
         // Clear file caches and retry
-        // Clear caches\n        DialogCache.shared.clear()
-        Validation.shared.clearCache()
+        Task { @MainActor in
+            Validation.shared.clearCache()
+        }
 
         recovery?()
     }
@@ -190,7 +191,9 @@ class ErrorHandling: ObservableObject {
 
         // Invalidate cached plist and retry
         if case .plistParsingError(let path, _) = error {
-            Validation.shared.invalidateCacheForPath(path)
+            Task { @MainActor in
+                Validation.shared.invalidateCacheForPath(path)
+            }
         }
 
         recovery?()
@@ -208,8 +211,7 @@ class ErrorHandling: ObservableObject {
     private func recoverFromPersistenceError(_ error: InspectError, recovery: (() -> Void)?) {
         writeLog("ErrorRecovery: Attempting to recover from persistence error", logLevel: .info)
 
-        // Clear persistence and start fresh
-        Preset7Persistence.shared.clearState()
+        // Persistence recovery should be handled by the preset itself via the recovery closure
         recovery?()
     }
 
@@ -232,9 +234,9 @@ class ErrorHandling: ObservableObject {
         writeLog("ErrorRecovery: Resetting to clean state", logLevel: .info)
 
         // Reset all services
-        // Restart monitoring would go here\n        writeLog("ErrorRecovery: Would restart monitoring service", logLevel: .info)
-        Validation.shared.clearCache()
-        // Clear caches\n        DialogCache.shared.clear()
+        Task { @MainActor in
+            Validation.shared.clearCache()
+        }
 
         recovery?()
     }
