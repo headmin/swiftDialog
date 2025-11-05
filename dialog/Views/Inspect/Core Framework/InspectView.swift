@@ -82,12 +82,18 @@ struct InspectView: View {
         case "preset5":
             // Using wrapper to fix state recreation
             Preset5Wrapper(coordinator: inspectState)
-        case "preset6":
-            // Using wrapper to fix state recreation
+        case "preset6", "6":
+            // Progress Stepper with Side Panel (formerly Preset9)
             Preset6Wrapper(coordinator: inspectState)
         case "preset7", "7":
             // Using wrapper to fix state recreation
             Preset7Wrapper(coordinator: inspectState)
+        case "preset8", "8":
+            // Using wrapper to fix state recreation
+            Preset8Wrapper(coordinator: inspectState)
+        case "preset9", "9":
+            // Modern two-panel onboarding flow
+            Preset9Wrapper(coordinator: inspectState)
         default:
             // Default fallback
             Preset1View(inspectState: inspectState)
@@ -300,5 +306,49 @@ private struct Preset7Wrapper: View {
             .onReceive(coordinator.$downloadingItems) { items in
                 inspectState.downloadingItems = items
             }
+    }
+}
+
+// MARK: - Wrapper for Preset8 to use InspectState
+
+private struct Preset8Wrapper: View {
+    @ObservedObject var coordinator: InspectState
+    @StateObject private var inspectState = InspectState()
+    @State private var hasInitialized = false
+
+    var body: some View {
+        Preset8View(inspectState: inspectState)
+            .onAppear {
+                guard !hasInitialized else { return }
+                hasInitialized = true
+
+                // Initialize the InspectState properly
+                inspectState.initialize()
+
+                // Then sync state from coordinator
+                inspectState.items = coordinator.items
+                inspectState.config = coordinator.config
+                inspectState.uiConfiguration = coordinator.uiConfiguration
+                inspectState.backgroundConfiguration = coordinator.backgroundConfiguration
+                inspectState.buttonConfiguration = coordinator.buttonConfiguration
+                inspectState.completedItems = coordinator.completedItems
+                inspectState.downloadingItems = coordinator.downloadingItems
+            }
+            .onReceive(coordinator.$completedItems) { items in
+                inspectState.completedItems = items
+            }
+            .onReceive(coordinator.$downloadingItems) { items in
+                inspectState.downloadingItems = items
+            }
+    }
+}
+
+// MARK: - Wrapper for Preset9 to use InspectState
+
+private struct Preset9Wrapper: View {
+    @ObservedObject var coordinator: InspectState
+
+    var body: some View {
+        Preset9View(inspectState: coordinator)
     }
 }
