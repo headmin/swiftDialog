@@ -151,15 +151,15 @@ struct Preset1View: View, InspectLayoutProtocol {
                     .font(.system(size: 16 * scaleFactor, weight: .medium))  // 14pt → 16pt
                     .foregroundColor(.primary)
 
-                Text(PresetCommonViews.getItemStatus(for: item, state: inspectState))
+                Text(getItemStatusWithValidation(for: item))
                     .font(.system(size: 13 * scaleFactor))  // 12pt → 13pt
-                    .foregroundColor(.secondary)
+                    .foregroundColor(getItemStatusColor(for: item))
             }
 
             Spacer()
 
-            // Status indicator
-            PresetCommonViews.statusIndicator(for: item, state: inspectState, size: 20 * scaleFactor)
+            // Status indicator with validation support
+            statusIndicatorWithValidation(for: item)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)  // Consistent 8pt padding
@@ -185,10 +185,104 @@ struct Preset1View: View, InspectLayoutProtocol {
 
     private func getStatusHeaderText(for statusType: InspectItemStatus) -> String {
         switch statusType {
-        case .completed: return "Installed"
-        case .downloading: return "Currently Installing"
-        case .pending: return "Pending Installation"
-        case .failed: return "Installation Failed"
+        case .completed:
+            // Use section header if provided, otherwise fall back to status text
+            return inspectState.config?.uiLabels?.sectionHeaderCompleted
+                ?? inspectState.config?.uiLabels?.completedStatus
+                ?? "Completed"
+        case .downloading:
+            // Use section header if provided, otherwise construct from status text
+            if let header = inspectState.config?.uiLabels?.sectionHeaderPending {
+                return header
+            }
+            let downloadingText = inspectState.config?.uiLabels?.downloadingStatus ?? "Installing..."
+            let cleanText = downloadingText.replacingOccurrences(of: "...", with: "")
+            return "Currently \(cleanText)"
+        case .pending:
+            // Use section header if provided, otherwise fall back to constructed text
+            return inspectState.config?.uiLabels?.sectionHeaderPending ?? "Pending Installation"
+        case .failed:
+            // Use section header if provided, otherwise fall back to hardcoded
+            return inspectState.config?.uiLabels?.sectionHeaderFailed ?? "Installation Failed"
+        }
+    }
+
+    // MARK: - Validation Support
+
+    private func hasValidationWarning(for item: InspectConfig.ItemConfig) -> Bool {
+        // Only check validation for completed items  
+        guard inspectState.completedItems.contains(item.id) else { return false }
+        
+        // Check if item has any plist validation configuration
+        let hasPlistValidation = item.plistKey != nil || 
+                               inspectState.plistSources?.contains(where: { source in
+                                   item.paths.contains(source.path)
+                               }) == true
+        
+        // If item has plist validation, check the results
+        if hasPlistValidation {
+            return !(inspectState.plistValidationResults[item.id] ?? true)
+        }
+        
+        return false
+    }
+
+    private func getItemStatusWithValidation(for item: InspectConfig.ItemConfig) -> String {
+        if inspectState.completedItems.contains(item.id) {
+            if hasValidationWarning(for: item) {
+                // Use custom validation warning text if available, otherwise default
+                return inspectState.config?.uiLabels?.failedStatus ?? "Failed"
+            } else {
+                return getItemStatus(for: item)
+            }
+        } else {
+            return getItemStatus(for: item)
+        }
+    }
+
+    private func getItemStatusColor(for item: InspectConfig.ItemConfig) -> Color {
+        if inspectState.completedItems.contains(item.id) {
+            return hasValidationWarning(for: item) ? .yellow : .green
+        } else if inspectState.downloadingItems.contains(item.id) {
+            return .blue
+        } else {
+            return .secondary
+        }
+    }
+
+    @ViewBuilder
+    private func statusIndicatorWithValidation(for item: InspectConfig.ItemConfig) -> some View {
+        let size: CGFloat = 20 * scaleFactor
+        
+        if inspectState.completedItems.contains(item.id) {
+            // Completed - check for validation warnings
+            Circle()
+                .fill(hasValidationWarning(for: item) ? Color.yellow : Color.green)
+                .frame(width: size, height: size)
+                .overlay(
+                    Image(systemName: hasValidationWarning(for: item) ? "exclamationmark" : "checkmark")
+                        .font(.system(size: size * 0.6, weight: .bold))
+                        .foregroundColor(.white)
+                )
+                .help(hasValidationWarning(for: item) ?
+                      "Configuration validation failed - check plist settings" :
+                      "Installed and validated")
+        } else if inspectState.downloadingItems.contains(item.id) {
+            // Downloading
+            Circle()
+                .fill(Color.blue)
+                .frame(width: size, height: size)
+                .overlay(
+                    ProgressView()
+                        .scaleEffect(0.7)
+                        .tint(Color.white)
+                        .colorScheme(.dark)
+                )
+        } else {
+            // Pending
+            Circle()
+                .stroke(Color.gray.opacity(0.3), lineWidth: 2)
+                .frame(width: size, height: size)
         }
     }
 }
