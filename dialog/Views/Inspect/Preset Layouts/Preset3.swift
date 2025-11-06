@@ -140,29 +140,8 @@ struct Preset3View: View, InspectLayoutProtocol {
                                         .foregroundColor(textColor)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     
-                                    // Status indicator
-                                    if inspectState.completedItems.contains(item.id) {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.green)
-                                            .font(.title3)
-                                    } else if inspectState.downloadingItems.contains(item.id) {
-                                        HStack(spacing: 8) { // More spacing between spinner and text
-                                            ProgressView()
-                                                .scaleEffect(0.6) // Much smaller spinner
-                                                .frame(width: 12, height: 12) // Smaller fixed size
-                                            Text("Installing...")
-                                                .font(.caption)
-                                                .foregroundColor(textColor.opacity(0.7))
-                                        }
-                                    } else {
-                                        Text("Pending")
-                                            .font(.caption)
-                                            .foregroundColor(textColor.opacity(0.7))
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 2)
-                                            .background(Color.primary.opacity(0.1))
-                                            .cornerRadius(4)
-                                    }
+                                    // Status indicator with validation support
+                                    statusIndicatorWithValidation(for: item, textColor: textColor)
                                 }
                                 .padding(.vertical, 3)
                                 .padding(.horizontal, 8)
@@ -183,6 +162,26 @@ struct Preset3View: View, InspectLayoutProtocol {
                             
                             // Auto-enable button when all items are completed
                             inspectState.checkAndUpdateButtonState()
+                            
+                            // Also trigger validation for completed items manually if needed
+                            if inspectState.completedItems.count == inspectState.items.count {
+                                // Ensure validation results are populated for UI display
+                                Task { @MainActor in
+                                    let completedItemsNeedingValidation = inspectState.items.filter { item in
+                                        inspectState.completedItems.contains(item.id) &&
+                                        (item.plistKey != nil || inspectState.plistSources?.contains(where: { source in
+                                            item.paths.contains(source.path)
+                                        }) == true)
+                                    }
+                                    
+                                    for item in completedItemsNeedingValidation {
+                                        if inspectState.plistValidationResults[item.id] == nil {
+                                            writeLog("Preset3: Manual validation trigger for '\(item.id)' - missing from results dict", logLevel: .info)
+                                            _ = inspectState.validatePlistItem(item)
+                                        }
+                                    }
+                                }
+                            }
                         }
                         .onChange(of: inspectState.downloadingItems.count) {
                             // Auto-scroll when installing status changes
@@ -196,6 +195,10 @@ struct Preset3View: View, InspectLayoutProtocol {
                             // Check button state when downloading status changes
                             inspectState.checkAndUpdateButtonState()
                         }
+                        .onChange(of: inspectState.plistValidationResults) {
+                            print("DEBUG Preset3: plistValidationResults changed: \(inspectState.plistValidationResults)")
+                            // Force UI update when validation results change
+                        }
                     }
                     .scrollIndicators(.visible, axes: .vertical)
                 }
@@ -207,17 +210,17 @@ struct Preset3View: View, InspectLayoutProtocol {
                     
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text(isComplete ? "Installation Complete!" : "Installation Progress")
+                            Text(isComplete ? (inspectState.config?.uiLabels?.completionMessage ?? "Installation Complete!") : "Installation Progress")
                                 .font(.headline)
                                 .foregroundColor(textColor)
                             Spacer()
                             if isComplete {
-                                Text("All installations completed successfully")
+                                Text(inspectState.config?.uiLabels?.completionSubtitle ?? "All installations completed successfully")
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
                                     .foregroundColor(textColor)
                             } else {
-                                Text("\(inspectState.completedItems.count) of \(inspectState.items.count) completed")
+                                Text(PresetCommonViews.getProgressText(state: inspectState))
                                     .font(.subheadline)
                                     .foregroundColor(textColor.opacity(0.8))
                             }
@@ -318,6 +321,162 @@ struct Preset3View: View, InspectLayoutProtocol {
             return 1 // Completed items second
         } else {
             return 2 // Pending items last
+        }
+    }
+
+    // MARK: - Validation Support
+
+    private func hasValidationWarning(for item: InspectConfig.ItemConfig) -> Bool {
+        print("DEBUG Preset3: hasValidationWarning called for item '\(item.id)'")
+        
+        // Only check validation for completed items  
+        guard inspectState.completedItems.contains(item.id) else { 
+            print("DEBUG Preset3: Item '\(item.id)' not completed - completedItems: \(inspectState.completedItems)")
+            return false 
+        }
+        
+        print("DEBUG Preset3: Item '\(item.id)' IS completed")
+        
+        // Check if item has any plist validation configuration
+        let hasPlistValidation = item.plistKey != nil || 
+                               inspectState.plistSources?.contains(where: { source in
+                                   item.paths.contains(source.path)
+                               }) == true
+        
+        print("DEBUG Preset3: Item '\(item.id)' - plistKey: '\(item.plistKey ?? "nil")', paths: \(item.paths), hasPlistValidation: \(hasPlistValidation)")
+        
+        // If item has plist validation, check the results
+        if hasPlistValidation {
+            // If validation result is missing, assume validation passed (true)
+            // If validation result is false, that means validation failed, so we have a warning
+            let validationResultFromDict = inspectState.plistValidationResults[item.id]
+            let validationResult = validationResultFromDict ?? true
+            let hasWarning = !validationResult  // Warning when validation result is false
+            print("DEBUG Preset3: Item '\(item.id)' - raw value from dict: \(validationResultFromDict as Any), computed validationResult: \(validationResult), hasWarning: \(hasWarning)")
+            print("DEBUG Preset3: Full validation results dict: \(inspectState.plistValidationResults)")
+            print("DEBUG Preset3: Dictionary keys: \(Array(inspectState.plistValidationResults.keys))")
+            
+            // If validation result is missing but item has plist validation config, trigger validation manually
+            if validationResultFromDict == nil {
+                print("DEBUG Preset3: Item '\(item.id)' missing validation result - triggering manual validation")
+                Task { @MainActor in
+                    _ = inspectState.validatePlistItem(item)
+                    print("DEBUG Preset3: Manual validation triggered for '\(item.id)'")
+                }
+                // For now, assume no warning until validation completes
+                return false
+            }
+            
+            return hasWarning
+        }
+        
+        print("DEBUG Preset3: Item '\(item.id)' - no plist validation configured")
+        return false
+    }
+
+    private func getStatusText(for item: InspectConfig.ItemConfig) -> String {
+        if inspectState.completedItems.contains(item.id) {
+            if hasValidationWarning(for: item) {
+                // Use custom validation warning text if available, otherwise default
+                return inspectState.config?.uiLabels?.failedStatus ?? "Failed"
+            } else {
+                // Use the new customization system for completed status
+                if let customStatus = item.completedStatus {
+                    return customStatus
+                } else if let globalStatus = inspectState.config?.uiLabels?.completedStatus {
+                    return globalStatus
+                } else {
+                    return "Completed"
+                }
+            }
+        } else if inspectState.downloadingItems.contains(item.id) {
+            // Use the new customization system for downloading status
+            if let customStatus = item.downloadingStatus {
+                return customStatus
+            } else if let globalStatus = inspectState.config?.uiLabels?.downloadingStatus {
+                return globalStatus
+            } else {
+                return "Installing..."
+            }
+        } else {
+            // Use the new customization system for pending status
+            if let customStatus = item.pendingStatus {
+                return customStatus
+            } else if let globalStatus = inspectState.config?.uiLabels?.pendingStatus {
+                return globalStatus
+            } else {
+                return "Waiting"
+            }
+        }
+    }
+
+    private func getStatusColor(for item: InspectConfig.ItemConfig) -> Color {
+        if inspectState.completedItems.contains(item.id) {
+            return hasValidationWarning(for: item) ? .yellow : .green
+        } else if inspectState.downloadingItems.contains(item.id) {
+            return .blue
+        } else {
+            return .secondary
+        }
+    }
+
+    @ViewBuilder
+    private func statusIndicatorWithValidation(for item: InspectConfig.ItemConfig, textColor: Color) -> some View {
+        let isCompleted = inspectState.completedItems.contains(item.id)
+        let hasWarning = hasValidationWarning(for: item)
+        
+        // Move print statements outside of ViewBuilder context
+        let _ = print("DEBUG Preset3 UI: Item '\(item.id)' - isCompleted: \(isCompleted), hasWarning: \(hasWarning)")
+        
+        if isCompleted {
+            // Completed - check for validation warnings (using same logic as Preset2)
+            if hasWarning {
+                let _ = print("DEBUG Preset3 UI: Showing 'Check Config' for '\(item.id)'")
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundColor(.yellow)
+                        .font(.caption)
+                    Text("Check Config")
+                        .font(.caption)
+                        .foregroundColor(.yellow)
+                        .fontWeight(.medium)
+                }
+                .help("Configuration validation failed - check plist settings")
+            } else {
+                let _ = print("DEBUG Preset3 UI: Showing '\(getStatusText(for: item))' for '\(item.id)'")
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.caption)
+                    Text(getStatusText(for: item))
+                        .font(.caption)
+                        .foregroundColor(.green)
+                        .fontWeight(.medium)
+                }
+                .help("\(getStatusText(for: item)) and validated")
+            }
+        } else if inspectState.downloadingItems.contains(item.id) {
+            let _ = print("DEBUG Preset3 UI: Showing '\(getStatusText(for: item))' for '\(item.id)'")
+            HStack(spacing: 4) {
+                ProgressView()
+                    .scaleEffect(0.6)
+                    .frame(width: 12, height: 12)
+                Text(getStatusText(for: item))
+                    .font(.caption)
+                    .foregroundColor(textColor.opacity(0.7))
+                    .fontWeight(.medium)
+            }
+        } else {
+            let _ = print("DEBUG Preset3 UI: Showing '\(getStatusText(for: item))' for '\(item.id)'")
+            HStack(spacing: 4) {
+                Image(systemName: "clock.fill")
+                    .foregroundColor(textColor.opacity(0.5))
+                    .font(.caption)
+                Text(getStatusText(for: item))
+                    .font(.caption)
+                    .foregroundColor(textColor.opacity(0.7))
+                    .fontWeight(.medium)
+            }
         }
     }
 }
