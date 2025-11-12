@@ -197,8 +197,10 @@ class DialogCache {
             guard let self = self else { return }
 
             var invalidKeys: [String] = []
-            for (key, entry) in self.entries where !FileManager.default.fileExists(atPath: entry.resolvedPath) {
-                invalidKeys.append(key)
+            for (key, entry) in self.entries {
+                if !FileManager.default.fileExists(atPath: entry.resolvedPath) {
+                    invalidKeys.append(key)
+                }
             }
 
             for key in invalidKeys {
