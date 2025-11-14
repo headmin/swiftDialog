@@ -3082,6 +3082,27 @@ struct ComplianceCardView: View {
         colorThresholds.getColor(for: score)
     }
 
+    /// Parse a check item to extract symbol, text, and status
+    /// Format: "pass:Description" or "fail:Description"
+    /// Returns: (symbol: String, text: String, isPassed: Bool, isFailed: Bool)
+    private func parseCheckItem(_ item: String) -> (symbol: String, text: String, isPassed: Bool, isFailed: Bool) {
+        let trimmed = item.trimmingCharacters(in: .whitespaces)
+
+        // Check for keyword prefixes (ASCII-safe, shell-independent)
+        if trimmed.lowercased().hasPrefix("pass:") {
+            let text = String(trimmed.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+            return ("✓", text, true, false)
+        }
+
+        if trimmed.lowercased().hasPrefix("fail:") {
+            let text = String(trimmed.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+            return ("✗", text, false, true)
+        }
+
+        // No status keyword - use neutral bullet point
+        return ("•", trimmed, false, false)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header with category title and status badge
@@ -3124,24 +3145,40 @@ struct ComplianceCardView: View {
             HStack(alignment: .top, spacing: 20 * scaleFactor) {
                 // Left: Check details list (scrollable)
                 if let details = checkDetails, !details.isEmpty {
+                    // Split on | separator (pipe-delimited format for external scripts)
+                    // Falls back to \n for backward compatibility with JSON-defined cards
+                    let separator = details.contains("|") ? "|" : "\n"
+                    let items = details.components(separatedBy: separator)
+                        .map { $0.trimmingCharacters(in: .whitespaces) }
+                        .filter { !$0.isEmpty }
+
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 8 * scaleFactor) {
-                            ForEach(details.components(separatedBy: "\n").filter { !$0.isEmpty }, id: \.self) { item in
+                            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                                // Parse the check item to extract symbol, text, and status
+                                let parsed = parseCheckItem(item)
+                                let symbol = parsed.symbol
+                                let text = parsed.text
+                                let isPassed = parsed.isPassed
+                                let isFailed = parsed.isFailed
+
                                 HStack(alignment: .top, spacing: 8 * scaleFactor) {
-                                    // Color-coded checkmark/cross symbols
-                                    Text(String(item.prefix(1)))
+                                    // Color-coded symbol
+                                    Text(symbol)
                                         .font(.system(size: 10 * scaleFactor, weight: .semibold))
-                                        .foregroundColor(item.hasPrefix("✓") ? colorThresholds.getPositiveColor() : colorThresholds.getNegativeColor())
+                                        .foregroundColor(isPassed ? colorThresholds.getPositiveColor() :
+                                                       isFailed ? colorThresholds.getNegativeColor() :
+                                                       Color.secondary)
                                         .frame(width: 10 * scaleFactor, alignment: .leading)
 
-                                    Text(String(item.dropFirst(2)))
+                                    Text(text)
                                         .font(.system(size: 10 * scaleFactor, weight: .medium))
                                         .foregroundColor(.primary)
                                         .lineLimit(2)
                                 }
                                 .padding(.vertical, 2 * scaleFactor)
 
-                                if item != details.components(separatedBy: "\n").filter({ !$0.isEmpty }).last {
+                                if index < items.count - 1 {
                                     Divider()
                                         .padding(.leading, 16 * scaleFactor)
                                         .padding(.vertical, 2 * scaleFactor)

@@ -176,6 +176,23 @@ struct Preset6View: View, InspectLayoutProtocol {
                     scaleFactor: scaleFactor
                 )
             }
+
+            // Instruction banner (top overlay)
+            if let bannerConfig = inspectState.config?.instructionBanner,
+               let bannerText = bannerConfig.text {
+                VStack {
+                    InstructionBanner(
+                        text: bannerText,
+                        autoDismiss: bannerConfig.autoDismiss ?? true,
+                        dismissDelay: bannerConfig.dismissDelay ?? 5.0,
+                        icon: bannerConfig.icon
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+
+                    Spacer()
+                }
+            }
         }
         .onAppear {
             writeLog("Preset6: View appearing, loading state...", logLevel: .info)
@@ -681,7 +698,7 @@ struct Preset6View: View, InspectLayoutProtocol {
                             HStack(spacing: 8 * scaleFactor) {
                                 Text(key + ":")
                                     .font(.system(size: 13 * scaleFactor, weight: .medium))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(colorHex != nil ? Color(hex: colorHex!).opacity(0.7) : .secondary)
 
                                 Text(value)
                                     .font(.system(size: 13 * scaleFactor, weight: .semibold))
@@ -2153,12 +2170,24 @@ struct Preset6View: View, InspectLayoutProtocol {
         } else if trimmedLine.hasPrefix("display_data:") {
             // Phase 2: Add/update custom data display
             // Format: display_data:stepId:key:value[:color]
-            let parts = trimmedLine.dropFirst(13).split(separator: ":", maxSplits: 3)
+            // Split only on first 2 colons to get stepId and key, leaving value+color intact
+            let parts = trimmedLine.dropFirst(13).split(separator: ":", maxSplits: 2)
             if parts.count >= 3 {
                 let stepId = String(parts[0])
                 let key = String(parts[1])
-                let value = String(parts[2])
-                let color = parts.count == 4 ? String(parts[3]) : nil
+                let valueAndColor = String(parts[2])
+
+                // Check if the last segment (after last ":") is a color (starts with #)
+                var value = valueAndColor
+                var color: String? = nil
+
+                if let lastColonIndex = valueAndColor.lastIndex(of: ":") {
+                    let potentialColor = String(valueAndColor[valueAndColor.index(after: lastColonIndex)...])
+                    if potentialColor.hasPrefix("#") {
+                        color = potentialColor
+                        value = String(valueAndColor[..<lastColonIndex])
+                    }
+                }
 
                 dynamicState.updateDisplayData(stepId: stepId, key: key, value: value, color: color)
                 logPreset6Event("display_data_update", details: ["stepId": stepId, "key": key, "value": value, "color": color ?? "none"])

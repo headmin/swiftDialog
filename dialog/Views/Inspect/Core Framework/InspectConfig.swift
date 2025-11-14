@@ -215,6 +215,7 @@ struct InspectConfig: Codable {
         let bentoSize: String?          // Card size: "small", "medium", "large", "wide", "tall" (default: "medium")
         let cardLayout: String?         // Card layout: "vertical-image-below", "horizontal-image-left", "horizontal-image-right", "pattern", "gradient" (default: "vertical-image-below")
         let gradientColors: [String]?   // Custom gradient colors for this card (hex strings like ["#9AA5A4", "#66bb6a"])
+        let verticalSpacing: String?    // Vertical spacing mode for Preset7: "compact" (150pt text, 32pt gap), "balanced" (200pt text, 60pt gap - default), "generous" (250pt text, 80pt gap)
 
         // Preset9 custom content
         let keyPointsText: String?      // Custom paragraph text for "Key Points" section in Preset9 (appears above bullet points)

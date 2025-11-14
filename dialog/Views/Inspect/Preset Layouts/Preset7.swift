@@ -38,6 +38,22 @@ struct Preset7View: View, InspectLayoutProtocol {
     @State private var autoPageNavigationWorkItem: DispatchWorkItem?  // Auto-page navigation timer (for cancellation on manual/external navigation)
     private let persistence = InspectPersistence<Preset7State>(presetName: "preset7")
 
+    // MARK: - Setup Assistant Mode Detection
+
+    /// Check if Setup Assistant mode is enabled via style configuration
+    private var isSetupAssistantMode: Bool {
+        inspectState.config?.style?.lowercased() == "setup-assistant"
+    }
+
+    /// Number of cards to display in Setup Assistant mode (1 or 2 for do/don't comparisons)
+    private var setupAssistantCardCount: Int {
+        // Check for explicit cardCount in liststyle (reusing existing field)
+        if let liststyle = inspectState.config?.liststyle, let count = Int(liststyle) {
+            return min(max(1, count), 2)  // Clamp to 1-2
+        }
+        return 1  // Default to single card
+    }
+
     // Dynamic cards per page based on size mode
     private var cardsPerPage: Int {
         switch sizeMode {
@@ -88,7 +104,11 @@ struct Preset7View: View, InspectLayoutProtocol {
 
     // Dynamic colors for light/dark mode
     private var backgroundColor: Color {
-        // Softer backgrounds for better visual comfort
+        // Setup Assistant mode uses pure white/black for minimal aesthetic
+        if isSetupAssistantMode {
+            return colorScheme == .dark ? .black : .white
+        }
+        // Standard mode: Softer backgrounds for better visual comfort
         // Dark: ~#0D0D0D (very dark gray instead of pure black)
         // Light: ~#F2F2F2 (soft white)
         return colorScheme == .dark ? Color(white: 0.05) : Color(white: 0.95)
@@ -472,32 +492,11 @@ struct Preset7View: View, InspectLayoutProtocol {
             // Dynamic background
             backgroundColor.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                headerSection
-                mainTitleSection
-
-                Spacer(minLength: 20)
-
-                gridSection
-
-                pageNavigationDots
-                    .padding(.top, 16)
-
-                // Fixed spacing region - prevents shifting when completion message appears
-                VStack(spacing: 0) {
-                    progressIndicatorSection
-                        .frame(height: 58)  // Fixed height container for the message area
-                }
-                .padding(.top, 8)
-
-                Spacer(minLength: 20)
-
-                customButtonArea()
-                    .padding(.horizontal, 40)
-                    .padding(.top, 12)
-                    .padding(.bottom, 16)
-
-                globalProgressBar
+            // Route to appropriate layout based on mode
+            if isSetupAssistantMode {
+                setupAssistantLayout
+            } else {
+                standardCardGridLayout
             }
         }
         .frame(minHeight: windowSize.height)
@@ -509,6 +508,798 @@ struct Preset7View: View, InspectLayoutProtocol {
             handleCompletedItemsChange(oldValue, newValue)
         }
         .onDisappear(perform: handleViewDisappear)
+    }
+
+    // MARK: - Standard Card Grid Layout (Original)
+
+    @ViewBuilder
+    private var standardCardGridLayout: some View {
+        VStack(spacing: 0) {
+            headerSection
+            mainTitleSection
+
+            Spacer(minLength: 20)
+
+            gridSection
+
+            pageNavigationDots
+                .padding(.top, 16)
+
+            // Fixed spacing region - prevents shifting when completion message appears
+            VStack(spacing: 0) {
+                progressIndicatorSection
+                    .frame(height: 58)  // Fixed height container for the message area
+            }
+            .padding(.top, 8)
+
+            Spacer(minLength: 20)
+
+            customButtonArea()
+                .padding(.horizontal, 40)
+                .padding(.top, 12)
+                .padding(.bottom, 16)
+
+            globalProgressBar
+        }
+    }
+
+    // MARK: - Setup Assistant Layout (Apple-style minimal design)
+
+    @ViewBuilder
+    private var setupAssistantLayout: some View {
+        let currentItem = inspectState.items[safe: currentStep]
+        let hasBackgroundImage = currentItem?.icon != nil &&
+                                 !currentItem!.icon!.isEmpty &&
+                                 !currentItem!.icon!.contains("sf=") &&
+                                 isWideImage(currentItem!.icon!)
+
+        // Calculate image height for content padding
+        let imageHeightRatio: CGFloat = {
+            if !hasBackgroundImage {
+                return 0
+            }
+            if setupAssistantCardCount == 2 {
+                return 0.35  // Less image for card layouts
+            } else {
+                return 0.50  // Maximum 50% for single card
+            }
+        }()
+
+        ZStack(alignment: .top) {
+            // Base background color/gradient (full screen)
+            setupAssistantBackground
+                .edgesIgnoringSafeArea(.all)
+
+            // Background image (if present) - fills from top edge
+            setupAssistantBackgroundImage
+                .edgesIgnoringSafeArea(.top)
+
+            // Content overlay
+            VStack(spacing: 0) {
+                // Top navigation bar (overlays on image)
+                setupAssistantTopBar
+                    .padding(.top, 20 * scaleFactor)
+                    .padding(.horizontal, 24 * scaleFactor)
+
+                // Push content below image if background image exists
+                if hasBackgroundImage {
+                    Spacer()
+                        .frame(height: windowSize.height * imageHeightRatio - 52 * scaleFactor)
+                }
+
+                Spacer(minLength: 0)
+
+                // Main content area - centered single or double card
+                // Show special completion screen on last step
+                if currentStep == inspectState.items.count - 1 {
+                    setupAssistantCompletionCard
+                } else if setupAssistantCardCount == 2 {
+                    setupAssistantSplitCards
+                } else {
+                    setupAssistantSingleCard
+                }
+
+                Spacer(minLength: 0)
+
+                // Bottom buttons - Fixed position at bottom
+                setupAssistantButtons
+                    .padding(.horizontal, 40 * scaleFactor)
+                    .padding(.bottom, 20 * scaleFactor)
+                    .frame(height: 44 * scaleFactor)  // Fixed height
+            }
+        }
+        .edgesIgnoringSafeArea(.all)
+    }
+
+    // Top bar with back button
+    @ViewBuilder
+    private var setupAssistantTopBar: some View {
+        HStack {
+            // Always reserve space for chevron to prevent layout jumping
+            if currentStep > 0 {
+                Button(action: {
+                    withAnimation {
+                        currentStep = max(0, currentStep - 1)
+                    }
+                }) {
+                    ZStack {
+                        // Circular background (semi-transparent white)
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 32 * scaleFactor, height: 32 * scaleFactor)
+
+                        // Chevron icon
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16 * scaleFactor, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel("Back")
+            } else {
+                // Invisible placeholder to maintain consistent spacing
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: 32 * scaleFactor, height: 32 * scaleFactor)
+            }
+            Spacer()
+        }
+    }
+
+    // Helper to check if icon path is a wide image
+    private func isWideImage(_ iconPath: String) -> Bool {
+        guard !iconPath.isEmpty,
+              !iconPath.contains("sf=") else {
+            return false
+        }
+
+        if let resolvedPath = iconCache.resolveImagePath(iconPath, basePath: inspectState.uiConfiguration.iconBasePath),
+           let nsImage = NSImage(contentsOfFile: resolvedPath) {
+            let imageSize = nsImage.size
+            let imageAspectRatio = imageSize.width / imageSize.height
+            return imageAspectRatio > 1.5  // Wide images are used as backgrounds
+        }
+
+        return false
+    }
+
+    // Helper to check if icon is used as background (to avoid duplicate display)
+    private func isIconUsedAsBackground(_ item: InspectConfig.ItemConfig) -> Bool {
+        guard let iconPath = item.icon else {
+            return false
+        }
+        return isWideImage(iconPath)
+    }
+
+    // Background image for Setup Assistant mode (positioned from top edge)
+    @ViewBuilder
+    private var setupAssistantBackgroundImage: some View {
+        // Check for per-item icon/image first, then fall back to top-level
+        let currentItem = inspectState.items[safe: currentStep]
+
+        // Try to load per-item icon (which can be image path or SF Symbol)
+        let bannerNSImage: NSImage? = {
+            if let currentItem = currentItem,
+               let iconPath = currentItem.icon,
+               !iconPath.isEmpty,
+               !iconPath.contains("sf=") {  // Skip SF Symbols
+                // Use iconCache.resolveImagePath() like Preset8 does
+                if let resolvedPath = iconCache.resolveImagePath(iconPath, basePath: inspectState.uiConfiguration.iconBasePath),
+                   let nsImage = NSImage(contentsOfFile: resolvedPath) {
+                    return nsImage
+                }
+            }
+            return iconCache.bannerImage  // Fall back to top-level
+        }()
+
+        if let bannerNSImage = bannerNSImage {
+            let imageSize = bannerNSImage.size
+            let imageAspectRatio = imageSize.width / imageSize.height
+
+            // Only show as background for wide images (not logos)
+            if imageAspectRatio > 1.5 {
+                // Determine image height based on layout type
+                // Maximum 50% for all layouts, less for card layouts
+                let imageHeightRatio: CGFloat = {
+                    if setupAssistantCardCount == 2 {
+                        return 0.35  // Less image for card layouts
+                    } else {
+                        return 0.50  // Maximum 50% for single card
+                    }
+                }()
+
+                // Position image at top edge (no overlay - text appears below in black area)
+                VStack(spacing: 0) {
+                    Image(nsImage: bannerNSImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: windowSize.width, height: windowSize.height * imageHeightRatio)
+                        .clipped()
+
+                    Spacer()
+                }
+            }
+        }
+    }
+
+    // Base background color/gradient for Setup Assistant mode
+    @ViewBuilder
+    private var setupAssistantBackground: some View {
+        let currentItem = inspectState.items[safe: currentStep]
+
+        // Check for per-item gradient colors first (highest priority)
+        let perItemGradientColors = currentItem?.gradientColors
+
+        // Check for global gradient colors
+        let globalGradientColors = inspectState.config?.gradientColors
+
+        // Check for global background color
+        let globalBackgroundColor = inspectState.config?.backgroundColor
+
+        // Determine which background to render
+        if let gradientColors = perItemGradientColors ?? globalGradientColors,
+           gradientColors.count >= 2 {
+            // Render gradient background
+            let colors = gradientColors.compactMap { Color(hex: $0) }
+            if colors.count >= 2 {
+                LinearGradient(
+                    gradient: Gradient(colors: colors),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            } else {
+                // Fallback to black if gradient parsing failed
+                Color.black
+            }
+        } else if let backgroundColor = globalBackgroundColor,
+                  !backgroundColor.isEmpty {
+            // Render solid color background
+            Color(hex: backgroundColor) ?? Color.black
+        } else {
+            // Default dark background (black)
+            Color.black
+        }
+    }
+
+    // Single centered card
+    @ViewBuilder
+    private var setupAssistantSingleCard: some View {
+        if let currentItem = inspectState.items[safe: currentStep] {
+            VStack(spacing: 24 * scaleFactor) {
+                // Large icon (only show if not used as background image)
+                if !isIconUsedAsBackground(currentItem) {
+                    setupAssistantIcon(for: currentItem)
+                        .frame(width: 128 * scaleFactor, height: 128 * scaleFactor)
+                }
+
+                // Title
+                Text(currentItem.displayName)
+                    .font(.system(size: 32 * scaleFactor, weight: .bold))
+                    .foregroundColor(primaryTextColor)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 60 * scaleFactor)
+
+                // Subtitle
+                if let subtitle = currentItem.subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: 17 * scaleFactor))
+                        .foregroundColor(secondaryTextColor)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 80 * scaleFactor)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                // Optional guidance content from Preset6
+                if let guidanceContent = currentItem.guidanceContent, !guidanceContent.isEmpty {
+                    VStack(spacing: 16 * scaleFactor) {
+                        ForEach(Array(guidanceContent.enumerated()), id: \.offset) { _, block in
+                            setupAssistantGuidanceBlock(block)
+                        }
+                    }
+                    .padding(.horizontal, 60 * scaleFactor)
+                    .padding(.top, 8 * scaleFactor)
+                }
+            }
+            .padding(.horizontal, 40 * scaleFactor)
+        }
+    }
+
+    // Split layout for do/don't comparisons
+    @ViewBuilder
+    private var setupAssistantSplitCards: some View {
+        let currentItem = inspectState.items[safe: currentStep]
+        let hasTitle = currentItem?.guidanceTitle != nil || currentItem?.displayName != nil
+        let hasSubtitle = currentItem?.subtitle != nil
+        let cardLayout = currentItem?.cardLayout ?? "text-above-cards"  // Default layout
+
+        // Render based on cardLayout
+        switch cardLayout {
+        case "cards-above-text":
+            setupAssistantCardsAboveText(hasTitle: hasTitle, hasSubtitle: hasSubtitle)
+        case "cards-only":
+            setupAssistantCardsOnly()
+        case "split-image":
+            setupAssistantSplitImage()
+        default:  // "text-above-cards" or any other value
+            setupAssistantTextAboveCards(hasTitle: hasTitle, hasSubtitle: hasSubtitle)
+        }
+    }
+
+    // Category badge (optional pill/bubble above title)
+    @ViewBuilder
+    private func categoryBadge(category: String, icon: String?) -> some View {
+        HStack(spacing: 6 * scaleFactor) {
+            // Optional icon
+            if let iconName = icon, !iconName.isEmpty {
+                IconView(image: iconName, defaultImage: "tag.fill", defaultColour: "secondary")
+                    .frame(width: 12 * scaleFactor, height: 12 * scaleFactor)
+            }
+
+            // Category text
+            Text(category)
+                .font(.system(size: 12 * scaleFactor, weight: .semibold))
+                .foregroundColor(Color.white.opacity(0.9))
+                .textCase(.uppercase)
+                .tracking(0.5)
+        }
+        .padding(.horizontal, 12 * scaleFactor)
+        .padding(.vertical, 6 * scaleFactor)
+        .background(
+            Capsule()
+                .fill(Color.white.opacity(0.15))
+        )
+        .overlay(
+            Capsule()
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        )
+        .frame(maxWidth: .infinity)  // Center the badge horizontally
+        .padding(.bottom, 12 * scaleFactor)
+    }
+
+    // Layout 1: Text above cards (default)
+    @ViewBuilder
+    private func setupAssistantTextAboveCards(hasTitle: Bool, hasSubtitle: Bool) -> some View {
+        let currentItem = inspectState.items[safe: currentStep]
+        let (textHeight, gapHeight) = verticalSpacingValues()
+
+        VStack(spacing: 0) {
+            Spacer()  // Push content down for vertical centering
+
+            // Title/text at top - FIXED HEIGHT AREA
+            VStack(spacing: 12 * scaleFactor) {
+                // Optional category badge
+                if let category = currentItem?.category, !category.isEmpty {
+                    categoryBadge(category: category, icon: currentItem?.categoryIcon)
+                } else {
+                    Spacer().frame(height: 32 * scaleFactor)  // Reserve space when no badge
+                }
+
+                if let title = currentItem?.guidanceTitle ?? currentItem?.displayName {
+                    Text(title)
+                        .font(.system(size: 32 * scaleFactor, weight: .bold))
+                        .foregroundColor(primaryTextColor)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Spacer().frame(height: 40 * scaleFactor)
+                }
+
+                if let subtitle = currentItem?.subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 17 * scaleFactor))
+                        .foregroundColor(secondaryTextColor)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Spacer().frame(height: 24 * scaleFactor)
+                }
+            }
+            .padding(.horizontal, 60 * scaleFactor)
+            .frame(minHeight: textHeight)  // Use configurable text area height
+
+            Spacer().frame(height: gapHeight)  // Use configurable gap height
+
+            // Cards below - CENTERED IN REMAINING SPACE
+            setupAssistantDualCardsView(hasSubtitle: hasSubtitle)
+
+            Spacer()  // Push content up for vertical centering
+        }
+        .padding(.horizontal, 40 * scaleFactor)
+    }
+
+    // Layout 2: Cards above text
+    @ViewBuilder
+    private func setupAssistantCardsAboveText(hasTitle: Bool, hasSubtitle: Bool) -> some View {
+        let currentItem = inspectState.items[safe: currentStep]
+        let (textHeight, gapHeight) = verticalSpacingValues()
+
+        VStack(spacing: 0) {
+            Spacer()  // Push content down for vertical centering
+
+            // Cards on top - CENTERED IN AVAILABLE SPACE
+            setupAssistantDualCardsView(hasSubtitle: hasSubtitle)
+
+            Spacer().frame(height: gapHeight)  // Use configurable gap height
+
+            // Title/text below - FIXED HEIGHT AREA
+            VStack(spacing: 12 * scaleFactor) {
+                // Optional category badge
+                if let category = currentItem?.category, !category.isEmpty {
+                    categoryBadge(category: category, icon: currentItem?.categoryIcon)
+                } else {
+                    Spacer().frame(height: 32 * scaleFactor)
+                }
+
+                if let title = currentItem?.guidanceTitle ?? currentItem?.displayName {
+                    Text(title)
+                        .font(.system(size: 32 * scaleFactor, weight: .bold))
+                        .foregroundColor(primaryTextColor)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Spacer().frame(height: 40 * scaleFactor)
+                }
+
+                if let subtitle = currentItem?.subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 17 * scaleFactor))
+                        .foregroundColor(secondaryTextColor)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Spacer().frame(height: 24 * scaleFactor)
+                }
+            }
+            .padding(.horizontal, 60 * scaleFactor)
+            .frame(minHeight: textHeight)  // Use configurable text area height
+
+            Spacer()  // Push content up for vertical centering
+        }
+        .padding(.horizontal, 40 * scaleFactor)
+    }
+
+    // Layout 3: Cards only (no text)
+    @ViewBuilder
+    private func setupAssistantCardsOnly() -> some View {
+        VStack(spacing: 0) {
+            Spacer()
+            setupAssistantDualCardsView(hasSubtitle: false)
+            Spacer()
+        }
+        .padding(.horizontal, 40 * scaleFactor)
+    }
+
+    // Layout 4: Split image (image top, image+text bottom)
+    @ViewBuilder
+    private func setupAssistantSplitImage() -> some View {
+        let currentItem = inspectState.items[safe: currentStep]
+
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Top half: First card's image
+                if let topItem = inspectState.items[safe: currentStep] {
+                    IconView(image: topItem.icon ?? "", defaultImage: "photo.fill", defaultColour: "secondary")
+                        .frame(width: geometry.size.width - (80 * scaleFactor), height: geometry.size.height * 0.45)
+                        .clipShape(RoundedRectangle(cornerRadius: 12 * scaleFactor))
+                }
+
+                Spacer().frame(height: 20 * scaleFactor)
+
+                // Bottom half: Second card's image + text overlay
+                if let bottomItem = inspectState.items[safe: currentStep + 1] {
+                    ZStack(alignment: .bottom) {
+                        IconView(image: bottomItem.icon ?? "", defaultImage: "photo.fill", defaultColour: "secondary")
+                            .frame(width: geometry.size.width - (80 * scaleFactor), height: geometry.size.height * 0.45)
+                            .clipShape(RoundedRectangle(cornerRadius: 12 * scaleFactor))
+
+                        // Text overlay at bottom
+                        VStack(spacing: 8 * scaleFactor) {
+                            if let category = currentItem?.category, !category.isEmpty {
+                                HStack(spacing: 6 * scaleFactor) {
+                                    if let iconName = currentItem?.categoryIcon, !iconName.isEmpty {
+                                        IconView(image: iconName, defaultImage: "tag.fill", defaultColour: "secondary")
+                                            .frame(width: 12 * scaleFactor, height: 12 * scaleFactor)
+                                    }
+                                    Text(category)
+                                        .font(.system(size: 11 * scaleFactor, weight: .semibold))
+                                        .foregroundColor(Color.white.opacity(0.9))
+                                        .textCase(.uppercase)
+                                        .tracking(0.5)
+                                }
+                                .padding(.horizontal, 10 * scaleFactor)
+                                .padding(.vertical, 5 * scaleFactor)
+                                .background(Capsule().fill(Color.black.opacity(0.3)))
+                            }
+
+                            Text(currentItem?.guidanceTitle ?? currentItem?.displayName ?? "")
+                                .font(.system(size: 24 * scaleFactor, weight: .bold))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .shadow(color: .black.opacity(0.5), radius: 4, x: 0, y: 2)
+
+                            if let subtitle = currentItem?.subtitle {
+                                Text(subtitle)
+                                    .font(.system(size: 15 * scaleFactor))
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .multilineTextAlignment(.center)
+                                    .shadow(color: .black.opacity(0.5), radius: 4, x: 0, y: 2)
+                            }
+                        }
+                        .padding(.horizontal, 40 * scaleFactor)
+                        .padding(.vertical, 24 * scaleFactor)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.black.opacity(0), Color.black.opacity(0.7)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(.horizontal, 40 * scaleFactor)
+    }
+
+    // Shared dual cards view (reusable across layouts)
+    @ViewBuilder
+    private func setupAssistantDualCardsView(hasSubtitle: Bool) -> some View {
+        HStack(spacing: 40 * scaleFactor) {
+            ForEach(0..<min(2, inspectState.items.count), id: \.self) { index in
+                if let item = inspectState.items[safe: currentStep + index] {
+                    VStack(spacing: 0) {
+                        Spacer()  // Push content to center
+
+                        VStack(spacing: 20 * scaleFactor) {
+                            // Icon
+                            setupAssistantIcon(for: item)
+                                .frame(width: 96 * scaleFactor, height: 96 * scaleFactor)
+
+                            // Title
+                            Text(item.displayName)
+                                .font(.system(size: 20 * scaleFactor, weight: .semibold))
+                                .foregroundColor(primaryTextColor)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            // Subtitle (if not used as main subtitle)
+                            if !hasSubtitle, let subtitle = item.subtitle, !subtitle.isEmpty {
+                                Text(subtitle)
+                                    .font(.system(size: 14 * scaleFactor))
+                                    .foregroundColor(secondaryTextColor)
+                                    .multilineTextAlignment(.center)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+
+                        Spacer()  // Push content to center
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 280 * scaleFactor)  // Fixed height
+                    .padding(24 * scaleFactor)
+                    // Card border
+                    .background(
+                        RoundedRectangle(cornerRadius: 12 * scaleFactor)
+                            .fill(Color.black.opacity(0.05))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12 * scaleFactor)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+                }
+            }
+        }
+        .padding(.horizontal, 40 * scaleFactor)
+    }
+
+    // MARK: - Vertical Spacing Helper
+
+    /// Returns appropriate text area height and gap spacing based on verticalSpacing configuration
+    /// - Returns: Tuple of (textAreaHeight, gapHeight) in points * scaleFactor
+    private func verticalSpacingValues() -> (textAreaHeight: CGFloat, gapHeight: CGFloat) {
+        let currentItem = inspectState.items[safe: currentStep]
+        let spacing = currentItem?.verticalSpacing ?? "balanced"
+
+        switch spacing {
+        case "compact":
+            return (150 * scaleFactor, 32 * scaleFactor)
+        case "generous":
+            return (250 * scaleFactor, 80 * scaleFactor)
+        default:  // "balanced" - new default
+            return (200 * scaleFactor, 60 * scaleFactor)
+        }
+    }
+
+    // Completion screen (shown on final step)
+    @ViewBuilder
+    private var setupAssistantCompletionCard: some View {
+        if let currentItem = inspectState.items[safe: currentStep] {
+            VStack(spacing: 24 * scaleFactor) {
+                // Large success icon (green checkmark shield)
+                ZStack {
+                    Circle()
+                        .fill((Color(hex: "#34C759") ?? Color.green).opacity(0.15))
+                        .frame(width: 140 * scaleFactor, height: 140 * scaleFactor)
+
+                    if let iconPath = currentItem.icon {
+                        setupAssistantIcon(for: currentItem)
+                            .frame(width: 80 * scaleFactor, height: 80 * scaleFactor)
+                    } else {
+                        // Default green checkmark shield
+                        Image(systemName: "checkmark.shield.fill")
+                            .font(.system(size: 72 * scaleFactor, weight: .regular))
+                            .foregroundColor(Color(hex: "#34C759") ?? .green)
+                    }
+                }
+
+                // Title
+                Text(currentItem.displayName)
+                    .font(.system(size: 34 * scaleFactor, weight: .bold))
+                    .foregroundColor(primaryTextColor)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 60 * scaleFactor)
+
+                // Subtitle
+                if let subtitle = currentItem.subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: 17 * scaleFactor))
+                        .foregroundColor(secondaryTextColor)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 80 * scaleFactor)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                // Optional guidance content
+                if let guidanceContent = currentItem.guidanceContent, !guidanceContent.isEmpty {
+                    VStack(spacing: 16 * scaleFactor) {
+                        ForEach(Array(guidanceContent.enumerated()), id: \.offset) { _, block in
+                            setupAssistantGuidanceBlock(block)
+                        }
+                    }
+                    .padding(.horizontal, 60 * scaleFactor)
+                    .padding(.top, 8 * scaleFactor)
+                }
+            }
+            .padding(.horizontal, 40 * scaleFactor)
+        }
+    }
+
+    // Render icon for Setup Assistant card
+    @ViewBuilder
+    private func setupAssistantIcon(for item: InspectConfig.ItemConfig) -> some View {
+        if let iconPath = item.icon {
+            IconView(image: iconPath, defaultImage: "app.fill", defaultColour: "primary")
+                .frame(maxWidth: 200 * scaleFactor, maxHeight: 200 * scaleFactor)
+        } else {
+            Image(systemName: "app.fill")
+                .font(.system(size: 80 * scaleFactor, weight: .thin))
+                .foregroundColor(secondaryTextColor)
+        }
+    }
+
+    // Render guidance content (subset of Preset6 components - lightweight text only)
+    @ViewBuilder
+    private func setupAssistantGuidanceBlock(_ block: InspectConfig.GuidanceContent) -> some View {
+        switch block.type {
+        case "text":
+            Text(block.content ?? "")
+                .font(.system(size: block.bold == true ? 15 * scaleFactor : 14 * scaleFactor, weight: block.bold == true ? .semibold : .regular))
+                .foregroundColor(primaryTextColor)
+                .multilineTextAlignment(.center)
+
+        case "bullets":
+            if let content = block.content {
+                VStack(alignment: .leading, spacing: 8 * scaleFactor) {
+                    ForEach(content.components(separatedBy: "\n"), id: \.self) { line in
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("•")
+                                .foregroundColor(secondaryTextColor)
+                            Text(line)
+                                .font(.system(size: 14 * scaleFactor))
+                                .foregroundColor(primaryTextColor)
+                        }
+                    }
+                }
+
+            }
+
+        default:
+            EmptyView()
+        }
+    }
+
+    // Bottom buttons
+    @ViewBuilder
+    private var setupAssistantButtons: some View {
+        HStack(spacing: 16 * scaleFactor) {
+            // Skip/Secondary button (optional) - Left-aligned text button
+            // ALWAYS reserve space to prevent primary button from moving
+            if inspectState.buttonConfiguration.button2Visible {
+                Button(action: {
+                    handleSecondaryButtonPress()
+                }) {
+                    Text(inspectState.buttonConfiguration.button2Text.isEmpty ? "Back" : inspectState.buttonConfiguration.button2Text)
+                        .font(.system(size: 14 * scaleFactor, weight: .regular))
+                        .foregroundColor(getConfigurableHighlightColor())
+                        .padding(.horizontal, 16 * scaleFactor)
+                        .padding(.vertical, 4 * scaleFactor)
+                }
+                .buttonStyle(PlainButtonStyle())
+            } else {
+                // Invisible placeholder to maintain consistent primary button position
+                Text("Back")
+                    .font(.system(size: 14 * scaleFactor, weight: .regular))
+                    .foregroundColor(.clear)
+                    .padding(.horizontal, 16 * scaleFactor)
+                    .padding(.vertical, 4 * scaleFactor)
+            }
+
+            Spacer()
+
+            // Continue/Done button - Right-aligned primary button (Apple style)
+            Button(action: {
+                if currentStep < inspectState.items.count - 1 {
+                    withAnimation {
+                        currentStep += 1
+                    }
+                } else {
+                    // Last step - handle completion
+                    handleAllStepsComplete()
+                }
+            }) {
+                // Determine button text with proper defaults
+                let buttonText: String = {
+                    if currentStep == inspectState.items.count - 1 {
+                        // Last step - use finalButtonText or default "Done"
+                        return inspectState.config?.finalButtonText?.isEmpty == false ?
+                            inspectState.config!.finalButtonText! : "Done"
+                    } else {
+                        // Regular steps - use button1Text or default "Continue"
+                        let text = inspectState.buttonConfiguration.button1Text
+                        return text.isEmpty ? "Continue" : text
+                    }
+                }()
+
+                ZStack {
+                    // Blue rounded rectangle background
+                    RoundedRectangle(cornerRadius: 5 * scaleFactor)
+                        .fill(getConfigurableHighlightColor())
+
+                    // White text on top
+                    Text(buttonText)
+                        .font(.system(size: 12 * scaleFactor, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 18 * scaleFactor)
+                        .padding(.vertical, 4 * scaleFactor)
+                }
+                .fixedSize(horizontal: true, vertical: false)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(inspectState.buttonConfiguration.button1Disabled)
+        }
+    }
+
+    // Handle secondary button press (Skip/Back)
+    private func handleSecondaryButtonPress() {
+        let buttonText = inspectState.buttonConfiguration.button2Text
+        writeLog("Preset7: Secondary button pressed: \(buttonText)", logLevel: .info)
+
+        // If button says "Skip", just move forward
+        if buttonText.lowercased().contains("skip") {
+            if currentStep < inspectState.items.count - 1 {
+                withAnimation {
+                    currentStep += 1
+                }
+            }
+        } else {
+            // Otherwise go back
+            if currentStep > 0 {
+                withAnimation {
+                    currentStep -= 1
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -1375,6 +2166,14 @@ struct Preset7View: View, InspectLayoutProtocol {
         // 5. Exit with success code
         writeLog("Preset7: Exiting with code 0", logLevel: .info)
         exit(0)
+    }
+
+    /// Handle completion of all steps in Setup Assistant mode
+    /// Called when user reaches the last step and clicks the final button
+    private func handleAllStepsComplete() {
+        let buttonText = inspectState.config?.finalButtonText ?? "Done"
+        writeLog("Preset7: All setup steps complete, final button: \(buttonText)", logLevel: .info)
+        handleFinalButtonPress(buttonText: buttonText)
     }
 }
 
