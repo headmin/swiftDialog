@@ -2267,8 +2267,8 @@ struct Preset5View: View {
                     if isCompleted {
                         // COMPLETED STATE: Show result banner
                         processingResultBanner(for: step, hasFailed: hasFailed)
-                    } else {
-                        // PROCESSING STATE: Show countdown ring and message
+                    } else if step.waitForExternalTrigger != true {
+                        // COUNTDOWN STATE: Show countdown ring and message (not used with external trigger)
                         countdownRing(for: step)
 
                         // Processing message with {countdown} substitution
@@ -2316,6 +2316,12 @@ struct Preset5View: View {
 
                 startProcessingCountdown(for: step, stepIndex: stepIndex)
 
+                // Start filesystem monitoring for items with paths (auto-update status badges)
+                if let items = step.items, !items.isEmpty {
+                    writeLog("Preset5: Starting item monitoring for processing step '\(step.id)' (\(items.count) items)", logLevel: .info)
+                    monitoringService.startMonitoring(items: items)
+                }
+
                 // Start plist monitoring for completion triggers (parity with Preset6)
                 // This allows external processes to signal completion via plist updates
                 introStepMonitor.startMonitoring(step: step) { [self] triggerStepId, triggerResult in
@@ -2334,7 +2340,28 @@ struct Preset5View: View {
         }
         .onDisappear {
             stopProcessingCountdown()
+            stopInstallationMonitoring()
             introStepMonitor.stopMonitoring()
+        }
+        .onChange(of: monitoringService.itemStatuses) { _, newStatuses in
+            // Bridge: when items are detected via filesystem, update matching status badges
+            if let items = step.items {
+                for item in items {
+                    if let status = newStatuses[item.id], status == .completed {
+                        if statusBadgeOverrides[item.id] != "success" {
+                            statusBadgeOverrides[item.id] = "success"
+                            dynamicContentUpdateCounter += 1
+                            writeLog("Preset5: Item '\(item.id)' detected at path — status badge updated to success", logLevel: .info)
+                        }
+                    }
+                }
+                // Auto-complete processing step when all items are detected
+                let allDetected = items.allSatisfy { newStatuses[$0.id] == .completed }
+                if allDetected && !completedProcessingSteps.contains(step.id) {
+                    writeLog("Preset5: All items detected for processing step '\(step.id)' — marking complete", logLevel: .info)
+                    handleCompletionTrigger(stepId: step.id, result: .success(message: step.successMessage))
+                }
+            }
         }
         .overlay {
             // Override picker overlay
