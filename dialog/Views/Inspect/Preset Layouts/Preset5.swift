@@ -82,7 +82,7 @@ struct Preset5View: View {
 
     // External command file monitoring (parity with Preset6)
     @State private var commandFileMonitorTimer: Timer?
-    @State private var lastProcessedCommandContent: String = ""  // Track processed content to avoid duplicates
+    @State private var lastProcessedLineCount: Int = 0  // Line-offset tracking for trigger file (never clear, only advance)
 
     // Form state management (for interactive form elements in intro steps)
     @State private var formValues: [String: String] = [:]
@@ -759,6 +759,7 @@ struct Preset5View: View {
             let label = value
             let state = extra ?? "enabled"
             statusBadgeOverrides[label] = state
+            dynamicContentUpdateCounter += 1  // Force SwiftUI re-render for status badge change
             writeLog("Preset5: Set status badge '\(label)' to state '\(state)'", logLevel: .info)
 
         case "phase-tracker":
@@ -1093,6 +1094,11 @@ struct Preset5View: View {
             FileManager.default.createFile(atPath: triggerFilePath, contents: nil, attributes: nil)
         }
 
+        // Skip past any stale content from a previous run
+        if let existing = try? String(contentsOfFile: triggerFilePath, encoding: .utf8) {
+            lastProcessedLineCount = existing.components(separatedBy: .newlines).count
+        }
+
         // Use Timer for polling (more reliable than DispatchSource with SwiftUI @State)
         // Note: Capture list removed - struct views are value types, no retain cycle risk
         commandFileMonitorTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [self] _ in
@@ -1107,27 +1113,33 @@ struct Preset5View: View {
     }
 
     /// Check for external trigger commands in the file
+    /// Uses line-offset tracking: reads all lines, processes only new ones, never clears the file.
+    /// This eliminates the read-then-clear race condition where commands appended between
+    /// reading and clearing were destroyed.
     private func checkForExternalTrigger() {
         guard let content = try? String(contentsOfFile: triggerFilePath, encoding: .utf8) else {
             return
         }
 
-        // Skip if content hasn't changed (avoid duplicate processing)
-        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedContent.isEmpty, trimmedContent != lastProcessedCommandContent else {
+        let lines = content.components(separatedBy: .newlines)
+        let totalLines = lines.count
+
+        guard totalLines > lastProcessedLineCount else {
             return
         }
 
-        // Log that we received content
-        print("[PRESET11_PROCESSING] trigger_received: \(trimmedContent)")
-        writeLog("Preset5: Received trigger content: \(trimmedContent)", logLevel: .info)
+        // Process only lines we haven't seen yet
+        let newLines = Array(lines.dropFirst(lastProcessedLineCount))
+        for line in newLines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { continue }
 
-        // Process new commands
-        lastProcessedCommandContent = trimmedContent
-        processExternalCommands(content)
+            print("[PRESET11_PROCESSING] trigger_received: \(trimmed)")
+            writeLog("Preset5: Received trigger command: \(trimmed)", logLevel: .info)
+            processPresetCommand(trimmed)
+        }
 
-        // Clear the file after processing
-        try? "".write(toFile: triggerFilePath, atomically: true, encoding: .utf8)
+        lastProcessedLineCount = totalLines
     }
 
     /// Stop command file monitoring
@@ -2262,6 +2274,8 @@ struct Preset5View: View {
                                 introContentBlock(block, blockIndex: index)
                             }
                         }
+                        // Force re-render when status badges or other dynamic content changes via IPC
+                        .id("processing-content-\(step.id)-\(dynamicContentUpdateCounter)")
                     }
 
                     if isCompleted {
@@ -2316,11 +2330,10 @@ struct Preset5View: View {
 
                 startProcessingCountdown(for: step, stepIndex: stepIndex)
 
-                // Start filesystem monitoring for items with paths (auto-update status badges)
-                if let items = step.items, !items.isEmpty {
-                    writeLog("Preset5: Starting item monitoring for processing step '\(step.id)' (\(items.count) items)", logLevel: .info)
-                    monitoringService.startMonitoring(items: items)
-                }
+                // TODO: Future — start filesystem monitoring for items with paths (auto-update status badges)
+                // Currently disabled; processing step completion is driven by IPC only.
+                // When enabled, monitoringService.startMonitoring(items:) will bridge
+                // detected paths to status-badge overrides via .onChange below.
 
                 // Start plist monitoring for completion triggers (parity with Preset6)
                 // This allows external processes to signal completion via plist updates
@@ -2340,28 +2353,7 @@ struct Preset5View: View {
         }
         .onDisappear {
             stopProcessingCountdown()
-            stopInstallationMonitoring()
             introStepMonitor.stopMonitoring()
-        }
-        .onChange(of: monitoringService.itemStatuses) { _, newStatuses in
-            // Bridge: when items are detected via filesystem, update matching status badges
-            if let items = step.items {
-                for item in items {
-                    if let status = newStatuses[item.id], status == .completed {
-                        if statusBadgeOverrides[item.id] != "success" {
-                            statusBadgeOverrides[item.id] = "success"
-                            dynamicContentUpdateCounter += 1
-                            writeLog("Preset5: Item '\(item.id)' detected at path — status badge updated to success", logLevel: .info)
-                        }
-                    }
-                }
-                // Auto-complete processing step when all items are detected
-                let allDetected = items.allSatisfy { newStatuses[$0.id] == .completed }
-                if allDetected && !completedProcessingSteps.contains(step.id) {
-                    writeLog("Preset5: All items detected for processing step '\(step.id)' — marking complete", logLevel: .info)
-                    handleCompletionTrigger(stepId: step.id, result: .success(message: step.successMessage))
-                }
-            }
         }
         .overlay {
             // Override picker overlay
@@ -2732,7 +2724,13 @@ struct Preset5View: View {
     /// Starts the countdown timer for a processing step
     private func startProcessingCountdown(for step: InspectConfig.IntroStep, stepIndex: Int) {
         guard let duration = step.processingDuration, duration > 0 else {
-            // No duration - mark as completed immediately (user clicks continue to advance)
+            // No duration — if waiting for external trigger, just wait (don't auto-complete)
+            if step.waitForExternalTrigger == true {
+                processingState = .waiting
+                writeLog("Preset5: Processing step '\(step.id)' waiting for external trigger (no countdown)", logLevel: .info)
+                return
+            }
+            // No duration, no external trigger - mark as completed immediately
             markProcessingCompleted(step: step, result: .success)
             return
         }

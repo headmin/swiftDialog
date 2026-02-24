@@ -56,7 +56,7 @@ struct Preset6View: View, InspectLayoutProtocol {
     // File monitoring
     @State private var fileMonitorSource: DispatchSourceFileSystemObject?
     @State private var commandFileMonitorTimer: Timer?
-    @State private var lastProcessedCommandContent: String = ""
+    @State private var lastProcessedLineCount: Int = 0  // Line-offset tracking for trigger file (never clear, only advance)
 
     // Auto-navigation
     @State private var autoNavigationWorkItem: DispatchWorkItem?
@@ -1168,10 +1168,10 @@ struct Preset6View: View, InspectLayoutProtocol {
         // Clear persistence
         persistenceService.clearState()
 
-        // Clear trigger file
+        // Reset trigger file line offset (truncate file and reset counter together)
         if FileManager.default.fileExists(atPath: triggerFilePath) {
-            // Truncate instead of delete so DispatchSource file descriptor stays valid
             try? "".write(toFile: triggerFilePath, atomically: false, encoding: .utf8)
+            lastProcessedLineCount = 0
         }
 
         writeLog("Preset6: All progress reset", logLevel: .info)
@@ -1436,6 +1436,11 @@ struct Preset6View: View, InspectLayoutProtocol {
             FileManager.default.createFile(atPath: triggerFilePath, contents: nil, attributes: nil)
         }
 
+        // Skip past any stale content from a previous run
+        if let existing = try? String(contentsOfFile: triggerFilePath, encoding: .utf8) {
+            lastProcessedLineCount = existing.components(separatedBy: .newlines).count
+        }
+
         // Open file descriptor
         let fileDescriptor = open(triggerFilePath, O_EVTONLY)
         guard fileDescriptor >= 0 else {
@@ -1471,17 +1476,26 @@ struct Preset6View: View, InspectLayoutProtocol {
         writeLog("Preset6: File monitoring started with DispatchSource at \(triggerFilePath) (mode: \(triggerMode), zero-latency)", logLevel: .info)
     }
 
+    /// Uses line-offset tracking: reads all lines, processes only new ones, never clears the file.
+    /// This eliminates the read-then-clear race where commands appended between read and clear were lost.
     private func checkForExternalTrigger() {
         guard let content = try? String(contentsOfFile: triggerFilePath, encoding: .utf8) else { return }
 
-        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed != lastProcessedCommandContent else { return }
+        let lines = content.components(separatedBy: .newlines)
+        let totalLines = lines.count
 
-        lastProcessedCommandContent = trimmed
-        processExternalCommands(trimmed)
+        guard totalLines > lastProcessedLineCount else { return }
 
-        // Truncate instead of delete so DispatchSource file descriptor stays valid
-        try? "".write(toFile: triggerFilePath, atomically: false, encoding: .utf8)
+        let newLines = Array(lines.dropFirst(lastProcessedLineCount))
+        for line in newLines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { continue }
+
+            writeLog("Preset6: Received trigger command: \(trimmed)", logLevel: .info)
+            processPresetCommand(trimmed)
+        }
+
+        lastProcessedLineCount = totalLines
     }
 
     private func processExternalCommands(_ content: String) {
