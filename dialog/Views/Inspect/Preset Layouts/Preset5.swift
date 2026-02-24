@@ -2297,7 +2297,7 @@ struct Preset5View: View {
             IntroFooterView(
                 footerText: branding.footerText,
                 backButtonText: backText,
-                continueButtonText: isCompleted ? (hasFailed ? "Continue Anyway" : (localized("continueButtonText", forStep: step, fallback: nil) ?? step.continueButtonText ?? "Continue")) : "",
+                continueButtonText: isCompleted ? (hasFailed ? "Continue Anyway" : (localized("continueButtonText", forStep: step, fallback: nil) ?? step.continueButtonText ?? "Continue")) : (localized("actionButtonText", forStep: step, fallback: nil) ?? step.actionButtonText ?? "Processing\u{2026}"),
                 accentColor: branding.primaryColor,
                 showBackButton: (step.showBackButton ?? false) && canGoBackFromStep,
                 onBack: canGoBackFromStep ? { stopProcessingCountdown(); goToPreviousStep() } : nil,
