@@ -77,6 +77,9 @@ struct Preset2View: View, InspectLayoutProtocol {
             checkAutoTransitionToSummary()
         }
         .onChange(of: currentPhase) { _, newPhase in
+            // Emit phase event so IPC consumers (scripts) can react
+            writePhaseEvent(newPhase)
+
             if newPhase == .main {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     checkAutoTransitionToSummary()
@@ -421,6 +424,36 @@ struct Preset2View: View, InspectLayoutProtocol {
             return localized("\(item.id).pendingStatus", fallback: nil)
                 ?? localized("pendingStatus", fallback: nil)
         }
+    }
+
+    // MARK: - IPC Event Emission
+
+    /// Write a phase-change event to the JSONL event file for IPC consumers.
+    /// Event file path: explicit `eventFile`, or derived from `readinessFile` (.ready → .events).
+    private func writePhaseEvent(_ phase: PresetPhase) {
+        let eventPath: String? = inspectState.config?.eventFile ?? inspectState.config?.readinessFile.map {
+            (($0 as NSString).deletingPathExtension) + ".events"
+        }
+        guard let path = eventPath else { return }
+
+        let entry: [String: Any] = [
+            "event": "phase_changed",
+            "phase": "\(phase)",
+            "timestamp": ISO8601DateFormatter().string(from: Date())
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: entry),
+              let line = String(data: data, encoding: .utf8) else { return }
+
+        let expandedPath = (path as NSString).expandingTildeInPath
+        let lineData = (line + "\n").data(using: .utf8)!
+        if let handle = FileHandle(forWritingAtPath: expandedPath) {
+            handle.seekToEndOfFile()
+            handle.write(lineData)
+            handle.closeFile()
+        } else {
+            FileManager.default.createFile(atPath: expandedPath, contents: lineData)
+        }
+        writeLog("Preset2View: Phase event emitted — \(phase)", logLevel: .info)
     }
 
     // MARK: - Navigation Methods
