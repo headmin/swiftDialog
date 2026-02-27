@@ -1427,6 +1427,7 @@ struct AssistantGridCell: View {
     let item: IntroGridItem
     let isSelected: Bool
     let basePath: String?
+    var accentColor: Color = .accentColor
     let onTap: () -> Void
 
     var body: some View {
@@ -1454,7 +1455,7 @@ struct AssistantGridCell: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(
-                        isSelected ? Color.accentColor : Color(NSColor.separatorColor).opacity(0.5),
+                        isSelected ? accentColor : Color(NSColor.separatorColor).opacity(0.5),
                         lineWidth: isSelected ? 3 : 1
                     )
             )
@@ -1476,10 +1477,10 @@ struct AssistantGridCell: View {
             Image(systemName: sfSymbol)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(accentColor)
                 .padding(24)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.accentColor.opacity(0.05))
+                .background(accentColor.opacity(0.05))
         } else {
             Color.gray.opacity(0.1)
         }
@@ -1493,6 +1494,7 @@ struct AssistantGridPicker: View {
     let selectionMode: String
     @Binding var selectedIds: Set<String>
     let basePath: String?
+    var accentColor: Color = .accentColor
 
     private var gridColumns: [GridItem] {
         Array(repeating: GridItem(.flexible(), spacing: 16), count: columns)
@@ -1505,6 +1507,7 @@ struct AssistantGridPicker: View {
                     item: item,
                     isSelected: selectedIds.contains(item.id),
                     basePath: basePath,
+                    accentColor: accentColor,
                     onTap: { toggleSelection(item.id) }
                 )
             }

@@ -4635,7 +4635,8 @@ struct Preset5View: View {
                                     columns: step.gridColumns ?? 3,
                                     selectionMode: step.gridSelectionMode ?? "single",
                                     selectedIds: binding,
-                                    basePath: effectiveIconBasePath
+                                    basePath: effectiveIconBasePath,
+                                    accentColor: palette.accent
                                 )
                                 .padding(.horizontal, 40)
                                 .padding(.bottom, 16)
