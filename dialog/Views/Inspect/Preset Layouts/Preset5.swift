@@ -939,7 +939,7 @@ struct Preset5View: View {
                     insertion: .opacity.combined(with: .move(edge: .trailing)),
                     removal: .opacity.combined(with: .move(edge: .leading))
                 ))
-                .animation(.easeInOut(duration: 0.3), value: currentStepIndex)
+                .animation(InspectConstants.stepTransition, value: currentStepIndex)
         } else if currentStepIndex >= allSteps.count {
             // Past the last step - complete and close
             Color.clear.onAppear { handleCompletion() }
@@ -1496,7 +1496,7 @@ struct Preset5View: View {
                 // Subtitle or processing message
                 if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle ?? step.processingMessage) {
                     Text(subtitle)
-                        .font(.title3)
+                        .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
@@ -1637,7 +1637,7 @@ struct Preset5View: View {
                     }
 
                     // Zone 3: Title + subtitle
-                    VStack(spacing: 6) {
+                    VStack(spacing: 8) {
                         if let title = localized("title", forStep: step, fallback: step.title) {
                             Text(title)
                                 .font(.system(size: 26, weight: .bold))
@@ -2090,7 +2090,7 @@ struct Preset5View: View {
                     }
                     if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
                         Text(subtitle)
-                            .font(.title3)
+                            .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -2175,7 +2175,7 @@ struct Preset5View: View {
                     }
                     if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
                         Text(subtitle)
-                            .font(.title3)
+                            .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -2283,7 +2283,7 @@ struct Preset5View: View {
 
                         if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
                             Text(subtitle)
-                                .font(.title3)
+                                .font(.system(size: 13))
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                         }
@@ -3023,7 +3023,7 @@ struct Preset5View: View {
 
                         if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
                             Text(subtitle)
-                                .font(.title3)
+                                .font(.system(size: 13))
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: 480)
@@ -4612,7 +4612,7 @@ struct Preset5View: View {
                             // Subtitle (centered)
                             if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
                                 Text(subtitle)
-                                    .font(.title3)
+                                    .font(.system(size: 13))
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
                                     .frame(maxWidth: contentMaxWidth)

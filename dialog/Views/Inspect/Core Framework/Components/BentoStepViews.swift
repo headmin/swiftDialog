@@ -68,7 +68,7 @@ struct BentoGridStepLayout: View {
             // Subtitle
             if let subtitle = config.subtitle {
                 Text(subtitle)
-                    .font(.title3)
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)

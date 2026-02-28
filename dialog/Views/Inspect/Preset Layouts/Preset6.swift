@@ -781,7 +781,7 @@ struct Preset6View: View, InspectLayoutProtocol {
                 .font(.system(size: 24, weight: .bold))
 
             Text(inspectState.config?.uiLabels?.completionSubtitle ?? "Your setup is now complete!")
-                .font(.title3)
+                .font(.system(size: 13))
                 .foregroundStyle(.secondary)
 
             Spacer()
@@ -1010,7 +1010,7 @@ struct Preset6View: View, InspectLayoutProtocol {
             return
         }
 
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(InspectConstants.stepTransition) {
             currentStep = index
         }
 
@@ -1044,7 +1044,7 @@ struct Preset6View: View, InspectLayoutProtocol {
         guard currentStep < inspectState.items.count - 1 else { return }
 
         let oldStep = currentStep
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(InspectConstants.stepTransition) {
             currentStep += 1
         }
 
@@ -1128,7 +1128,7 @@ struct Preset6View: View, InspectLayoutProtocol {
         guard canGoBack else { return }
 
         let oldStep = currentStep
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(InspectConstants.stepTransition) {
             currentStep -= 1
         }
 

@@ -78,7 +78,7 @@ struct Preset4View: View, InspectLayoutProtocol {
         }
         .onChange(of: inspectState.downloadingItems) { _, newDownloading in
             if let nextDownloadingIndex = inspectState.items.firstIndex(where: { newDownloading.contains($0.id) && !inspectState.completedItems.contains($0.id) }) {
-                withAnimation(.easeInOut(duration: 0.25)) {
+                withAnimation(InspectConstants.stepTransition) {
                     currentItemIndex = nextDownloadingIndex
                 }
             }
@@ -165,7 +165,7 @@ struct Preset4View: View, InspectLayoutProtocol {
                 }
 
                 Button(inspectState.config?.introScreen?.buttonText ?? "Continue") {
-                    withAnimation(.easeInOut(duration: 0.25)) {
+                    withAnimation(InspectConstants.stepTransition) {
                         currentPhase = .main
                     }
                 }
@@ -292,7 +292,7 @@ struct Preset4View: View, InspectLayoutProtocol {
         if let nextIdx = inspectState.items.firstIndex(where: {
             inspectState.downloadingItems.contains($0.id) && !inspectState.completedItems.contains($0.id)
         }) {
-            withAnimation(.easeInOut(duration: 0.25)) {
+            withAnimation(InspectConstants.stepTransition) {
                 currentItemIndex = nextIdx
             }
             return
@@ -303,7 +303,7 @@ struct Preset4View: View, InspectLayoutProtocol {
             !inspectState.downloadingItems.contains($0.id) &&
             !inspectState.failedItems.contains($0.id)
         }) {
-            withAnimation(.easeInOut(duration: 0.25)) {
+            withAnimation(InspectConstants.stepTransition) {
                 currentItemIndex = nextIdx
             }
             return
@@ -316,7 +316,7 @@ struct Preset4View: View, InspectLayoutProtocol {
               inspectState.completedItems.count == inspectState.items.count else { return }
 
         if inspectState.config?.summaryScreen != nil {
-            withAnimation(.easeInOut(duration: 0.25)) {
+            withAnimation(InspectConstants.stepTransition) {
                 currentPhase = .summary
             }
         } else {

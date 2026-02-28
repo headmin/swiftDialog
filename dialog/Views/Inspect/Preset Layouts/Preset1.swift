@@ -43,7 +43,7 @@ struct Preset1View: View, InspectLayoutProtocol {
                         basePath: inspectState.uiConfiguration.iconBasePath,
                         inspectState: inspectState,
                         onContinue: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
+                            withAnimation(InspectConstants.stepTransition) {
                                 currentPhase = .main
                             }
                         }
@@ -100,7 +100,7 @@ struct Preset1View: View, InspectLayoutProtocol {
               summaryConfig.autoTransition != false,
               !inspectState.items.isEmpty,
               inspectState.completedItems.count == inspectState.items.count else { return }
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(InspectConstants.stepTransition) {
             currentPhase = .summary
         }
     }
@@ -110,7 +110,7 @@ struct Preset1View: View, InspectLayoutProtocol {
     private var summaryScreenButtonAction: (() -> Void)? {
         guard inspectState.config?.summaryScreen != nil else { return nil }
         return {
-            withAnimation(.easeInOut(duration: 0.3)) {
+            withAnimation(InspectConstants.stepTransition) {
                 currentPhase = .summary
             }
         }
