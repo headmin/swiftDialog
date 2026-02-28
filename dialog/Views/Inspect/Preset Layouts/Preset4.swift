@@ -531,7 +531,10 @@ struct Preset4View: View, InspectLayoutProtocol {
             Capsule()
                 .fill(color.opacity(0.12))
         )
-        .animation(.easeInOut(duration: 0.3), value: text)
+        // Use .id so SwiftUI crossfades between states instead of
+        // morphing color/text/layout (which caused wobble).
+        .id("\(item.id)-\(text)")
+        .transition(.opacity)
     }
 
     /// Resolve pill text, color, and spinner state for an item
