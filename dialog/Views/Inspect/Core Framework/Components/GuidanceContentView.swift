@@ -290,10 +290,10 @@ struct GuidanceContentView: View {
 
         case "bullets":
             if let items = block.items {
-                VStack(alignment: .leading, spacing: 8 * scaleFactor) {
+                VStack(alignment: .leading, spacing: 16 * scaleFactor) {
                     ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                         if !item.isEmpty {
-                            HStack(alignment: .top, spacing: 8 * scaleFactor) {
+                            HStack(alignment: .top, spacing: 12 * scaleFactor) {
                                 if block.numbered == true {
                                     // Numbered mode: 1.circle.fill, 2.circle.fill, etc. (up to 50)
                                     Image(systemName: "\(index + 1).circle.fill")

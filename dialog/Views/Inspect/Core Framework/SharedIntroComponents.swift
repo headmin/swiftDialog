@@ -290,10 +290,16 @@ struct IntroFooterView<PopoverContent: View>: View {
 
                 // Back button
                 if showBackButton, let onBack = onBack {
-                    Button(backButtonText, action: onBack)
-                        .buttonStyle(.bordered)
-                        .tint(accentColor)
-                        .controlSize(.large)
+                    Button(action: onBack) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(.quaternary))
+                    }
+                    .buttonStyle(.plain)
+                    .help(backButtonText)
+                    .accessibilityLabel(backButtonText)
                 }
 
                 // Skip button (secondary action)

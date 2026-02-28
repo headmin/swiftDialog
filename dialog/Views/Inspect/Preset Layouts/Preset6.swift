@@ -825,10 +825,16 @@ struct Preset6View: View, InspectLayoutProtocol {
                            let loc = localized("backButtonText", forItem: item, fallback: nil) { return loc }
                         return branding.button2Text ?? "Back"
                     }()
-                    Button(backText) {
-                        goToPreviousStep()
+                    Button(action: { goToPreviousStep() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(.quaternary))
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.plain)
+                    .help(backText)
+                    .accessibilityLabel(backText)
                 }
 
                 Button(getContinueButtonText()) {

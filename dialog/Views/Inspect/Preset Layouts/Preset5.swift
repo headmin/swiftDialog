@@ -1375,12 +1375,16 @@ struct Preset5View: View {
 
             // Back button (button2) - MDM > portal-specific > global
             if config?.button2Visible ?? false {
-                Button(branding.button2Text ?? effectivePortalConfig?.button2Text ?? "Back") {
-                    handleButton2()
+                Button(action: { handleButton2() }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(.quaternary))
                 }
-                .buttonStyle(.bordered)
-                .tint(branding.primaryColor)
-                .controlSize(.large)
+                .buttonStyle(.plain)
+                .help(branding.button2Text ?? effectivePortalConfig?.button2Text ?? "Back")
+                .accessibilityLabel(branding.button2Text ?? effectivePortalConfig?.button2Text ?? "Back")
             }
 
             // Done button (button1) - MDM > portal-specific > global
@@ -5294,10 +5298,16 @@ struct Preset5View: View {
 
                 // Back button
                 if (step.showBackButton ?? true) && canGoBackFromStep {
-                    Button(backText, action: { goToPreviousStep() })
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        .tint(accent)
+                    Button(action: { goToPreviousStep() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(.quaternary))
+                    }
+                    .buttonStyle(.plain)
+                    .help(backText)
+                    .accessibilityLabel(backText)
                 }
 
                 // Continue button
