@@ -241,6 +241,7 @@ struct InspectConfig: Codable {
     struct IntroLayoutConfig: Codable {
         let heroImageShape: String?             // "circle" (default) | "roundedSquare" | "square"
         let heroImageSize: Double?              // Size in points (default: 200)
+        let heroImagePadding: Double?           // Inset padding in points (nil = auto ~4%, 0 = none)
         let logoImage: String?                  // Bottom branding logo path
         let logoPosition: String?               // "bottomLeft" (default) | "bottomRight"
         let logoMaxWidth: Double?               // Maximum logo width in points (default: 120)
@@ -331,6 +332,7 @@ struct InspectConfig: Codable {
         let heroImageSize: Double?              // Default: 200
         let heroImageSFSymbolColor: String?     // Hex color for SF Symbol (defaults to accentColor)
         let heroImageSFSymbolWeight: String?    // "regular" | "medium" | "bold" (default: "medium")
+        let heroImagePadding: Double?           // Inset padding in points (nil = auto ~4%, 0 = none)
 
         // Content
         let title: String?

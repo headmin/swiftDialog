@@ -934,48 +934,56 @@ struct Preset6View: View, InspectLayoutProtocol {
                 }
             )
         ) {
-            VStack(spacing: 24) {
-                Spacer()
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(spacing: 24) {
+                        Spacer()
 
-                // Hero image
-                if let iconPath = item?.icon {
-                    IntroHeroImage(
-                        path: iconPath,
-                        shape: "none",
-                        size: layoutConfig?.heroImageSize ?? 180,
-                        accentColor: highlightColor
-                    )
-                    .padding(.bottom, 8)
-                }
+                        // Hero image
+                        if let iconPath = item?.icon {
+                            let proportionalSize = min(max(geometry.size.height * 0.28, 100), 180)
+                            IntroHeroImage(
+                                path: iconPath,
+                                shape: "none",
+                                size: layoutConfig?.heroImageSize ?? proportionalSize,
+                                accentColor: highlightColor,
+                                padding: layoutConfig?.heroImagePadding
+                            )
+                            .padding(.bottom, 8)
+                        }
 
-                // Title
-                if let title = item.flatMap({ localized("guidanceTitle", forItem: $0, fallback: $0.guidanceTitle) }) ?? item?.guidanceTitle {
-                    Text(title)
-                        .font(.system(size: 28, weight: .bold))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                }
+                        // Title
+                        if let title = item.flatMap({ localized("guidanceTitle", forItem: $0, fallback: $0.guidanceTitle) }) ?? item?.guidanceTitle {
+                            Text(title)
+                                .font(.system(size: 28, weight: .bold))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 40)
+                        }
 
-                // Content blocks (delegate all types to GuidanceContentView)
-                if let content = item?.guidanceContent, !content.isEmpty {
-                    let itemId = item?.id ?? "intro"
-                    let localizedBlocks = content.enumerated().map { index, block in
-                        localizedContentBlock(block, itemId: itemId, blockIndex: index)
+                        // Content blocks (delegate all types to GuidanceContentView)
+                        if let content = item?.guidanceContent, !content.isEmpty {
+                            let itemId = item?.id ?? "intro"
+                            let localizedBlocks = content.enumerated().map { index, block in
+                                localizedContentBlock(block, itemId: itemId, blockIndex: index)
+                            }
+                            GuidanceContentView(
+                                contentBlocks: localizedBlocks,
+                                scaleFactor: scaleFactor,
+                                iconBasePath: inspectState.uiConfiguration.iconBasePath,
+                                inspectState: inspectState,
+                                itemId: itemId,
+                                accentColor: highlightColor,
+                                contentAlignment: .center
+                            )
+                            .frame(maxWidth: 420)
+                            .padding(.horizontal, 40)
+                        }
+
+                        Spacer()
                     }
-                    GuidanceContentView(
-                        contentBlocks: localizedBlocks,
-                        scaleFactor: scaleFactor,
-                        iconBasePath: inspectState.uiConfiguration.iconBasePath,
-                        inspectState: inspectState,
-                        itemId: itemId,
-                        accentColor: highlightColor,
-                        contentAlignment: .center
-                    )
-                    .frame(maxWidth: 420)
-                    .padding(.horizontal, 40)
+                    .frame(maxWidth: .infinity, minHeight: geometry.size.height)
                 }
-
-                Spacer()
+                .scrollIndicators(.automatic)
             }
         }
     }

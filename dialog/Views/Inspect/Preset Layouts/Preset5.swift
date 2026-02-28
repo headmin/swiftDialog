@@ -1630,7 +1630,8 @@ struct Preset5View: View {
                             accentColor: heroImageColor(step: step),
                             sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
                             sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
-                            basePath: effectiveIconBasePath
+                            basePath: effectiveIconBasePath,
+                            padding: step.heroImagePadding
                         )
                         .padding(.bottom, 16)
                     }
@@ -1826,7 +1827,8 @@ struct Preset5View: View {
                         accentColor: heroImageColor(step: step),
                         sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
                         sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
-                        basePath: effectiveIconBasePath
+                        basePath: effectiveIconBasePath,
+                        padding: step.heroImagePadding
                     )
                 }
 
@@ -2064,6 +2066,21 @@ struct Preset5View: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 20)
 
+                // Hero Image (compact, above title)
+                if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
+                    IntroHeroImage(
+                        path: heroImage,
+                        shape: step.heroImageShape ?? "roundedSquare",
+                        size: step.heroImageSize ?? 70,
+                        accentColor: heroImageColor(step: step),
+                        sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
+                        sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
+                        basePath: effectiveIconBasePath,
+                        padding: step.heroImagePadding
+                    )
+                    .padding(.bottom, 12)
+                }
+
                 // Title area - centered
                 VStack(spacing: 8) {
                     if let title = localized("title", forStep: step, fallback: step.title) {
@@ -2250,7 +2267,8 @@ struct Preset5View: View {
                             accentColor: heroImageColor(step: step),
                             sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
                             sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
-                            basePath: effectiveIconBasePath
+                            basePath: effectiveIconBasePath,
+                            padding: step.heroImagePadding
                         )
                     }
 
@@ -2959,22 +2977,25 @@ struct Preset5View: View {
                 inspectConfig: config
             )
         ) {
-            ScrollView {
-                VStack(spacing: 16) {
-                    Spacer(minLength: 20)
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(spacing: 16) {
+                        Spacer()
 
-                    // Hero Image - check for override first
-                    if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
-                        IntroHeroImage(
-                            path: heroImage,
-                            shape: step.heroImageShape ?? "circle",
-                            size: step.heroImageSize ?? 220,
-                            accentColor: heroImageColor(step: step),
-                            sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
-                            sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
-                            basePath: effectiveIconBasePath
-                        )
-                    }
+                        // Hero Image - check for override first
+                        if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
+                            let proportionalSize = min(max(geometry.size.height * 0.28, 100), 220)
+                            IntroHeroImage(
+                                path: heroImage,
+                                shape: step.heroImageShape ?? "circle",
+                                size: step.heroImageSize ?? proportionalSize,
+                                accentColor: heroImageColor(step: step),
+                                sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
+                                sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
+                                basePath: effectiveIconBasePath,
+                                padding: step.heroImagePadding
+                            )
+                        }
 
                     // Title - MDM > localization > config
                     let displayTitle: String? = {
@@ -3063,11 +3084,12 @@ struct Preset5View: View {
 
                     // Note: Wallpaper picker is handled by dedicated wallpaperStepView
 
-                    Spacer(minLength: 20)
+                    Spacer()
                 }
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, minHeight: geometry.size.height)
             }
             .scrollIndicators(.automatic)
+            }
         }
         .onAppear {
             initializeFormDefaults(for: step)

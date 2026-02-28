@@ -22,6 +22,7 @@ struct IntroHeroImage: View {
     let sfSymbolColor: Color?
     let sfSymbolWeight: Font.Weight
     let basePath: String?
+    let padding: Double?            // nil = auto, 0 = none, >0 = explicit inset
 
     init(
         path: String,
@@ -30,7 +31,8 @@ struct IntroHeroImage: View {
         accentColor: Color = .blue,
         sfSymbolColor: Color? = nil,
         sfSymbolWeight: Font.Weight = .medium,
-        basePath: String? = nil
+        basePath: String? = nil,
+        padding: Double? = nil
     ) {
         self.path = path
         self.shape = shape
@@ -39,6 +41,14 @@ struct IntroHeroImage: View {
         self.sfSymbolColor = sfSymbolColor
         self.sfSymbolWeight = sfSymbolWeight
         self.basePath = basePath
+        self.padding = padding
+    }
+
+    /// Resolved padding: explicit value wins, SF symbols default to 0, images get proportional inset
+    private var effectivePadding: Double {
+        if let padding = padding { return padding }
+        if path.hasPrefix("SF=") { return 0 }
+        return size * 0.04
     }
 
     var body: some View {
@@ -52,33 +62,37 @@ struct IntroHeroImage: View {
                 imageFileView(path: path)
             }
         }
+        .frame(width: size, height: size)
         .modifier(ConditionalClipShape(shape: shape, size: size))
         .shadow(color: .black.opacity(0.1), radius: 10, y: 5)
     }
 
     @ViewBuilder
     private func sfSymbolView(symbolName: String) -> some View {
+        let contentSize = size - 2 * effectivePadding
         Image(systemName: symbolName)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .font(.system(size: size * 0.5, weight: sfSymbolWeight))
-            .frame(width: size, height: size)
+            .font(.system(size: contentSize * 0.5, weight: sfSymbolWeight))
+            .frame(width: contentSize, height: contentSize)
             .foregroundStyle(sfSymbolColor ?? accentColor)
     }
 
     @ViewBuilder
     private func imageFileView(path: String) -> some View {
+        let contentSize = size - 2 * effectivePadding
         if let nsImage = loadImage(path: path) {
             Image(nsImage: nsImage)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: size, height: size)
+                .frame(width: max(contentSize, 10), height: max(contentSize, 10))
+                .clipped()
         } else {
             // Fallback placeholder
             Image(systemName: "photo")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: size, height: size)
+                .frame(width: max(contentSize, 10), height: max(contentSize, 10))
                 .foregroundStyle(.secondary)
         }
     }
