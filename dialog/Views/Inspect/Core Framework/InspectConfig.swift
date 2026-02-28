@@ -368,6 +368,7 @@ struct InspectConfig: Codable {
         let progressPosition: String?           // "bottom" | "top" (default: "bottom")
 
         // Button Configuration
+        let actionButtonText: String?           // Custom button text during processing (e.g., "Processing…", "Installing…")
         let continueButtonText: String?         // Default: "Continue"
         let backButtonText: String?             // Default: "Back"
         let showBackButton: Bool?               // Default: true (except first step)

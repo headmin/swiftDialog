@@ -39,7 +39,12 @@ struct Preset5View: View {
 
     @ObservedObject var inspectState: InspectState
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.palette) private var palette
+    /// Local resolved palette — built directly from config, not from environment.
+    /// (The .environment(\.palette, ...) modifier on body sets it for child views,
+    /// but this view itself reads from the parent environment which has the default.)
+    private var palette: ResolvedPalette {
+        ResolvedPalette(from: config?.brandPalette, primaryColor: branding.primaryColor)
+    }
     @StateObject private var authService = PortalAuthService()
 
     // MARK: - Module Services (Modular Architecture)
@@ -2754,7 +2759,7 @@ struct Preset5View: View {
         guard let duration = step.processingDuration, duration > 0 else {
             // No duration — if waiting for external trigger, just wait (don't auto-complete)
             if step.waitForExternalTrigger == true {
-                processingState = .waiting
+                processingState = .waiting(stepId: step.id)
                 writeLog("Preset5: Processing step '\(step.id)' waiting for external trigger (no countdown)", logLevel: .info)
                 return
             }

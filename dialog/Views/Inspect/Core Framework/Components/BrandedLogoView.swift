@@ -49,21 +49,22 @@ struct BrandedLogoView: View {
     private var isBottom: Bool { pos.contains("bottom") }
     private var isLeft: Bool { pos.contains("left") }
 
-    /// Config opacity, or position-based default: bottom = 0.6, top = 1.0
+    /// Config opacity, defaults to 1.0 (full strength)
     private var effectiveOpacity: Double {
-        logoConfig.opacity ?? (isBottom ? 0.6 : 1.0)
+        logoConfig.opacity ?? 1.0
     }
 
     private var edgePaddingH: CGFloat {
-        CGFloat(logoConfig.padding ?? 20)
+        // Bottom logos match IntroFooterView's .padding(.horizontal, 24)
+        CGFloat(logoConfig.padding ?? (isBottom ? 24 : 20))
     }
 
     private var edgePaddingV: CGFloat {
         if let padding = logoConfig.padding {
             return CGFloat(padding)
         }
-        // Bottom logos need more clearance to sit above the footer bar (~60pt)
-        return isBottom ? 64 : 16
+        // Bottom logos match IntroFooterView's .padding(.vertical, 16) for button alignment
+        return isBottom ? 16 : 16
     }
 
     // MARK: - Body

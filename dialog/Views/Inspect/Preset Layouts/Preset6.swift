@@ -1506,7 +1506,7 @@ struct Preset6View: View, InspectLayoutProtocol {
             guard !trimmed.isEmpty else { continue }
 
             writeLog("Preset6: Received trigger command: \(trimmed)", logLevel: .info)
-            processPresetCommand(trimmed)
+            processExternalCommands(trimmed)
         }
 
         lastProcessedLineCount = totalLines
