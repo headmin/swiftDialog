@@ -29,6 +29,7 @@ struct Preset4View: View, InspectLayoutProtocol {
     @State private var currentPhase: PresetPhase = .main
     @State private var currentItemIndex: Int = 0
     @State private var isUserNavigating: Bool = false
+    @State private var progressCount: Int = 0  // High-water-mark: only goes up
 
     // MARK: - Derived properties
 
@@ -92,6 +93,9 @@ struct Preset4View: View, InspectLayoutProtocol {
             }
         }
         .onChange(of: inspectState.completedItems) { _, _ in
+            // Advance progress (high-water-mark — never decreases)
+            let newCount = terminalCount
+            if newCount > progressCount { progressCount = newCount }
             // Delay so the user sees the green/red pill before sliding to next
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                 advanceToNextItem()
@@ -99,6 +103,8 @@ struct Preset4View: View, InspectLayoutProtocol {
             }
         }
         .onChange(of: inspectState.failedItems) { _, _ in
+            let newCount = terminalCount
+            if newCount > progressCount { progressCount = newCount }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                 advanceToNextItem()
                 checkAutoTransitionToSummary()
@@ -201,13 +207,13 @@ struct Preset4View: View, InspectLayoutProtocol {
                 }
             }
             .padding(.horizontal, 16)
-            .animation(.easeInOut(duration: 0.25), value: currentItemIndex)
 
-            // Progress bar — simple determinate ProgressView
+            // Progress bar — driven by high-water-mark counter that never decreases
             if progressMode == "shared" {
-                ProgressView(value: Double(terminalCount), total: Double(max(inspectState.items.count, 1)))
+                ProgressView(value: Double(progressCount), total: Double(max(inspectState.items.count, 1)))
                     .tint(primaryColor)
                     .padding(.horizontal, 20)
+                    .animation(.easeInOut(duration: 0.4), value: progressCount)
             }
         }
     }
