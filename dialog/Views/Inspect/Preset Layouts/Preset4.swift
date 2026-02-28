@@ -110,9 +110,7 @@ struct Preset4View: View, InspectLayoutProtocol {
         .onChange(of: inspectState.downloadingItems) { _, newDownloading in
             guard !isUserNavigating else { return }
             if let nextDownloadingIndex = inspectState.items.firstIndex(where: { newDownloading.contains($0.id) && !inspectState.completedItems.contains($0.id) }) {
-                withAnimation(InspectConstants.stepTransition) {
-                    currentItemIndex = nextDownloadingIndex
-                }
+                currentItemIndex = nextDownloadingIndex
             }
         }
         // Plist polling timer — only active when items have plistKey configured
@@ -201,16 +199,25 @@ struct Preset4View: View, InspectLayoutProtocol {
                 }
             }
             .padding(.horizontal, 16)
+            .animation(.easeInOut(duration: 0.25), value: currentItemIndex)
 
-            // Progress bar — stable position, isolated from item slide animation
+            // Progress bar — uses custom drawing to stay immune to item transition animations
             if progressMode == "shared" {
                 let total = max(inspectState.items.count, 1)
-                let completed = inspectState.completedItems.count
-                ProgressView(value: Double(completed), total: Double(total))
-                    .progressViewStyle(.linear)
-                    .tint(primaryColor)
-                    .animation(.easeInOut(duration: 0.3), value: completed)
-                    .padding(.horizontal, 20)
+                let completed = terminalCount
+                let fraction = Double(completed) / Double(total)
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.secondary.opacity(0.15))
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(primaryColor)
+                            .frame(width: geo.size.width * fraction)
+                    }
+                }
+                .frame(height: 4)
+                .padding(.horizontal, 20)
+                .animation(.easeInOut(duration: 0.4), value: completed)
             }
         }
     }
@@ -554,9 +561,7 @@ struct Preset4View: View, InspectLayoutProtocol {
         guard newIndex >= 0, newIndex < inspectState.items.count else { return }
 
         isUserNavigating = true
-        withAnimation(InspectConstants.stepTransition) {
-            currentItemIndex = newIndex
-        }
+        currentItemIndex = newIndex
 
         // Resume auto-advance after 5 seconds of no manual navigation
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
@@ -569,21 +574,37 @@ struct Preset4View: View, InspectLayoutProtocol {
     /// Synchronous icon from already-cached path — no loading spinner
     @ViewBuilder
     private func cachedIcon(for path: String, fallbackSymbol: String, size: CGFloat = 48) -> some View {
-        let resolvedPath = resolvePath(path)
         let cornerRadius = size > 30 ? 10.0 : 5.0
         let symbolSize = size > 30 ? 28.0 : size * 0.6
+
+        // SF Symbol icons (e.g. "SF=lock.shield.fill")
+        if path.hasPrefix("SF=") {
+            let symbolName = String(path.dropFirst(3))
+            return AnyView(
+                Image(systemName: symbolName)
+                    .font(.system(size: symbolSize))
+                    .foregroundStyle(primaryColor)
+                    .frame(width: size, height: size)
+            )
+        }
+
+        let resolvedPath = resolvePath(path)
         if let resolvedPath, let nsImage = NSImage(contentsOfFile: resolvedPath) {
-            Image(nsImage: nsImage)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: size, height: size)
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-        } else {
+            return AnyView(
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: size, height: size)
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            )
+        }
+
+        return AnyView(
             Image(systemName: fallbackSymbol)
                 .font(.system(size: symbolSize))
                 .foregroundStyle(primaryColor.opacity(0.6))
                 .frame(width: size, height: size)
-        }
+        )
     }
 
     /// Async icon for intro (loads once, spinner acceptable)
@@ -700,9 +721,7 @@ struct Preset4View: View, InspectLayoutProtocol {
         if let nextIdx = inspectState.items.firstIndex(where: {
             inspectState.downloadingItems.contains($0.id) && !inspectState.completedItems.contains($0.id)
         }) {
-            withAnimation(InspectConstants.stepTransition) {
-                currentItemIndex = nextIdx
-            }
+            currentItemIndex = nextIdx
             return
         }
 
@@ -711,9 +730,7 @@ struct Preset4View: View, InspectLayoutProtocol {
             !inspectState.downloadingItems.contains($0.id) &&
             !inspectState.failedItems.contains($0.id)
         }) {
-            withAnimation(InspectConstants.stepTransition) {
-                currentItemIndex = nextIdx
-            }
+            currentItemIndex = nextIdx
             return
         }
     }
