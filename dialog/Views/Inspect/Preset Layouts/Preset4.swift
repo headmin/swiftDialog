@@ -90,12 +90,17 @@ struct Preset4View: View, InspectLayoutProtocol {
             }
         }
         .onChange(of: inspectState.completedItems) { _, _ in
-            advanceToNextItem()
-            checkAutoTransitionToSummary()
+            // Delay so the user sees the green/red pill before sliding to next
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                advanceToNextItem()
+                checkAutoTransitionToSummary()
+            }
         }
         .onChange(of: inspectState.failedItems) { _, _ in
-            advanceToNextItem()
-            checkAutoTransitionToSummary()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                advanceToNextItem()
+                checkAutoTransitionToSummary()
+            }
         }
         .onChange(of: currentPhase) { _, newPhase in
             if newPhase == .main {
@@ -111,7 +116,7 @@ struct Preset4View: View, InspectLayoutProtocol {
             }
         }
         // Plist polling timer — only active when items have plistKey configured
-        .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
+        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
             if hasPlistMonitoring && currentPhase == .main {
                 checkPlistStatuses()
             }
@@ -121,85 +126,93 @@ struct Preset4View: View, InspectLayoutProtocol {
     // MARK: - Main Phase
 
     private var mainPhaseView: some View {
-        HStack(spacing: 8) {
-            // Left chevron — browse to previous item
-            if inspectState.items.count > 1 {
-                Button { navigateItem(-1) } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 16, height: 48)
+        VStack(spacing: 6) {
+            // Item row — this content slides on item change
+            HStack(spacing: 8) {
+                // Left chevron — browse to previous item
+                if inspectState.items.count > 1 {
+                    Button { navigateItem(-1) } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 16, height: 48)
+                    }
+                    .buttonStyle(.plain)
+                    .opacity(currentItemIndex > 0 ? 0.6 : 0.15)
+                    .disabled(currentItemIndex <= 0)
                 }
-                .buttonStyle(.plain)
-                .opacity(currentItemIndex > 0 ? 0.6 : 0.15)
-                .disabled(currentItemIndex <= 0)
-            }
 
-            cachedIcon(
-                for: currentItem.flatMap { iconCache.getItemIconPath(for: $0, state: inspectState) } ?? "",
-                fallbackSymbol: "app.fill"
-            )
+                cachedIcon(
+                    for: currentItem.flatMap { iconCache.getItemIconPath(for: $0, state: inspectState) } ?? "",
+                    fallbackSymbol: "app.fill"
+                )
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(currentItem?.displayName ?? inspectState.config?.title ?? "Installing...")
                         .font(.system(size: 14, weight: .semibold))
                         .lineLimit(1)
 
-                    itemStatusIcon(for: currentItem)
-                }
-
-                if progressMode == "perItem" {
-                    ProgressView()
-                        .progressViewStyle(.linear)
-                        .tint(primaryColor)
-                } else {
-                    let total = max(inspectState.items.count, 1)
-                    let completed = inspectState.completedItems.count
-                    ProgressView(value: Double(completed), total: Double(total))
-                        .progressViewStyle(.linear)
-                        .tint(primaryColor)
-                        .animation(.easeInOut(duration: 0.3), value: completed)
-                }
-
-                HStack {
-                    if let item = currentItem {
-                        Text(getItemStatus(for: item))
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    } else if progressMode == "shared" {
-                        Text("\(inspectState.completedItems.count) of \(inspectState.items.count) completed")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
+                    if progressMode == "perItem" {
+                        ProgressView()
+                            .progressViewStyle(.linear)
+                            .tint(primaryColor)
                     }
 
-                    Spacer()
+                    HStack {
+                        if let item = currentItem {
+                            Text(getItemStatus(for: item))
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        } else if progressMode == "shared" {
+                            Text("\(inspectState.completedItems.count) of \(inspectState.items.count) completed")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
 
-                    if inspectState.items.count > 1 {
-                        Text("\(currentItemIndex + 1)/\(inspectState.items.count)")
-                            .font(.system(size: 10, weight: .medium).monospacedDigit())
-                            .foregroundStyle(.tertiary)
+                        Spacer()
+
+                        if inspectState.items.count > 1 {
+                            Text("\(currentItemIndex + 1)/\(inspectState.items.count)")
+                                .font(.system(size: 10, weight: .medium).monospacedDigit())
+                                .foregroundStyle(.tertiary)
+                        }
                     }
+                }
+
+                Spacer(minLength: 4)
+
+                // Status pill badge
+                if let item = currentItem {
+                    statusPill(for: item)
+                }
+
+                // Right chevron — browse to next item
+                if inspectState.items.count > 1 {
+                    Button { navigateItem(1) } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 16, height: 48)
+                    }
+                    .buttonStyle(.plain)
+                    .opacity(currentItemIndex < inspectState.items.count - 1 ? 0.6 : 0.15)
+                    .disabled(currentItemIndex >= inspectState.items.count - 1)
                 }
             }
+            .padding(.horizontal, 16)
 
-            Spacer(minLength: 4)
-
-            // Right chevron — browse to next item
-            if inspectState.items.count > 1 {
-                Button { navigateItem(1) } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 16, height: 48)
-                }
-                .buttonStyle(.plain)
-                .opacity(currentItemIndex < inspectState.items.count - 1 ? 0.6 : 0.15)
-                .disabled(currentItemIndex >= inspectState.items.count - 1)
+            // Progress bar — stable position, isolated from item slide animation
+            if progressMode == "shared" {
+                let total = max(inspectState.items.count, 1)
+                let completed = inspectState.completedItems.count
+                ProgressView(value: Double(completed), total: Double(total))
+                    .progressViewStyle(.linear)
+                    .tint(primaryColor)
+                    .animation(.easeInOut(duration: 0.3), value: completed)
+                    .padding(.horizontal, 20)
             }
         }
-        .padding(.horizontal, 16)
     }
 
     // MARK: - Compact Intro Phase
@@ -248,6 +261,142 @@ struct Preset4View: View, InspectLayoutProtocol {
             }
         }
         .padding(.horizontal, 20)
+    }
+
+    // MARK: - Compact Report View (Plist Monitoring Mode)
+
+    /// Shows all items at once as a compact check report with live-updating colored status
+    private var compactReportView: some View {
+        VStack(spacing: 0) {
+            // Header row
+            HStack(spacing: 12) {
+                let heroPath = inspectState.config?.introScreen?.heroImage
+                    ?? inspectState.uiConfiguration.iconPath ?? ""
+                toastIcon(path: heroPath, fallbackSymbol: "shield.checkered")
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(inspectState.config?.title ?? "System Check")
+                        .font(.system(size: 14, weight: .semibold))
+                        .lineLimit(1)
+
+                    Text(reportProgressText)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if allItemsTerminal {
+                    Button(inspectState.config?.summaryScreen?.buttonText ?? "Done") {
+                        writeLog("Preset4View: Report closed", logLevel: .info)
+                        exit(0)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(primaryColor)
+                    .controlSize(.small)
+                } else {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+            .padding(.bottom, 6)
+
+            Divider()
+                .padding(.horizontal, 12)
+
+            // Item list — compact rows with colored status
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 0) {
+                    ForEach(inspectState.items, id: \.id) { item in
+                        reportItemRow(item)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
+        }
+    }
+
+    /// Report progress text — adapts as checks complete
+    private var reportProgressText: String {
+        if allItemsTerminal {
+            let failedCount = inspectState.failedItems.count
+            if failedCount > 0 {
+                return "\(inspectState.completedItems.count) passed, \(failedCount) failed"
+            }
+            return "All \(inspectState.items.count) checks passed"
+        }
+        return "\(terminalCount) of \(inspectState.items.count) checks complete"
+    }
+
+    /// Single row in the check report — icon + name + status badge
+    @ViewBuilder
+    private func reportItemRow(_ item: InspectConfig.ItemConfig) -> some View {
+        HStack(spacing: 8) {
+            // Colored status icon
+            reportItemStatusIcon(for: item)
+
+            // Item icon (small)
+            cachedIcon(
+                for: iconCache.getItemIconPath(for: item, state: inspectState) ?? "",
+                fallbackSymbol: "app.fill",
+                size: 20
+            )
+
+            Text(item.displayName)
+                .font(.system(size: 12))
+                .lineLimit(1)
+
+            Spacer()
+
+            // Status badge
+            Text(reportItemStatusText(for: item))
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(reportItemStatusColor(for: item))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    Capsule()
+                        .fill(reportItemStatusColor(for: item).opacity(0.12))
+                )
+        }
+        .padding(.vertical, 3)
+    }
+
+    /// Status icon for report row
+    @ViewBuilder
+    private func reportItemStatusIcon(for item: InspectConfig.ItemConfig) -> some View {
+        if inspectState.failedItems.contains(item.id) {
+            StatusIconView(.failure, size: 14)
+        } else if inspectState.completedItems.contains(item.id) {
+            StatusIconView(.success, size: 14)
+        } else {
+            StatusIconView(.pending, size: 14)
+        }
+    }
+
+    /// Status text for report badge
+    private func reportItemStatusText(for item: InspectConfig.ItemConfig) -> String {
+        if inspectState.failedItems.contains(item.id) {
+            return "Failed"
+        } else if inspectState.completedItems.contains(item.id) {
+            return "Passed"
+        } else {
+            return "Pending"
+        }
+    }
+
+    /// Status color for report badge
+    private func reportItemStatusColor(for item: InspectConfig.ItemConfig) -> Color {
+        if inspectState.failedItems.contains(item.id) {
+            return .red
+        } else if inspectState.completedItems.contains(item.id) {
+            return .green
+        } else {
+            return .orange
+        }
     }
 
     // MARK: - Compact Summary Phase
@@ -341,18 +490,40 @@ struct Preset4View: View, InspectLayoutProtocol {
 
     // MARK: - Status Indicators
 
-    /// Colored status icon next to item name in the main phase
+    /// Colored pill badge — "Pending" (orange), "Passed"/"Installed" (green), "Failed" (red), "Installing" (blue spinner)
     @ViewBuilder
-    private func itemStatusIcon(for item: InspectConfig.ItemConfig?) -> some View {
-        if let item = item {
-            if inspectState.failedItems.contains(item.id) {
-                StatusIconView(.failure, size: 12)
-            } else if inspectState.completedItems.contains(item.id) {
-                StatusIconView(.success, size: 12)
-            } else if inspectState.downloadingItems.contains(item.id) {
-                StatusSpinnerView(size: 12, color: primaryColor)
+    private func statusPill(for item: InspectConfig.ItemConfig) -> some View {
+        let (text, color, showSpinner) = pillState(for: item)
+
+        HStack(spacing: 4) {
+            if showSpinner {
+                ProgressView()
+                    .controlSize(.mini)
+                    .tint(color)
             }
-            // Pending items show no icon — keeps it clean
+            Text(text)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(color)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(
+            Capsule()
+                .fill(color.opacity(0.12))
+        )
+        .animation(.easeInOut(duration: 0.3), value: text)
+    }
+
+    /// Resolve pill text, color, and spinner state for an item
+    private func pillState(for item: InspectConfig.ItemConfig) -> (String, Color, Bool) {
+        if inspectState.failedItems.contains(item.id) {
+            return ("Failed", .red, false)
+        } else if inspectState.completedItems.contains(item.id) {
+            return (hasPlistMonitoring ? "Passed" : "Installed", .green, false)
+        } else if inspectState.downloadingItems.contains(item.id) {
+            return ("Installing", .blue, true)
+        } else {
+            return ("Pending", .orange, false)
         }
     }
 
@@ -397,19 +568,21 @@ struct Preset4View: View, InspectLayoutProtocol {
 
     /// Synchronous icon from already-cached path — no loading spinner
     @ViewBuilder
-    private func cachedIcon(for path: String, fallbackSymbol: String) -> some View {
+    private func cachedIcon(for path: String, fallbackSymbol: String, size: CGFloat = 48) -> some View {
         let resolvedPath = resolvePath(path)
+        let cornerRadius = size > 30 ? 10.0 : 5.0
+        let symbolSize = size > 30 ? 28.0 : size * 0.6
         if let resolvedPath, let nsImage = NSImage(contentsOfFile: resolvedPath) {
             Image(nsImage: nsImage)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 48, height: 48)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .frame(width: size, height: size)
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         } else {
             Image(systemName: fallbackSymbol)
-                .font(.system(size: 28))
+                .font(.system(size: symbolSize))
                 .foregroundStyle(primaryColor.opacity(0.6))
-                .frame(width: 48, height: 48)
+                .frame(width: size, height: size)
         }
     }
 
