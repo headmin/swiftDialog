@@ -3501,7 +3501,9 @@ struct Preset5View: View {
         // MARK: - Delegated Content Types (rendered by GuidanceContentView with accent color)
         case "text", "bullets", "info", "warning", "success", "arrow",
              "highlight", "label-value", "explainer", "image", "video", "button":
-            centeredContentContainer {
+            // Video blocks use full width; all others constrained to 480pt
+            let wideBlock = (block.type == "video" || block.type == "image")
+            centeredContentContainer(maxWidth: wideBlock ? .infinity : 480) {
                 GuidanceContentView(
                     contentBlocks: [block],
                     scaleFactor: 1.0,

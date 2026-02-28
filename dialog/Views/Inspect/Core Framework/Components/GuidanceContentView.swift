@@ -458,18 +458,20 @@ struct GuidanceContentView: View {
             }
 
         case "video":
-            // Video player - reuses main dialog's VideoView
+            // Video player sized to the video's natural aspect ratio
+            // so the frame matches content exactly (no letterbox bars).
+            // videoHeight from config acts as a max-height cap.
             if let videoPath = block.content, !videoPath.isEmpty {
                 VStack(spacing: 4 * scaleFactor) {
-                    let videoHeight = CGFloat(block.videoHeight ?? 300) * scaleFactor
                     let autoPlay = block.autoplay ?? false
+                    let maxHeight = CGFloat(block.videoHeight ?? 400) * scaleFactor
 
-                    VideoView(
-                        videourl: videoPath,
-                        autoplay: autoPlay,
-                        caption: block.caption ?? ""
+                    AspectFitVideoView(
+                        videoPath: videoPath,
+                        autoPlay: autoPlay,
+                        caption: block.caption ?? "",
+                        maxHeight: maxHeight
                     )
-                    .frame(height: videoHeight)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
                     .padding(.vertical, 4 * scaleFactor)
@@ -1581,5 +1583,78 @@ struct InstallListRowView: View {
             fullPath = path
         }
         return NSImage(contentsOfFile: fullPath)
+    }
+}
+
+// MARK: - Aspect-Fit Video Player
+
+/// AVPlayerView with a clear background so no black letterbox bars
+/// appear. Sized to the video's natural aspect ratio.
+private struct InspectPlayerView: NSViewRepresentable {
+    let player: AVPlayer
+
+    func makeNSView(context: Context) -> AVPlayerView {
+        let view = AVPlayerView()
+        view.player = player
+        view.controlsStyle = .inline
+        view.wantsLayer = true
+        view.layer?.backgroundColor = .clear
+        return view
+    }
+
+    func updateNSView(_ nsView: AVPlayerView, context: Context) {
+        nsView.player = player
+    }
+}
+
+/// Self-sizing video player for Inspect/Preset5 content blocks.
+/// Reads the video's natural aspect ratio so the frame matches the
+/// content exactly — no letterbox bars, transparent background.
+/// `maxHeight` caps the player height; width is derived from the ratio.
+private struct AspectFitVideoView: View {
+    let videoPath: String
+    let autoPlay: Bool
+    let caption: String
+    let maxHeight: CGFloat
+
+    @State private var player = AVPlayer()
+    @State private var aspectRatio: CGFloat = 16.0 / 9.0
+
+    private var videoURL: URL {
+        if videoPath.hasPrefix("http") {
+            return URL(string: videoPath)!
+        }
+        return URL(fileURLWithPath: videoPath)
+    }
+
+    var body: some View {
+        VStack {
+            InspectPlayerView(player: player)
+                .aspectRatio(aspectRatio, contentMode: .fit)
+                .frame(maxHeight: maxHeight)
+
+            if !caption.isEmpty {
+                Text(caption)
+                    .font(.system(size: 20))
+                    .italic()
+            }
+        }
+        .onAppear {
+            player.replaceCurrentItem(with: AVPlayerItem(url: videoURL))
+            if autoPlay { player.play() }
+            loadNaturalSize()
+        }
+    }
+
+    private func loadNaturalSize() {
+        let asset = AVURLAsset(url: videoURL)
+        Task {
+            guard let track = try? await asset.loadTracks(withMediaType: .video).first,
+                  let size = try? await track.load(.naturalSize),
+                  size.height > 0 else { return }
+            await MainActor.run {
+                aspectRatio = size.width / size.height
+            }
+        }
     }
 }
