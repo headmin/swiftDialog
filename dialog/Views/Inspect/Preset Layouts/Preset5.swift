@@ -445,8 +445,14 @@ struct Preset5View: View {
             if config?.showAccentBorder ?? true {
                 VStack(spacing: 0) {
                     Rectangle()
-                        .fill(branding.primaryColor)
-                        .frame(height: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [branding.primaryColor, branding.primaryColor.opacity(0)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(height: 6)
                     Spacer()
                 }
             }
