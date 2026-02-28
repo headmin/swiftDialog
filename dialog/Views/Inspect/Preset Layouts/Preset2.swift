@@ -310,9 +310,17 @@ struct Preset2View: View, InspectLayoutProtocol {
                     }
 
                     // Main action button - uses finalButtonText with fallback chain
-                    let finalButtonText = inspectState.config?.finalButtonText ??
-                                         inspectState.config?.button1Text ??
-                                         (inspectState.buttonConfiguration.button1Text.isEmpty ? "Continue" : inspectState.buttonConfiguration.button1Text)
+                    // Priority: autoEnableButtonText (when complete) > finalButtonText > button1Text > buttonConfiguration > "Continue"
+                    let allItemsCompleted = !inspectState.items.isEmpty && inspectState.completedItems.count == inspectState.items.count
+                    let shouldUseAutoEnableText = allItemsCompleted &&
+                                                  inspectState.buttonConfiguration.autoEnableButton &&
+                                                  inspectState.config?.autoEnableButtonText != nil
+
+                    let finalButtonText = shouldUseAutoEnableText
+                        ? (inspectState.config?.autoEnableButtonText ?? "OK")
+                        : (inspectState.config?.finalButtonText ??
+                           inspectState.config?.button1Text ??
+                           (inspectState.buttonConfiguration.button1Text.isEmpty ? "Continue" : inspectState.buttonConfiguration.button1Text))
 
                     Button(action: {
                         if let action = summaryScreenButtonAction {
