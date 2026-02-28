@@ -264,7 +264,9 @@ struct IntroFooterView<PopoverContent: View>: View {
                         .foregroundStyle(.primary)
                 }
 
-                // Popup button (e.g., "Install Details...")
+                Spacer()
+
+                // Popup button centered between logo and nav buttons
                 if let popupText = popupButtonText, let content = popoverContent {
                     Button(popupText) {
                         showPopover.toggle()

@@ -135,7 +135,7 @@ struct Preset5View: View {
     }
 
     private var branding: BrandingResolver {
-        BrandingResolver(config: config, mdmOverrides: mdmOverrides, selectedBrand: selectedBrand)
+        BrandingResolver(config: config, mdmOverrides: mdmOverrides, selectedBrand: selectedBrand, colorScheme: colorScheme)
     }
 
     // MARK: - Localization
@@ -446,19 +446,13 @@ struct Preset5View: View {
         ZStack {
             mainContent
 
-            // Persistent accent ribbon at top — stays across step transitions
+            // Persistent accent ribbon above footer — stays across step transitions
             if config?.showAccentBorder ?? true {
                 VStack(spacing: 0) {
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [branding.primaryColor, branding.primaryColor.opacity(0)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(height: 6)
                     Spacer()
+                    Rectangle()
+                        .fill(branding.primaryColor.opacity(0.25))
+                        .frame(height: 1)
                 }
             }
 

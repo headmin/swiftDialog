@@ -24,6 +24,7 @@ import SwiftUI
 struct Preset4View: View, InspectLayoutProtocol {
     @ObservedObject var inspectState: InspectState
     @StateObject private var iconCache = PresetIconCache()
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var currentPhase: PresetPhase = .main
     @State private var currentItemIndex: Int = 0
@@ -32,7 +33,8 @@ struct Preset4View: View, InspectLayoutProtocol {
     // MARK: - Derived properties
 
     private var primaryColor: Color {
-        Color(hex: inspectState.uiConfiguration.highlightColor)
+        let color = Color(hex: inspectState.uiConfiguration.highlightColor)
+        return colorScheme == .dark ? color.darkModeAdapted : color
     }
 
     private var progressMode: String {
@@ -201,23 +203,11 @@ struct Preset4View: View, InspectLayoutProtocol {
             .padding(.horizontal, 16)
             .animation(.easeInOut(duration: 0.25), value: currentItemIndex)
 
-            // Progress bar — uses custom drawing to stay immune to item transition animations
+            // Progress bar — simple determinate ProgressView
             if progressMode == "shared" {
-                let total = max(inspectState.items.count, 1)
-                let completed = terminalCount
-                let fraction = Double(completed) / Double(total)
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.secondary.opacity(0.15))
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(primaryColor)
-                            .frame(width: geo.size.width * fraction)
-                    }
-                }
-                .frame(height: 4)
-                .padding(.horizontal, 20)
-                .animation(.easeInOut(duration: 0.4), value: completed)
+                ProgressView(value: Double(terminalCount), total: Double(max(inspectState.items.count, 1)))
+                    .tint(primaryColor)
+                    .padding(.horizontal, 20)
             }
         }
     }
@@ -411,8 +401,8 @@ struct Preset4View: View, InspectLayoutProtocol {
     private var compactSummaryView: some View {
         VStack(spacing: 6) {
             HStack(spacing: 14) {
-                // Summary icon — colored based on results
-                summaryIcon
+                // Summary hero — config heroImage, or intro heroImage, or status icon
+                summaryHeroIcon
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(inspectState.config?.summaryScreen?.title ?? "Installation Complete")
@@ -461,20 +451,37 @@ struct Preset4View: View, InspectLayoutProtocol {
         .padding(.vertical, 4)
     }
 
-    /// Summary icon — green check if all pass, orange warning if mixed, red X if all fail
+    /// Summary hero icon — uses summaryScreen heroImage, intro heroImage, config icon, or status icon fallback
     @ViewBuilder
-    private var summaryIcon: some View {
-        let failedCount = inspectState.failedItems.count
-        if failedCount == 0 {
-            StatusIconView(.success, size: 36)
-                .frame(width: 48, height: 48)
-        } else if failedCount < inspectState.items.count {
-            StatusIconView(.warning, size: 36)
-                .frame(width: 48, height: 48)
+    private var summaryHeroIcon: some View {
+        let heroPath = inspectState.config?.summaryScreen?.heroImage
+            ?? inspectState.config?.introScreen?.heroImage
+            ?? inspectState.uiConfiguration.iconPath ?? ""
+
+        if !heroPath.isEmpty {
+            toastIcon(path: heroPath, fallbackSymbol: summaryFallbackSymbol)
         } else {
-            StatusIconView(.failure, size: 36)
-                .frame(width: 48, height: 48)
+            // No hero configured — fall back to colored status icon
+            let failedCount = inspectState.failedItems.count
+            if failedCount == 0 {
+                StatusIconView(.success, size: 36)
+                    .frame(width: 48, height: 48)
+            } else if failedCount < inspectState.items.count {
+                StatusIconView(.warning, size: 36)
+                    .frame(width: 48, height: 48)
+            } else {
+                StatusIconView(.failure, size: 36)
+                    .frame(width: 48, height: 48)
+            }
         }
+    }
+
+    /// SF Symbol name for summary fallback based on results
+    private var summaryFallbackSymbol: String {
+        let failedCount = inspectState.failedItems.count
+        if failedCount == 0 { return "checkmark.circle.fill" }
+        if failedCount < inspectState.items.count { return "exclamationmark.triangle.fill" }
+        return "xmark.circle.fill"
     }
 
     /// Summary subtitle text with counts — adapts wording based on context
