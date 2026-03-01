@@ -170,10 +170,11 @@ struct Preset6View: View, InspectLayoutProtocol {
         return .accentColor
     }
 
-    /// Sidebar width from config (using default as property isn't in InspectConfig)
-    private var sidebarWidth: CGFloat {
-        220  // Wider to avoid truncating step names like "Enrollment Status"
-    }
+    /// Fixed sidebar width — sized to avoid truncating step names like "Enrollment Status".
+    /// This value is added to Preset5-equivalent content width to determine window size (see InspectSizes).
+    private static let sidebarWidthConstant: CGFloat = 220
+
+    private var sidebarWidth: CGFloat { Self.sidebarWidthConstant }
 
     /// Show step numbers in sidebar (default true)
     private var showStepNumbers: Bool {
@@ -460,7 +461,8 @@ struct Preset6View: View, InspectLayoutProtocol {
             if let currentItem = inspectState.items[safe: currentStep] {
                 // Content area
                 ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 16 * scaleFactor) {
+                    let sp = InspectSizes.SetupSpacing.self
+                    VStack(alignment: .leading, spacing: sp.sectionGap) {
                         // Step heading
                         stepHeading(for: currentItem)
 
@@ -499,8 +501,8 @@ struct Preset6View: View, InspectLayoutProtocol {
                         // Success/Failure banner
                         resultBanner(for: currentItem)
                     }
-                    .padding(.horizontal, 24 * scaleFactor)
-                    .padding(.vertical, 20 * scaleFactor)
+                    .padding(.horizontal, sp.contentPadH)
+                    .padding(.vertical, sp.sectionGap)
                 }
             } else {
                 // Completion state
@@ -514,7 +516,7 @@ struct Preset6View: View, InspectLayoutProtocol {
 
     @ViewBuilder
     private func stepHeading(for item: InspectConfig.ItemConfig) -> some View {
-        VStack(alignment: .leading, spacing: 8 * scaleFactor) {
+        VStack(alignment: .leading, spacing: InspectSizes.SetupSpacing.titleSubtitle) {
             HStack(spacing: 8) {
                 if let guidanceTitle = localized("guidanceTitle", forItem: item, fallback: item.guidanceTitle) {
                     Text(guidanceTitle)
@@ -548,7 +550,7 @@ struct Preset6View: View, InspectLayoutProtocol {
                 statusBadge(completed: true, failed: failedSteps[item.id] != nil)
             }
         }
-        .padding(.bottom, 8 * scaleFactor)
+        .padding(.bottom, InspectSizes.SetupSpacing.titleSubtitle)
     }
 
     @ViewBuilder
@@ -573,7 +575,7 @@ struct Preset6View: View, InspectLayoutProtocol {
 
     @ViewBuilder
     private func fallbackContentView(for item: InspectConfig.ItemConfig) -> some View {
-        VStack(alignment: .leading, spacing: 16 * scaleFactor) {
+        VStack(alignment: .leading, spacing: InspectSizes.SetupSpacing.sectionGap) {
             // Icon
             if let icon = item.icon {
                 IntroHeroImage(
@@ -598,7 +600,7 @@ struct Preset6View: View, InspectLayoutProtocol {
 
     @ViewBuilder
     private func processingStateView(for item: InspectConfig.ItemConfig) -> some View {
-        VStack(spacing: 16 * scaleFactor) {
+        VStack(spacing: InspectSizes.SetupSpacing.sectionGap) {
             // Countdown or spinner
             if case .countdown(_, let remaining, _) = processingState {
                 countdownRing(remaining: remaining, total: item.processingDuration ?? 5)
@@ -638,7 +640,7 @@ struct Preset6View: View, InspectLayoutProtocol {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16 * scaleFactor)
+        .padding(.vertical, InspectSizes.SetupSpacing.topInset)
     }
 
     @ViewBuilder

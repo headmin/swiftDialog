@@ -92,6 +92,10 @@ struct Preset5View: View {
     // Form state management (for interactive form elements in intro steps)
     @State private var formValues: [String: String] = [:]
 
+    // Scroll hint overlay state (tracks content overflow for bottom fade indicator)
+    @State private var assistantContentHeight: CGFloat = 0
+    @State private var assistantScrollOffset: CGFloat = 0
+
     // Guide step state (stepType: "guide" — guide two-panel layout)
     @State private var guideMonitoringTimer: Timer?
     @State private var guideValidationCache: [String: Bool] = [:]       // stepId -> isValid
@@ -1637,45 +1641,46 @@ struct Preset5View: View {
             return localized("continueButtonText", forStep: step, fallback: nil) ?? step.continueButtonText ?? "Continue"
         }()
 
+        let sp = InspectSizes.SetupSpacing.self
+
         VStack(spacing: 0) {
             // Scrollable content area (zones 2–4)
             ScrollView {
-                VStack(spacing: 0) {
-                    Spacer(minLength: 24)
+                VStack(spacing: sp.blockGap) {
+                    Spacer(minLength: sp.topInset)
 
                     // Zone 2: Hero image
                     if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
                         IntroHeroImage(
                             path: heroImage,
                             shape: step.heroImageShape ?? "none",
-                            size: step.heroImageSize ?? 100,
+                            size: step.heroImageSize ?? 80,
                             accentColor: heroImageColor(step: step),
                             sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
                             sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
                             basePath: effectiveIconBasePath,
                             padding: step.heroImagePadding
                         )
-                        .padding(.bottom, 16)
                     }
 
                     // Zone 3: Title + subtitle
-                    VStack(spacing: 8) {
+                    VStack(spacing: sp.titleSubtitle) {
                         if let title = localized("title", forStep: step, fallback: step.title) {
                             Text(title)
                                 .font(.system(size: 26, weight: .bold))
                                 .multilineTextAlignment(.center)
-                                .frame(maxWidth: 480)
+                                .frame(maxWidth: sp.contentMaxW)
                         }
 
                         if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
                             Text(subtitle)
-                                .font(.body)
+                                .font(.system(size: 13))
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
-                                .frame(maxWidth: 480)
+                                .frame(maxWidth: sp.contentMaxW)
                         }
                     }
-                    .padding(.horizontal, 40)
+                    .padding(.horizontal, sp.contentPadH)
 
                     // Rotating side messages (centered, fixed height to prevent layout jumps)
                     if let messages = step.sideMessages, !messages.isEmpty {
@@ -1685,7 +1690,6 @@ struct Preset5View: View {
                         )
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 400, minHeight: 36, alignment: .center)
-                        .padding(.top, 8)
                     }
 
                     // Zone 4: Inline progress bar
@@ -1710,8 +1714,7 @@ struct Preset5View: View {
                                 .foregroundStyle(.tertiary)
                         }
                         .frame(maxWidth: 320)
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
+                        .padding(.top, sp.blockGap)
                     }
 
                     // Zone 4: Grouped item list with subtle card background
@@ -1737,10 +1740,9 @@ struct Preset5View: View {
                             .fill(Color(NSColor.controlBackgroundColor))
                     )
                     .frame(maxWidth: 520)
-                    .padding(.horizontal, 40)
-                    .padding(.top, 4)
+                    .padding(.horizontal, sp.contentPadH)
 
-                    Spacer(minLength: 16)
+                    Spacer(minLength: sp.topInset)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -1820,125 +1822,129 @@ struct Preset5View: View {
         // Banner mode: only when bannerHeight is explicitly set and hero is not SF symbol
         let useBanner = step.bannerHeight != nil && !(step.heroImage?.hasPrefix("SF=") ?? true)
 
+        let sp = InspectSizes.SetupSpacing.self
+
         VStack(spacing: 0) {
-            // Fixed content area (zones 2–4) — NOT scrollable; carousel manages its own horizontal scroll
-            VStack(spacing: isSetupSize ? 8 : 16) {
-                Spacer(minLength: isSetupSize ? 8 : 20)
+            // Fixed content area (zones 2–4) — vertically centered
+            GeometryReader { contentGeo in
+                VStack(spacing: sp.sectionGap) {
+                    Spacer()
 
-                // Zone 2: Banner or hero image
-                if useBanner, let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
-                    // Banner mode — full-width image
-                    AsyncImage(url: URL(fileURLWithPath: heroImage)) { phase in
-                        if let image = phase.image {
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(height: CGFloat(step.bannerHeight ?? 100))
-                                .clipped()
-                        } else {
-                            Color.gray.opacity(0.1)
-                                .frame(height: CGFloat(step.bannerHeight ?? 100))
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: CGFloat(step.bannerHeight ?? 100))
-                } else if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
-                    // Standard hero image (consistent with all other step types)
-                    IntroHeroImage(
-                        path: heroImage,
-                        shape: step.heroImageShape ?? "none",
-                        size: step.heroImageSize ?? 80,
-                        accentColor: heroImageColor(step: step),
-                        sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
-                        sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
-                        basePath: effectiveIconBasePath,
-                        padding: step.heroImagePadding
-                    )
-                }
-
-                // Zone 3: Title + subtitle
-                VStack(spacing: 8) {
-                    if let title = localized("title", forStep: step, fallback: step.title) {
-                        Text(title)
-                            .font(.system(size: 26, weight: .bold))
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: 480)
-                    }
-
-                    if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
-                        Text(subtitle)
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: 480)
-                    }
-                }
-                .padding(.horizontal, 40)
-
-                // Rotating side messages (centered)
-                if let messages = step.sideMessages, !messages.isEmpty {
-                    DeploymentSideMessageView(
-                        messages: messages,
-                        interval: step.sideMessageInterval ?? 8
-                    )
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 480, alignment: .center)
-                }
-
-                // Zone 4: Card carousel with navigation arrows
-                HStack(spacing: isSetupSize ? 10 : 16) {
-                    // Left arrow (hidden when all items fit)
-                    if !allItemsFit {
-                        Button(action: { carouselScrollLeft(itemCount: installationData.count) }) {
-                            Image(systemName: "chevron.left.circle.fill")
-                                .font(.system(size: isSetupSize ? 22 : 28))
-                                .foregroundStyle(carouselScrollOffset > 0 ? branding.primaryColor : .gray.opacity(0.3))
-                        }
-                        .disabled(carouselScrollOffset <= 0)
-                        .buttonStyle(.plain)
-                    }
-
-                    // Visible cards
-                    HStack(spacing: isSetupSize ? 6 : 12) {
-                        let visibleItems = carouselVisibleItems(from: installationData)
-                        ForEach(visibleItems) { item in
-                            CarouselCardView(item: item, accentColor: branding.primaryColor, compact: isSetupSize)
-                        }
-
-                        // Placeholder cards when at end of list
-                        if !allItemsFit {
-                            ForEach(0..<max(0, visibleCount - carouselVisibleItems(from: installationData).count), id: \.self) { _ in
-                                CarouselPlaceholderCardView(compact: isSetupSize)
+                    // Zone 2: Banner or hero image
+                    if useBanner, let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
+                        // Banner mode — full-width image
+                        AsyncImage(url: URL(fileURLWithPath: heroImage)) { phase in
+                            if let image = phase.image {
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(height: CGFloat(step.bannerHeight ?? 100))
+                                    .clipped()
+                            } else {
+                                Color.gray.opacity(0.1)
+                                    .frame(height: CGFloat(step.bannerHeight ?? 100))
                             }
                         }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: CGFloat(step.bannerHeight ?? 100))
+                    } else if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
+                        // Standard hero image
+                        IntroHeroImage(
+                            path: heroImage,
+                            shape: step.heroImageShape ?? "none",
+                            size: step.heroImageSize ?? 80,
+                            accentColor: heroImageColor(step: step),
+                            sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
+                            sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
+                            basePath: effectiveIconBasePath,
+                            padding: step.heroImagePadding
+                        )
                     }
-                    .animation(.easeInOut(duration: 0.3), value: carouselScrollOffset)
 
-                    // Right arrow (hidden when all items fit)
-                    if !allItemsFit {
-                        Button(action: { carouselScrollRight(itemCount: installationData.count) }) {
-                            Image(systemName: "chevron.right.circle.fill")
-                                .font(.system(size: isSetupSize ? 22 : 28))
-                                .foregroundStyle(carouselScrollOffset + visibleCount < installationData.count ? branding.primaryColor : .gray.opacity(0.3))
+                    // Zone 3: Title + subtitle
+                    VStack(spacing: sp.titleSubtitle) {
+                        if let title = localized("title", forStep: step, fallback: step.title) {
+                            Text(title)
+                                .font(.system(size: 26, weight: .bold))
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: sp.contentMaxW)
                         }
-                        .disabled(carouselScrollOffset + visibleCount >= installationData.count)
-                        .buttonStyle(.plain)
+
+                        if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
+                            Text(subtitle)
+                                .font(.system(size: 13))
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: sp.contentMaxW)
+                        }
                     }
+                    .padding(.horizontal, sp.contentPadH)
+
+                    // Rotating side messages (centered)
+                    if let messages = step.sideMessages, !messages.isEmpty {
+                        DeploymentSideMessageView(
+                            messages: messages,
+                            interval: step.sideMessageInterval ?? 8
+                        )
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: sp.contentMaxW, alignment: .center)
+                    }
+
+                    // Zone 4: Card carousel with navigation arrows
+                    HStack(spacing: isSetupSize ? 10 : 16) {
+                        // Left arrow (hidden when all items fit)
+                        if !allItemsFit {
+                            Button(action: { carouselScrollLeft(itemCount: installationData.count) }) {
+                                Image(systemName: "chevron.left.circle.fill")
+                                    .font(.system(size: isSetupSize ? 22 : 28))
+                                    .foregroundStyle(carouselScrollOffset > 0 ? branding.primaryColor : .gray.opacity(0.3))
+                            }
+                            .disabled(carouselScrollOffset <= 0)
+                            .buttonStyle(.plain)
+                        }
+
+                        // Visible cards
+                        HStack(spacing: isSetupSize ? 6 : 12) {
+                            let visibleItems = carouselVisibleItems(from: installationData)
+                            ForEach(visibleItems) { item in
+                                CarouselCardView(item: item, accentColor: branding.primaryColor, compact: isSetupSize)
+                            }
+
+                            // Placeholder cards when at end of list
+                            if !allItemsFit {
+                                ForEach(0..<max(0, visibleCount - carouselVisibleItems(from: installationData).count), id: \.self) { _ in
+                                    CarouselPlaceholderCardView(compact: isSetupSize)
+                                }
+                            }
+                        }
+                        .animation(.easeInOut(duration: 0.3), value: carouselScrollOffset)
+
+                        // Right arrow (hidden when all items fit)
+                        if !allItemsFit {
+                            Button(action: { carouselScrollRight(itemCount: installationData.count) }) {
+                                Image(systemName: "chevron.right.circle.fill")
+                                    .font(.system(size: isSetupSize ? 22 : 28))
+                                    .foregroundStyle(carouselScrollOffset + visibleCount < installationData.count ? branding.primaryColor : .gray.opacity(0.3))
+                            }
+                            .disabled(carouselScrollOffset + visibleCount >= installationData.count)
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, sp.contentPadH)
+
+                    // Progress bar (attached to cards, not detached at bottom)
+                    CarouselProgressBarView(
+                        completed: installationData.filter { $0.status == .completed }.count,
+                        total: installationData.count,
+                        accentColor: branding.primaryColor,
+                        progressFormat: step.progressFormat,
+                        compact: isSetupSize
+                    )
+
+                    Spacer()
                 }
-                .padding(.horizontal, isSetupSize ? 24 : 40)
-
-                Spacer()
-
-                // Progress bar
-                CarouselProgressBarView(
-                    completed: installationData.filter { $0.status == .completed }.count,
-                    total: installationData.count,
-                    accentColor: branding.primaryColor,
-                    progressFormat: step.progressFormat,
-                    compact: isSetupSize
-                )
+                .frame(maxWidth: .infinity, minHeight: contentGeo.size.height)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // Zone 5: Footer
             IntroFooterView(
@@ -2190,46 +2196,59 @@ struct Preset5View: View {
         let backText = branding.button2Text ?? localized("backButtonText", forStep: step, fallback: nil) ?? step.backButtonText ?? "Back"
         let availableBrands = resolvedAvailableBrands
 
+        let sp = InspectSizes.SetupSpacing.self
         VStack(spacing: 0) {
-            // Accent ribbon is persistent at Preset5 root level
-
-            // Content area
-            VStack(spacing: 0) {
-                Spacer(minLength: 20)
-
-                // Title area
-                VStack(spacing: 8) {
-                    if let title = localized("title", forStep: step, fallback: step.title) {
-                        Text(title)
-                            .font(.system(size: 26, weight: .bold))
-                            .multilineTextAlignment(.center)
-                    }
-                    if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
-                        Text(subtitle)
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .frame(maxWidth: 480)
-
-                Spacer(minLength: 20)
-
-                // Brand picker grid
+            // OBTemplateView zones 2-4: hero + title + grid, vertically centered
+            GeometryReader { contentGeo in
                 ScrollView(.vertical, showsIndicators: false) {
-                    BrandPickerGrid(
-                        brands: availableBrands,
-                        columns: step.gridColumns ?? 2,
-                        selectedBrandId: $selectedBrandId,
-                        accentColor: branding.primaryColor
-                    )
-                    .frame(maxWidth: 600)
-                }
-                .frame(maxWidth: .infinity)
+                    VStack(spacing: sp.sectionGap) {
+                        Spacer()
 
-                Spacer(minLength: 20)
+                        // Zone 2: Hero image (optional — like Accessibility icon)
+                        if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
+                            IntroHeroImage(
+                                path: heroImage,
+                                shape: step.heroImageShape ?? "circle",
+                                size: step.heroImageSize ?? 80,
+                                accentColor: heroImageColor(step: step),
+                                sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
+                                sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
+                                basePath: effectiveIconBasePath,
+                                padding: step.heroImagePadding
+                            )
+                        }
+
+                        // Zone 3: Title + Subtitle (tight semantic pair)
+                        VStack(spacing: sp.titleSubtitle) {
+                            if let title = localized("title", forStep: step, fallback: step.title) {
+                                Text(title)
+                                    .font(.system(size: 26, weight: .bold))
+                                    .multilineTextAlignment(.center)
+                            }
+                            if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
+                                Text(subtitle)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+                        .frame(maxWidth: sp.contentMaxW)
+
+                        // Zone 4: Brand picker grid
+                        BrandPickerGrid(
+                            brands: availableBrands,
+                            columns: step.gridColumns ?? 2,
+                            selectedBrandId: $selectedBrandId,
+                            accentColor: branding.primaryColor
+                        )
+                        .frame(maxWidth: 600)
+
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, minHeight: contentGeo.size.height)
+                    .padding(.horizontal, sp.contentPadH)
+                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // Footer with navigation
             IntroFooterView(
@@ -2283,86 +2302,87 @@ struct Preset5View: View {
         let isCompleted = completedProcessingSteps.contains(step.id)
         let hasFailed = failedSteps[step.id] != nil
 
+        let sp = InspectSizes.SetupSpacing.self
         VStack(spacing: 0) {
-            // Accent ribbon is persistent at Preset5 root level
-
             // Content area — scrollable to accommodate badges + countdown
-            ScrollView {
-                VStack(spacing: 16) {
-                    Spacer(minLength: 20)
+            GeometryReader { contentGeo in
+                ScrollView {
+                    VStack(spacing: sp.sectionGap) {
+                        Spacer()
 
-                    // Hero Image (optional) - check for override first
-                    if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
-                        IntroHeroImage(
-                            path: heroImage,
-                            shape: step.heroImageShape ?? "circle",
-                            size: step.heroImageSize ?? 180,
-                            accentColor: heroImageColor(step: step),
-                            sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
-                            sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
-                            basePath: effectiveIconBasePath,
-                            padding: step.heroImagePadding
-                        )
-                    }
-
-                    // Title + Subtitle (tight semantic pair — Apple SA uses 8pt gap)
-                    VStack(spacing: 8) {
-                        if let title = localized("title", forStep: step, fallback: step.title) {
-                            Text(title)
-                                .font(.system(size: 26, weight: .bold))
-                                .foregroundStyle(.primary)
-                                .multilineTextAlignment(.center)
+                        // Hero Image (optional) - check for override first
+                        if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
+                            IntroHeroImage(
+                                path: heroImage,
+                                shape: step.heroImageShape ?? "circle",
+                                size: step.heroImageSize ?? 180,
+                                accentColor: heroImageColor(step: step),
+                                sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
+                                sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
+                                basePath: effectiveIconBasePath,
+                                padding: step.heroImagePadding
+                            )
                         }
 
-                        if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
-                            Text(subtitle)
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                    }
-                    .frame(maxWidth: 480)
+                        // Title + Subtitle (tight semantic pair)
+                        VStack(spacing: sp.titleSubtitle) {
+                            if let title = localized("title", forStep: step, fallback: step.title) {
+                                Text(title)
+                                    .font(.system(size: 26, weight: .bold))
+                                    .foregroundStyle(.primary)
+                                    .multilineTextAlignment(.center)
+                            }
 
-                    // Rich content blocks (status badges, text, etc.)
-                    if let content = step.content {
-                        VStack(spacing: 12) {
-                            ForEach(content.indices, id: \.self) { index in
-                                let block = localizedContentBlock(content[index], stepId: step.id, blockIndex: index)
-                                introContentBlock(block, blockIndex: index)
+                            if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
+                                Text(subtitle)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
                             }
                         }
-                        // Force re-render when status badges or other dynamic content changes via IPC
-                        .id("processing-content-\(step.id)-\(dynamicContentUpdateCounter)")
-                    }
+                        .frame(maxWidth: sp.contentMaxW)
 
-                    if isCompleted {
-                        // COMPLETED STATE: Show result banner
-                        processingResultBanner(for: step, hasFailed: hasFailed)
-                    } else if step.waitForExternalTrigger != true {
-                        // COUNTDOWN STATE: Show countdown ring and message (not used with external trigger)
-                        countdownRing(for: step)
-
-                        // Processing message with {countdown} substitution
-                        if let message = step.processingMessage {
-                            let displayMessage = message.replacingOccurrences(
-                                of: "{countdown}",
-                                with: "\(processingCountdown)"
-                            )
-                            Text(displayMessage)
-                                .font(.system(size: 16))
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
+                        // Rich content blocks (status badges, text, etc.)
+                        if let content = step.content {
+                            VStack(spacing: sp.blockGap) {
+                                ForEach(content.indices, id: \.self) { index in
+                                    let block = localizedContentBlock(content[index], stepId: step.id, blockIndex: index)
+                                    introContentBlock(block, blockIndex: index)
+                                }
+                            }
+                            // Force re-render when status badges or other dynamic content changes via IPC
+                            .id("processing-content-\(step.id)-\(dynamicContentUpdateCounter)")
                         }
 
-                        // Override buttons (progressive escalation)
-                        overrideButtons(for: step, stepIndex: stepIndex)
-                    }
+                        if isCompleted {
+                            // COMPLETED STATE: Show result banner
+                            processingResultBanner(for: step, hasFailed: hasFailed)
+                        } else if step.waitForExternalTrigger != true {
+                            // COUNTDOWN STATE: Show countdown ring and message (not used with external trigger)
+                            countdownRing(for: step)
 
-                    Spacer(minLength: 20)
+                            // Processing message with {countdown} substitution
+                            if let message = step.processingMessage {
+                                let displayMessage = message.replacingOccurrences(
+                                    of: "{countdown}",
+                                    with: "\(processingCountdown)"
+                                )
+                                Text(displayMessage)
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+
+                            // Override buttons (progressive escalation)
+                            overrideButtons(for: step, stepIndex: stepIndex)
+                        }
+
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, minHeight: contentGeo.size.height)
                 }
-                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, sp.contentPadH)
 
             // Footer - show continue button when completed, hide during processing
             IntroFooterView(
@@ -3021,8 +3041,9 @@ struct Preset5View: View {
             )
         ) {
             GeometryReader { geometry in
+                let sp = InspectSizes.SetupSpacing.self
                 ScrollView {
-                    VStack(spacing: 16) {
+                    VStack(spacing: sp.sectionGap) {
                         Spacer()
 
                         // Hero Image - check for override first
@@ -3052,10 +3073,10 @@ struct Preset5View: View {
                         return localized("title", forStep: step, fallback: step.title)
                     }()
 
-                    // Title + Subtitle (tight semantic pair — Apple SA uses 8pt gap)
-                    VStack(spacing: 8) {
+                    // Title + Subtitle (tight semantic pair)
+                    VStack(spacing: sp.titleSubtitle) {
                         if let title = displayTitle {
-                            HStack(spacing: 8) {
+                            HStack(spacing: sp.titleSubtitle) {
                                 Text(title)
                                     .font(.system(size: 26, weight: .bold))
                                     .multilineTextAlignment(.center)
@@ -3063,7 +3084,7 @@ struct Preset5View: View {
                                 // Step overlay info button (if configured)
                                 stepInfoButton(for: step)
                             }
-                            .frame(maxWidth: 480)
+                            .frame(maxWidth: sp.contentMaxW)
                         }
 
                         if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
@@ -3071,19 +3092,19 @@ struct Preset5View: View {
                                 .font(.system(size: 13))
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
-                                .frame(maxWidth: 480)
+                                .frame(maxWidth: sp.contentMaxW)
                         }
                     }
 
                     // Rich content
                     if let content = step.content {
-                        VStack(spacing: 12) {
+                        VStack(spacing: sp.blockGap) {
                             ForEach(content.indices, id: \.self) { index in
                                 let block = localizedContentBlock(content[index], stepId: step.id, blockIndex: index)
                                 introContentBlock(block, blockIndex: index)
                             }
                         }
-                        .padding(.top, 16)
+                        .padding(.top, sp.topInset)
                         // Force re-render when dynamic state or language changes
                         .id("content-\(step.id)-\(dynamicContentUpdateCounter)-\(selectedLanguageCode ?? "")")
                     }
@@ -3098,8 +3119,8 @@ struct Preset5View: View {
                             showDots: step.mediaShowDots ?? true,
                             accentColor: branding.accentColor
                         )
-                        .padding(.horizontal, 40)
-                        .padding(.top, 16)
+                        .padding(.horizontal, sp.contentPadH)
+                        .padding(.top, sp.topInset)
                     }
 
                     // Grid picker (for wallpaper-style selection)
@@ -3124,7 +3145,7 @@ struct Preset5View: View {
                             selectedIds: binding,
                             accentColor: branding.accentColor
                         )
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, sp.contentPadH)
                     }
 
                     // Note: Wallpaper picker is handled by dedicated wallpaperStepView
@@ -3178,91 +3199,115 @@ struct Preset5View: View {
     /// Setup-size showcase: vertical layout matching Apple Setup Assistant
     @ViewBuilder
     private func showcaseVerticalLayout(step: InspectConfig.IntroStep, stepIndex: Int, canGoBack: Bool, continueText: String, backText: String) -> some View {
-        GeometryReader { geometry in
+        let sp = InspectSizes.SetupSpacing.self
+        return GeometryReader { geometry in
             VStack(spacing: 0) {
-                // Scrollable content area
-                VStack(spacing: 10) {
-                    Spacer(minLength: 10)
+                // Content area with vertical centering
+                GeometryReader { contentGeo in
+                    ScrollView {
+                        VStack(spacing: sp.sectionGap) {
+                            Spacer()
 
-                    // Hero image (standard intro size, not full-bleed)
-                    if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
-                        IntroHeroImage(
-                            path: heroImage,
-                            shape: step.heroImageShape ?? "none",
-                            size: step.heroImageSize ?? 100,
-                            accentColor: heroImageColor(step: step),
-                            sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
-                            sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
-                            basePath: effectiveIconBasePath,
-                            padding: step.heroImagePadding
-                        )
-                    }
+                            // Hero image — showcase renders file images as a wide strip
+                            if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
+                                if heroImage.hasPrefix("SF=") {
+                                    // SF Symbol: standard icon size
+                                    IntroHeroImage(
+                                        path: heroImage,
+                                        shape: step.heroImageShape ?? "none",
+                                        size: step.heroImageSize ?? 100,
+                                        accentColor: heroImageColor(step: step),
+                                        sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
+                                        sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
+                                        basePath: effectiveIconBasePath,
+                                        padding: step.heroImagePadding
+                                    )
+                                } else {
+                                    // File-based image: wide strip, proportional aspect-fit
+                                    let imageHeight = geometry.size.height * (step.assistantImageHeight ?? 0.40)
+                                    let heroBgColor: Color? = step.heroBackgroundColor.flatMap { Color(hex: $0) }
 
-                    // Title + subtitle (centered, Apple-style)
-                    VStack(spacing: 8) {
-                        if let title = localized("title", forStep: step, fallback: step.title) {
-                            Text(title)
-                                .font(.system(size: 26, weight: .bold))
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: 480)
-                        }
-
-                        if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
-                            Text(subtitle)
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: 480)
-                        }
-                    }
-                    .padding(.horizontal, 40)
-
-                    // Rich content (scrollable)
-                    if let content = step.content, !content.isEmpty {
-                        ScrollView {
-                            VStack(spacing: 10) {
-                                ForEach(content.indices, id: \.self) { index in
-                                    let block = localizedContentBlock(content[index], stepId: step.id, blockIndex: index)
-                                    centeredContentContainer {
-                                        GuidanceContentView(
-                                            contentBlocks: [block],
-                                            scaleFactor: 1.0,
-                                            iconBasePath: iconBasePathOverride ?? inspectState.uiConfiguration.iconBasePath,
-                                            inspectState: inspectState,
-                                            itemId: "showcase-block-\(index)",
-                                            accentColor: branding.primaryColor,
-                                            contentAlignment: .center
+                                    ZStack {
+                                        if let bgColor = heroBgColor {
+                                            bgColor
+                                        }
+                                        AsyncImageView(
+                                            iconPath: heroImage,
+                                            basePath: effectiveIconBasePath,
+                                            maxWidth: geometry.size.width,
+                                            maxHeight: imageHeight,
+                                            imageFit: .fill,
+                                            fallback: { Color.clear }
                                         )
+                                        .clipped()
+                                    }
+                                    .frame(width: geometry.size.width, height: imageHeight)
+                                    .clipped()
+                                }
+                            }
+
+                            // Title + subtitle (tight semantic pair)
+                            VStack(spacing: sp.titleSubtitle) {
+                                if let title = localized("title", forStep: step, fallback: step.title) {
+                                    Text(title)
+                                        .font(.system(size: 26, weight: .bold))
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: sp.contentMaxW)
+                                }
+
+                                if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
+                                    Text(subtitle)
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: sp.contentMaxW)
+                                }
+                            }
+
+                            // Rich content
+                            if let content = step.content, !content.isEmpty {
+                                VStack(spacing: sp.blockGap) {
+                                    ForEach(content.indices, id: \.self) { index in
+                                        let block = localizedContentBlock(content[index], stepId: step.id, blockIndex: index)
+                                        centeredContentContainer {
+                                            GuidanceContentView(
+                                                contentBlocks: [block],
+                                                scaleFactor: 1.0,
+                                                iconBasePath: iconBasePathOverride ?? inspectState.uiConfiguration.iconBasePath,
+                                                inspectState: inspectState,
+                                                itemId: "showcase-block-\(index)",
+                                                accentColor: branding.primaryColor,
+                                                contentAlignment: .center
+                                            )
+                                        }
                                     }
                                 }
                             }
+
+                            // Grid picker
+                            if let gridItems = step.gridItems, !gridItems.isEmpty {
+                                let key = step.gridSelectionKey ?? step.id
+                                let binding = Binding<Set<String>>(
+                                    get: { gridSelections[key] ?? [] },
+                                    set: { gridSelections[key] = $0 }
+                                )
+
+                                showcaseGridPicker(
+                                    gridItems: gridItems,
+                                    selectionMode: step.gridSelectionMode ?? "single",
+                                    selectedIds: binding,
+                                    textColor: .primary
+                                )
+                                .padding(.horizontal, sp.contentPadH)
+                            }
+
+                            Spacer()
                         }
-                        .scrollIndicators(.automatic)
+                        .frame(maxWidth: .infinity, minHeight: contentGeo.size.height)
                     }
-
-                    // Grid picker
-                    if let gridItems = step.gridItems, !gridItems.isEmpty {
-                        let key = step.gridSelectionKey ?? step.id
-                        let binding = Binding<Set<String>>(
-                            get: { gridSelections[key] ?? [] },
-                            set: { gridSelections[key] = $0 }
-                        )
-
-                        ScrollView {
-                            showcaseGridPicker(
-                                gridItems: gridItems,
-                                selectionMode: step.gridSelectionMode ?? "single",
-                                selectedIds: binding,
-                                textColor: .primary
-                            )
-                            .padding(.horizontal, 40)
-                        }
-                    }
-
-                    Spacer()
+                    .scrollIndicators(.automatic)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, sp.contentPadH)
 
                 // Standard footer
                 IntroFooterView(
@@ -4038,7 +4083,7 @@ struct Preset5View: View {
 
         formFieldContainer {
             HStack(spacing: 8) {
-                if let label = block.label {
+                if let label = block.label ?? block.content {
                     Text(label)
                         .font(.system(size: 14))
 
@@ -4089,7 +4134,7 @@ struct Preset5View: View {
         formFieldContainer {
             VStack(alignment: .leading, spacing: 10) {
                 // Label row
-                if let label = block.label {
+                if let label = block.label ?? block.content {
                     HStack(spacing: 4) {
                         Text(label)
                             .font(.system(size: 14, weight: .medium))
@@ -4207,7 +4252,7 @@ struct Preset5View: View {
             VStack(alignment: .leading, spacing: 8) {
                 // Label row with value
                 HStack {
-                    if let label = block.label {
+                    if let label = block.label ?? block.content {
                         HStack(spacing: 4) {
                             Text(label)
                                 .font(.system(size: 14, weight: .medium))
@@ -4732,7 +4777,7 @@ struct Preset5View: View {
         let continueText = localized("continueButtonText", forStep: step, fallback: nil) ?? step.continueButtonText ?? "Continue"
 
         GeometryReader { geometry in
-            let contentMaxWidth: CGFloat = 480
+            let sp = InspectSizes.SetupSpacing.self
 
             ZStack(alignment: .topLeading) {
                 // White background
@@ -4740,119 +4785,143 @@ struct Preset5View: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Main scrollable content area
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            // Top spacing
-                            Spacer(minLength: 20)
+                    // Main scrollable content area (with scroll hint overlay)
+                    GeometryReader { contentGeo in
+                        ZStack(alignment: .bottom) {
+                        ScrollView {
+                            VStack(spacing: sp.blockGap) {
+                                Spacer(minLength: 0)
 
-                            // Hero image area (full-width, proportional)
-                            if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
-                                let imageHeight = geometry.size.height * (step.assistantImageHeight ?? 0.4)
-                                let heroBgColor: Color? = step.heroBackgroundColor.flatMap { Color(hex: $0) }
+                                // Hero image area
+                                if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
+                                    if heroImage.hasPrefix("SF=") {
+                                        // SF Symbol hero — use IntroHeroImage for proper rendering
+                                        IntroHeroImage(
+                                            path: heroImage,
+                                            shape: step.heroImageShape ?? "none",
+                                            size: step.heroImageSize ?? 80,
+                                            accentColor: heroImageColor(step: step),
+                                            sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
+                                            sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
+                                            basePath: effectiveIconBasePath,
+                                            padding: step.heroImagePadding
+                                        )
+                                        .padding(.bottom, sp.blockGap)
+                                    } else {
+                                        // File-based hero — full-width proportional with optional background
+                                        let imageHeight = geometry.size.height * (step.assistantImageHeight ?? 0.4)
+                                        let heroBgColor: Color? = step.heroBackgroundColor.flatMap { Color(hex: $0) }
 
-                                ZStack {
-                                    if let bgColor = heroBgColor {
-                                        bgColor
+                                        ZStack {
+                                            if let bgColor = heroBgColor {
+                                                bgColor
+                                            }
+                                            AsyncImageView(
+                                                iconPath: heroImage,
+                                                basePath: effectiveIconBasePath,
+                                                maxWidth: geometry.size.width,
+                                                maxHeight: imageHeight,
+                                                imageFit: .fit,
+                                                fallback: { Color.clear }
+                                            )
+                                        }
+                                        .frame(width: geometry.size.width, height: imageHeight)
                                     }
-                                    AsyncImageView(
-                                        iconPath: heroImage,
-                                        basePath: effectiveIconBasePath,
-                                        maxWidth: geometry.size.width,
-                                        maxHeight: imageHeight,
-                                        imageFit: .fit,
-                                        fallback: { Color.clear }
+                                }
+
+                                // Title + Subtitle (tight semantic pair)
+                                VStack(spacing: sp.titleSubtitle) {
+                                    if let title = localized("title", forStep: step, fallback: step.title) {
+                                        Text(title)
+                                            .font(.system(size: 26, weight: .bold))
+                                            .foregroundStyle(.primary)
+                                            .multilineTextAlignment(.center)
+                                            .frame(maxWidth: sp.contentMaxW)
+                                    }
+
+                                    if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
+                                        Text(subtitle)
+                                            .font(.system(size: 13))
+                                            .foregroundStyle(.secondary)
+                                            .multilineTextAlignment(.center)
+                                            .frame(maxWidth: sp.contentMaxW)
+                                    }
+                                }
+
+                                // Rich content blocks (left-aligned within centered container)
+                                if let content = step.content, !content.isEmpty {
+                                    VStack(alignment: .leading, spacing: sp.blockGap) {
+                                        ForEach(content.indices, id: \.self) { index in
+                                            let block = localizedContentBlock(content[index], stepId: step.id, blockIndex: index)
+                                            introContentBlock(block, blockIndex: index)
+                                        }
+                                    }
+                                    .frame(maxWidth: sp.contentMaxW)
+                                }
+
+                                // Items with filesystem monitoring (left-aligned within centered container)
+                                if let items = step.items, !items.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        ForEach(items, id: \.id) { item in
+                                            assistantItemRow(item: item)
+                                        }
+                                    }
+                                    .frame(maxWidth: sp.contentMaxW)
+                                    .id("items-\(monitoringService.itemStatuses.values.filter { $0 == .completed }.count)")
+                                }
+
+                                // Card grid (centered, wider area for cards)
+                                if let gridItems = step.gridItems, !gridItems.isEmpty {
+                                    let key = step.gridSelectionKey ?? step.id
+                                    let binding = Binding<Set<String>>(
+                                        get: { gridSelections[key] ?? [] },
+                                        set: { gridSelections[key] = $0 }
                                     )
-                                }
-                                .frame(width: geometry.size.width, height: imageHeight)
-                                .padding(.bottom, 24)
-                            }
 
-                            // Title (centered)
-                            if let title = localized("title", forStep: step, fallback: step.title) {
-                                Text(title)
-                                    .font(.system(size: 26, weight: .bold))
-                                    .foregroundStyle(.primary)
-                                    .multilineTextAlignment(.center)
-                                    .frame(maxWidth: contentMaxWidth)
-                                    .padding(.bottom, 8)
-                            }
-
-                            // Subtitle (centered)
-                            if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
-                                Text(subtitle)
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
-                                    .frame(maxWidth: contentMaxWidth)
-                                    .padding(.bottom, 16)
-                            }
-
-                            // Rich content blocks (left-aligned within centered container)
-                            if let content = step.content, !content.isEmpty {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    ForEach(content.indices, id: \.self) { index in
-                                        let block = localizedContentBlock(content[index], stepId: step.id, blockIndex: index)
-                                        introContentBlock(block, blockIndex: index)
-                                    }
-                                }
-                                .frame(maxWidth: contentMaxWidth)
-                                .padding(.bottom, 16)
-                            }
-
-                            // Items with filesystem monitoring (left-aligned within centered container)
-                            if let items = step.items, !items.isEmpty {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    ForEach(items, id: \.id) { item in
-                                        assistantItemRow(item: item)
-                                    }
-                                }
-                                .frame(maxWidth: contentMaxWidth)
-                                .padding(.bottom, 16)
-                                .id("items-\(monitoringService.itemStatuses.values.filter { $0 == .completed }.count)")
-                            }
-
-                            // Card grid (centered, wider area for cards)
-                            if let gridItems = step.gridItems, !gridItems.isEmpty {
-                                let key = step.gridSelectionKey ?? step.id
-                                let binding = Binding<Set<String>>(
-                                    get: { gridSelections[key] ?? [] },
-                                    set: { gridSelections[key] = $0 }
-                                )
-
-                                AssistantGridPicker(
-                                    items: gridItems.map { IntroGridItem(
-                                        id: $0.id,
-                                        imagePath: $0.imagePath,
-                                        sfSymbol: $0.sfSymbol,
-                                        title: $0.title,
-                                        subtitle: $0.description ?? $0.subtitle,
-                                        value: $0.value ?? $0.id
-                                    ) },
-                                    columns: step.gridColumns ?? 3,
-                                    selectionMode: step.gridSelectionMode ?? "single",
-                                    selectedIds: binding,
-                                    basePath: effectiveIconBasePath,
-                                    accentColor: palette.accent
-                                )
-                                .padding(.horizontal, 40)
-                                .padding(.bottom, 16)
-                                .onChange(of: gridSelections[key]) {
-                                    // Auto-advance after grid selection (e.g. language picker)
-                                    if step.autoAdvance == true,
-                                       let selected = gridSelections[key], !selected.isEmpty {
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                                            goToNextStep()
+                                    AssistantGridPicker(
+                                        items: gridItems.map { IntroGridItem(
+                                            id: $0.id,
+                                            imagePath: $0.imagePath,
+                                            sfSymbol: $0.sfSymbol,
+                                            title: $0.title,
+                                            subtitle: $0.description ?? $0.subtitle,
+                                            value: $0.value ?? $0.id
+                                        ) },
+                                        columns: step.gridColumns ?? 3,
+                                        selectionMode: step.gridSelectionMode ?? "single",
+                                        selectedIds: binding,
+                                        basePath: effectiveIconBasePath,
+                                        accentColor: palette.accent
+                                    )
+                                    .padding(.horizontal, sp.contentPadH)
+                                    .onChange(of: gridSelections[key]) {
+                                        // Auto-advance after grid selection (e.g. language picker)
+                                        if step.autoAdvance == true,
+                                           let selected = gridSelections[key], !selected.isEmpty {
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                                goToNextStep()
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            Spacer(minLength: 20)
+                                Spacer(minLength: 0)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: contentGeo.size.height)
+                            .trackScrollForHint(coordinateSpace: "assistantScroll")
                         }
-                        .frame(maxWidth: .infinity)
+                        .coordinateSpace(name: "assistantScroll")
+                        .scrollIndicators(.automatic)
+
+                        ScrollHintOverlay(
+                            containerHeight: contentGeo.size.height,
+                            contentHeight: assistantContentHeight,
+                            scrollOffset: assistantScrollOffset
+                        )
+                        } // ZStack
+                        .onPreferenceChange(ScrollContentHeightKey.self) { assistantContentHeight = $0 }
+                        .onPreferenceChange(ScrollOffsetKey.self) { assistantScrollOffset = $0 }
                     }
-                    .scrollIndicators(.automatic)
 
                     // Footer (unified — back button in standard footer position)
                     IntroFooterView(
@@ -4992,64 +5061,109 @@ struct Preset5View: View {
     }
 
     /// Setup-size guide: vertical layout matching Apple Setup Assistant
+    /// Setup-size guide: OBTemplateView 5-zone vertical layout
+    /// Zone 1 (nav) is handled at Preset5 root level
+    /// Zone 2: Hero image/GIF with gradient background (~45% of height)
+    /// Zone 3: Title + subtitle
+    /// Zone 4: Content blocks (steps, bullets, etc.)
+    /// Zone 5: Footer with back/continue buttons
     @ViewBuilder
     private func guideVerticalLayout(step: InspectConfig.IntroStep, stepIndex: Int, accent: Color) -> some View {
         let canGoBackFromStep = canGoBack(fromStepIndex: stepIndex)
         let continueText = localized("continueButtonText", forStep: step, fallback: nil) ?? step.continueButtonText ?? "Continue"
         let backText = localized("backButtonText", forStep: step, fallback: nil) ?? step.backButtonText ?? "Back"
 
-        GeometryReader { geometry in
+        let sp = InspectSizes.SetupSpacing.self
+        return GeometryReader { geometry in
+            let heroHeight = geometry.size.height * (step.assistantImageHeight ?? 0.45)
+
             VStack(spacing: 0) {
-                // Hero strip at top (35% of height)
+                // Zone 2: Hero with gradient background
                 ZStack {
                     guideGradient(step: step)
 
                     guideLeftPanelContent(step: step, size: CGSize(
                         width: geometry.size.width,
-                        height: geometry.size.height * 0.35
+                        height: heroHeight
                     ))
-
-                    // No title overlay at setup size — title is shown in content area below
                 }
-                .frame(height: geometry.size.height * 0.28)
+                .frame(height: heroHeight)
 
-                // Content area below hero
-                VStack(spacing: 0) {
-                    GeometryReader { contentGeo in
-                        ScrollView(.vertical, showsIndicators: false) {
-                            VStack(alignment: .center, spacing: 8) {
-                                // Title
+                // Zones 3-4: Title + content, vertically centered in remaining space
+                GeometryReader { contentGeo in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: sp.sectionGap) {
+                            Spacer()
+
+                            // Zone 3: Title + Subtitle
+                            VStack(spacing: sp.titleSubtitle) {
                                 if let title = localized("title", forStep: step, fallback: step.title) {
                                     Text(title)
                                         .font(.system(size: 26, weight: .bold))
-                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: sp.contentMaxW)
                                 }
 
-                                guideSidebarContent(step: step, accent: accent, alignment: .center)
+                                if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
+                                    Text(subtitle)
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: sp.contentMaxW)
+                                }
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 16)
-                            .frame(minHeight: contentGeo.size.height)
-                        }
-                    }
 
-                    // Standard footer
-                    IntroFooterView(
-                        footerText: branding.footerText,
-                        backButtonText: backText,
-                        continueButtonText: continueText,
-                        accentColor: accent,
-                        showBackButton: (step.showBackButton ?? true) && canGoBackFromStep,
-                        onBack: canGoBackFromStep ? { goToPreviousStep() } : nil,
-                        onContinue: { goToNextStep() },
-                        inspectConfig: config,
-                        buttonControlSize: setupButtonControlSize,
-                        footerVerticalPadding: setupFooterPadding
-                    )
+                            // Zone 4: Content blocks
+                            if let content = step.content, !content.isEmpty {
+                                VStack(spacing: sp.blockGap) {
+                                    ForEach(content.indices, id: \.self) { index in
+                                        let block = localizedContentBlock(content[index], stepId: step.id, blockIndex: index)
+                                        centeredContentContainer {
+                                            GuidanceContentView(
+                                                contentBlocks: [block],
+                                                scaleFactor: 1.0,
+                                                iconBasePath: iconBasePathOverride ?? inspectState.uiConfiguration.iconBasePath,
+                                                inspectState: inspectState,
+                                                itemId: "guide-block-\(index)",
+                                                accentColor: accent,
+                                                contentAlignment: .center
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Key points (if configured)
+                            if let keyPoints = step.guideKeyPoints {
+                                Text(keyPoints)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: sp.contentMaxW)
+                            }
+
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, minHeight: contentGeo.size.height)
+                        .padding(.horizontal, sp.contentPadH)
+                    }
                 }
-                .background(Color(NSColor.windowBackgroundColor))
+
+                // Zone 5: Footer
+                IntroFooterView(
+                    footerText: branding.footerText,
+                    backButtonText: backText,
+                    continueButtonText: continueText,
+                    accentColor: accent,
+                    showBackButton: (step.showBackButton ?? true) && canGoBackFromStep,
+                    onBack: canGoBackFromStep ? { goToPreviousStep() } : nil,
+                    onContinue: { goToNextStep() },
+                    inspectConfig: config,
+                    buttonControlSize: setupButtonControlSize,
+                    footerVerticalPadding: setupFooterPadding
+                )
             }
+            .background(Color(NSColor.windowBackgroundColor))
         }
     }
 

@@ -1583,4 +1583,151 @@ struct AssistantGridPicker: View {
     }
 }
 
+// MARK: - Scroll Hint Overlay
+
+/// Tracks content height inside a ScrollView and reports whether the content overflows.
+/// Use with `ScrollHintOverlay` to show a bottom fade + chevron cue.
+struct ScrollContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+/// A subtle bottom fade gradient + chevron that appears when scrollable content
+/// overflows the visible area. Disappears once the user scrolls near the bottom.
+///
+/// Usage: wrap the ScrollView in a ZStack and overlay this view.
+struct ScrollHintOverlay: View {
+    let containerHeight: CGFloat
+    let contentHeight: CGFloat
+    let scrollOffset: CGFloat
+
+    private var contentOverflows: Bool {
+        contentHeight > containerHeight + 10
+    }
+
+    private var isNearBottom: Bool {
+        // scrollOffset is typically negative as you scroll down.
+        // Content is near bottom when: |offset| + containerHeight >= contentHeight - threshold
+        let scrolled = -scrollOffset
+        return scrolled + containerHeight >= contentHeight - 20
+    }
+
+    private var shouldShow: Bool {
+        contentOverflows && !isNearBottom
+    }
+
+    var body: some View {
+        if shouldShow {
+            VStack(spacing: 0) {
+                Spacer()
+                ZStack(alignment: .bottom) {
+                    LinearGradient(
+                        colors: [
+                            Color(NSColor.windowBackgroundColor).opacity(0),
+                            Color(NSColor.windowBackgroundColor).opacity(0.85),
+                            Color(NSColor.windowBackgroundColor)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 48)
+
+                    Image(systemName: "chevron.compact.down")
+                        .font(.system(size: 20, weight: .light))
+                        .foregroundStyle(.secondary.opacity(0.6))
+                        .padding(.bottom, 6)
+                }
+            }
+            .allowsHitTesting(false)
+            .transition(.opacity)
+            .animation(.easeInOut(duration: 0.25), value: shouldShow)
+        }
+    }
+}
+
+/// Preference key for tracking vertical scroll offset within a named coordinate space.
+struct ScrollOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+/// View modifier that adds scroll overflow detection + hint overlay to a ScrollView.
+/// Attach to a GeometryReader that wraps a ScrollView for automatic content overflow hints.
+struct ScrollHintModifier: ViewModifier {
+    let coordinateSpaceName: String
+    @State private var contentHeight: CGFloat = 0
+    @State private var scrollOffset: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        GeometryReader { containerGeo in
+            ZStack(alignment: .bottom) {
+                content
+                    .environment(\.scrollHintCoordinateSpace, coordinateSpaceName)
+                    .environment(\.scrollHintContainerHeight, containerGeo.size.height)
+                    .onPreferenceChange(ScrollContentHeightKey.self) { height in
+                        contentHeight = height
+                    }
+                    .onPreferenceChange(ScrollOffsetKey.self) { offset in
+                        scrollOffset = offset
+                    }
+
+                ScrollHintOverlay(
+                    containerHeight: containerGeo.size.height,
+                    contentHeight: contentHeight,
+                    scrollOffset: scrollOffset
+                )
+            }
+        }
+    }
+}
+
+// Environment keys for passing scroll hint context to inner views
+private struct ScrollHintCoordinateSpaceKey: EnvironmentKey {
+    static let defaultValue: String = "scrollHint"
+}
+
+private struct ScrollHintContainerHeightKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 0
+}
+
+extension EnvironmentValues {
+    var scrollHintCoordinateSpace: String {
+        get { self[ScrollHintCoordinateSpaceKey.self] }
+        set { self[ScrollHintCoordinateSpaceKey.self] = newValue }
+    }
+
+    var scrollHintContainerHeight: CGFloat {
+        get { self[ScrollHintContainerHeightKey.self] }
+        set { self[ScrollHintContainerHeightKey.self] = newValue }
+    }
+}
+
+/// View extension to easily add scroll tracking to a ScrollView's inner content VStack.
+extension View {
+    /// Reports content height and scroll offset for scroll hint overlay detection.
+    /// Place this on the VStack inside a ScrollView that uses `.scrollHintOverlay()`.
+    func trackScrollForHint(coordinateSpace: String = "scrollHint") -> some View {
+        self
+            .background(GeometryReader { innerGeo in
+                Color.clear
+                    .preference(key: ScrollContentHeightKey.self, value: innerGeo.size.height)
+            })
+            .background(GeometryReader { innerGeo in
+                Color.clear
+                    .preference(key: ScrollOffsetKey.self,
+                                value: innerGeo.frame(in: .named(coordinateSpace)).minY)
+            })
+    }
+
+    /// Adds a scroll hint overlay that shows a bottom fade + chevron when content overflows.
+    /// Use together with `.trackScrollForHint()` on the inner content.
+    func scrollHintOverlay(coordinateSpace: String = "scrollHint") -> some View {
+        self.modifier(ScrollHintModifier(coordinateSpaceName: coordinateSpace))
+    }
+}
+
 // Note: Wallpaper picker for Preset5 reuses WallpaperPickerView from PresetCommonHelpers.swift
