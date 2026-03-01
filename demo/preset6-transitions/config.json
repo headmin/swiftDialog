@@ -1,0 +1,234 @@
+{
+  "preset": "guidance",
+  "windowTitle": "Apple Design Uplift Tests",
+  "highlightColor": "#05164D",
+  "items": [
+    {
+      "id": "welcome",
+      "displayName": "Welcome",
+      "stepType": "intro",
+      "icon": "sf=hand.wave.fill",
+      "guidanceTitle": "Preset6 Apple Design Tests",
+      "guidanceContent": [
+        {
+          "type": "text",
+          "content": "This test config exercises the Apple design quality uplift changes."
+        },
+        {
+          "type": "text",
+          "content": "Each step tests a specific feature. Use the interactive script to verify."
+        }
+      ],
+      "continueButtonText": "Begin Tests"
+    },
+    {
+      "id": "transitions-basic",
+      "displayName": "Transitions",
+      "icon": "sf=arrow.left.arrow.right",
+      "guidanceTitle": "Transition Direction Test",
+      "guidanceContent": [
+        {
+          "type": "info",
+          "content": "This step should have slid in from the RIGHT (forward direction)."
+        },
+        {
+          "type": "text",
+          "content": "Click the back button overlay (top-left chevron) to go backward. The content should slide RIGHT (backward direction) and the previous step should slide in from the LEFT."
+        },
+        {
+          "type": "highlight",
+          "content": "Then click Continue to come back here and verify forward transition again."
+        }
+      ]
+    },
+    {
+      "id": "back-button",
+      "displayName": "Back Button",
+      "icon": "sf=chevron.left.circle",
+      "guidanceTitle": "Floating Back Button Test",
+      "guidanceContent": [
+        {
+          "type": "info",
+          "content": "The back button should be a floating circular chevron at the TOP-LEFT of this content panel."
+        },
+        {
+          "type": "arrow",
+          "content": "It should NOT appear in the footer bar (bottom)"
+        },
+        {
+          "type": "arrow",
+          "content": "It should be 18pt from the left edge, 12pt from the top"
+        },
+        {
+          "type": "arrow",
+          "content": "It should have a circular quaternary background"
+        },
+        {
+          "type": "warning",
+          "content": "The footer bar should only show: footer text, step counter, and Continue button."
+        }
+      ]
+    },
+    {
+      "id": "content-width",
+      "displayName": "Content Width",
+      "icon": "sf=ruler",
+      "guidanceTitle": "Content Width Constraint Test",
+      "guidanceContent": [
+        {
+          "type": "text",
+          "content": "This paragraph tests the 420pt max-width constraint. The text should NOT stretch across the full width of the content panel. Instead, it should be constrained to a comfortable reading width of approximately 420 points, centered within the panel. There should be visible breathing room on both sides of the text column."
+        },
+        {
+          "type": "text",
+          "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+        },
+        {
+          "type": "label-value",
+          "label": "Expected max width",
+          "value": "420pt"
+        },
+        {
+          "type": "label-value",
+          "label": "Content panel width",
+          "value": "~640pt (860 - 220 sidebar)"
+        },
+        {
+          "type": "label-value",
+          "label": "Side margins",
+          "value": "~110pt each side"
+        }
+      ]
+    },
+    {
+      "id": "forms-test",
+      "displayName": "Forms",
+      "icon": "sf=checklist",
+      "guidanceTitle": "Form Elements at 420pt",
+      "guidanceContent": [
+        {
+          "type": "text",
+          "content": "Interactive form elements should render properly within the 420pt column."
+        },
+        {
+          "type": "checkbox_group",
+          "id": "test_checkboxes",
+          "label": "Checkbox test group",
+          "options": ["FileVault Encryption", "Firewall Enabled", "Automatic Security Updates", "Gatekeeper Active"]
+        },
+        {
+          "type": "dropdown",
+          "id": "test_dropdown",
+          "label": "Deployment target",
+          "options": ["Development", "Staging", "Production (Requires Approval)", "Enterprise (Contact Sales Team)"]
+        },
+        {
+          "type": "text_input",
+          "id": "test_textfield",
+          "label": "Device name",
+          "placeholder": "e.g. MBP-JDOE-2026"
+        },
+        {
+          "type": "slider",
+          "id": "test_slider",
+          "label": "Display brightness",
+          "min": 0,
+          "max": 100,
+          "step": 10,
+          "unit": "%",
+          "helpText": "Adjusts the display brightness level. Lower values save battery."
+        }
+      ]
+    },
+    {
+      "id": "sidebar-nav",
+      "displayName": "Sidebar Nav",
+      "icon": "sf=sidebar.left",
+      "guidanceTitle": "Sidebar Navigation Direction Test",
+      "guidanceContent": [
+        {
+          "type": "text",
+          "content": "Click sidebar items to test direction-aware transitions via sidebar navigation."
+        },
+        {
+          "type": "arrow",
+          "content": "Click 'Transitions' (step 2) in the sidebar. Content should slide RIGHT (backward)."
+        },
+        {
+          "type": "arrow",
+          "content": "Then click 'Sidebar Nav' (this step) in the sidebar. Content should slide LEFT (forward)."
+        },
+        {
+          "type": "info",
+          "content": "The transition direction should always match the navigation direction: clicking a step BEFORE the current one slides backward, clicking AFTER slides forward."
+        }
+      ]
+    },
+    {
+      "id": "scroll-test",
+      "displayName": "Long Content",
+      "icon": "sf=scroll",
+      "guidanceTitle": "Scroll & Overflow Test",
+      "guidanceContent": [
+        {
+          "type": "text",
+          "content": "This step has enough content to require scrolling. The scroll hint overlay should appear at the bottom when content overflows."
+        },
+        {
+          "type": "text",
+          "content": "Section 1: The content panel uses a ScrollView with vertical scrolling. When content exceeds the visible area, a subtle gradient hint appears at the bottom to indicate more content below."
+        },
+        {
+          "type": "info",
+          "content": "The scroll hint should fade away as you scroll down toward the bottom of the content."
+        },
+        {
+          "type": "text",
+          "content": "Section 2: The 420pt width constraint ensures that even long paragraphs remain readable. Without this constraint, text lines would stretch across the full 640pt content panel, making them harder to read. The ideal line length for body text is 65-75 characters."
+        },
+        {
+          "type": "highlight",
+          "content": "Section 3: This highlight block should also respect the 420pt width constraint and be centered within the panel."
+        },
+        {
+          "type": "text",
+          "content": "Section 4: Additional content to ensure scrolling is needed. The spring animation on step transitions should still feel smooth even when the content requires scrolling."
+        },
+        {
+          "type": "warning",
+          "content": "Section 5: Warning blocks should also be properly constrained and centered."
+        },
+        {
+          "type": "text",
+          "content": "Section 6: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nunc id aliquam tincidunt, nisi nunc tincidunt urna, nec tincidunt nunc nunc id nunc. Sed euismod, nunc id aliquam tincidunt."
+        },
+        {
+          "type": "success",
+          "content": "Section 7: If you can see this, the content overflows properly and scrolling works."
+        },
+        {
+          "type": "text",
+          "content": "Section 8: Final padding content. The back button overlay at top-left should remain fixed and not scroll with the content."
+        }
+      ]
+    },
+    {
+      "id": "complete",
+      "displayName": "Complete",
+      "stepType": "outro",
+      "icon": "sf=checkmark.circle.fill",
+      "guidanceTitle": "All Tests Passed!",
+      "guidanceContent": [
+        {
+          "type": "text",
+          "content": "If all visual checks passed, the Apple design quality uplift is working correctly."
+        },
+        {
+          "type": "success",
+          "content": "Transitions, back button overlay, content width, forms, sidebar nav, and scrolling all verified."
+        }
+      ],
+      "continueButtonText": "Finish"
+    }
+  ]
+}
