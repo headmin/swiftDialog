@@ -466,114 +466,120 @@ struct Preset6View: View, InspectLayoutProtocol {
 
     @ViewBuilder
     private var contentPanel: some View {
-        ZStack(alignment: .topLeading) {
-            VStack(spacing: 0) {
-                if let currentItem = inspectState.items[safe: currentStep] {
-                    // Content area with scroll hint overlay for long-form steps
-                    GeometryReader { contentGeo in
-                        ZStack(alignment: .bottom) {
-                            ScrollView(.vertical, showsIndicators: true) {
-                                let sp = InspectSizes.SetupSpacing.self
-                                VStack(alignment: .leading, spacing: sp.sectionGap) {
-                                    // Step heading
-                                    stepHeading(for: currentItem)
-
-                                    // Guidance content blocks
-                                    if let guidanceContent = currentItem.guidanceContent, !guidanceContent.isEmpty {
-                                        // Apply localization then dynamic content updates to guidance blocks
-                                        let updatedContent = guidanceContent.enumerated().map { index, block in
-                                            let locBlock = localizedContentBlock(block, itemId: currentItem.id, blockIndex: index)
-                                            return applyDynamicUpdates(to: locBlock, index: index, itemId: currentItem.id)
-                                        }
-
-                                        GuidanceContentView(
-                                            contentBlocks: updatedContent,
-                                            scaleFactor: scaleFactor,
-                                            iconBasePath: inspectState.uiConfiguration.iconBasePath,
-                                            inspectState: inspectState,
-                                            itemId: currentItem.id,
-                                            onOverlayTap: currentItem.itemOverlay != nil ? {
-                                                selectedItemForDetail = currentItem
-                                                showItemDetailOverlay = true
-                                            } : nil,
-                                            accentColor: highlightColor
-                                        )
-                                        // Force re-render when dynamic properties change for this item
-                                        .id("guidance-\(currentItem.id)-\(dynamicState.dynamicGuidanceProperties[currentItem.id]?.hashValue ?? 0)")
-                                    } else {
-                                        // Fallback for items without guidanceContent
-                                        fallbackContentView(for: currentItem)
-                                    }
-
-                                    // Processing state display
-                                    if isProcessing && processingState.stepId == currentItem.id {
-                                        processingStateView(for: currentItem)
-                                    }
-
-                                    // Success/Failure banner
-                                    resultBanner(for: currentItem)
+        VStack(spacing: 0) {
+            if let currentItem = inspectState.items[safe: currentStep] {
+                // Content area with scroll hint overlay for long-form steps
+                GeometryReader { contentGeo in
+                    ZStack(alignment: .bottom) {
+                        ScrollView(.vertical, showsIndicators: true) {
+                            let sp = InspectSizes.SetupSpacing.self
+                            VStack(alignment: .leading, spacing: sp.sectionGap) {
+                                // Inline back button (scrolls with content, above heading)
+                                if canGoBack && useInlineBackButton {
+                                    inlineBackButton
                                 }
-                                .frame(maxWidth: 420, alignment: .leading)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.horizontal, sp.contentPadH)
-                                .padding(.vertical, sp.sectionGap)
-                                .trackScrollForHint(coordinateSpace: "preset6Content")
+
+                                // Step heading
+                                stepHeading(for: currentItem)
+
+                                // Guidance content blocks
+                                if let guidanceContent = currentItem.guidanceContent, !guidanceContent.isEmpty {
+                                    // Apply localization then dynamic content updates to guidance blocks
+                                    let updatedContent = guidanceContent.enumerated().map { index, block in
+                                        let locBlock = localizedContentBlock(block, itemId: currentItem.id, blockIndex: index)
+                                        return applyDynamicUpdates(to: locBlock, index: index, itemId: currentItem.id)
+                                    }
+
+                                    GuidanceContentView(
+                                        contentBlocks: updatedContent,
+                                        scaleFactor: scaleFactor,
+                                        iconBasePath: inspectState.uiConfiguration.iconBasePath,
+                                        inspectState: inspectState,
+                                        itemId: currentItem.id,
+                                        onOverlayTap: currentItem.itemOverlay != nil ? {
+                                            selectedItemForDetail = currentItem
+                                            showItemDetailOverlay = true
+                                        } : nil,
+                                        accentColor: highlightColor
+                                    )
+                                    // Force re-render when dynamic properties change for this item
+                                    .id("guidance-\(currentItem.id)-\(dynamicState.dynamicGuidanceProperties[currentItem.id]?.hashValue ?? 0)")
+                                } else {
+                                    // Fallback for items without guidanceContent
+                                    fallbackContentView(for: currentItem)
+                                }
+
+                                // Processing state display
+                                if isProcessing && processingState.stepId == currentItem.id {
+                                    processingStateView(for: currentItem)
+                                }
+
+                                // Success/Failure banner
+                                resultBanner(for: currentItem)
                             }
-                            .coordinateSpace(name: "preset6Content")
-
-                            ScrollHintOverlay(
-                                containerHeight: contentGeo.size.height,
-                                contentHeight: contentPanelContentHeight,
-                                scrollOffset: contentPanelScrollOffset
-                            )
+                            .frame(maxWidth: 420, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.horizontal, sp.contentPadH)
+                            .padding(.vertical, sp.sectionGap)
+                            .trackScrollForHint(coordinateSpace: "preset6Content")
                         }
-                        .onPreferenceChange(ScrollContentHeightKey.self) { contentPanelContentHeight = $0 }
-                        .onPreferenceChange(ScrollOffsetKey.self) { contentPanelScrollOffset = $0 }
-                    }
-                    .id(currentStep)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: navigationDirection == .forward ? .trailing : .leading)
-                                   .combined(with: .opacity),
-                        removal:   .move(edge: navigationDirection == .forward ? .leading : .trailing)
-                                   .combined(with: .opacity)
-                    ))
-                } else {
-                    // Completion state
-                    completionView
-                }
-            }
+                        .coordinateSpace(name: "preset6Content")
 
-            // Floating back button overlay (Apple Zone 1: top-left of content panel)
-            if canGoBack {
-                backButtonOverlay
+                        ScrollHintOverlay(
+                            containerHeight: contentGeo.size.height,
+                            contentHeight: contentPanelContentHeight,
+                            scrollOffset: contentPanelScrollOffset
+                        )
+                    }
+                    .onPreferenceChange(ScrollContentHeightKey.self) { contentPanelContentHeight = $0 }
+                    .onPreferenceChange(ScrollOffsetKey.self) { contentPanelScrollOffset = $0 }
+                }
+                .id(currentStep)
+                .transition(.asymmetric(
+                    insertion: .move(edge: navigationDirection == .forward ? .trailing : .leading)
+                               .combined(with: .opacity),
+                    removal:   .move(edge: navigationDirection == .forward ? .leading : .trailing)
+                               .combined(with: .opacity)
+                ))
+            } else {
+                // Completion state
+                completionView
             }
         }
-        .clipped()
         .background(Color(NSColor.windowBackgroundColor))
     }
 
-    // MARK: - Back Button Overlay
+    // MARK: - Inline Back Button
+
+    /// Whether to show the back button inline (inside scroll, above heading) vs in the footer bar.
+    /// Controlled by config `backButtonStyle`: "inline" (default) or "footer".
+    private var useInlineBackButton: Bool {
+        let style = inspectState.config?.backButtonStyle ?? "inline"
+        return style == "inline"
+    }
 
     @ViewBuilder
-    private var backButtonOverlay: some View {
+    private var inlineBackButton: some View {
         let backText: String = {
             if let item = inspectState.items[safe: currentStep],
                let loc = localized("backButtonText", forItem: item, fallback: nil) { return loc }
             return branding.button2Text ?? "Back"
         }()
 
-        Button(action: { goToPreviousStep() }) {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
-                .frame(width: 28, height: 28)
-                .background(Circle().fill(.quaternary))
+        HStack {
+            Button(action: { goToPreviousStep() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(.quaternary))
+            }
+            .buttonStyle(.plain)
+            .help(backText)
+            .accessibilityLabel(backText)
+
+            Spacer()
         }
-        .buttonStyle(.plain)
-        .help(backText)
-        .accessibilityLabel(backText)
-        .padding(.leading, 18)
-        .padding(.top, 12)
     }
 
     // MARK: - Step Heading
@@ -884,8 +890,26 @@ struct Preset6View: View, InspectLayoutProtocol {
 
             Spacer()
 
-            // Continue button (back button is now a floating overlay on the content panel)
+            // Buttons (back button appears here only when backButtonStyle is "footer")
             HStack(spacing: 12) {
+                if canGoBack && !useInlineBackButton {
+                    let backText: String = {
+                        if let item = inspectState.items[safe: currentStep],
+                           let loc = localized("backButtonText", forItem: item, fallback: nil) { return loc }
+                        return branding.button2Text ?? "Back"
+                    }()
+                    Button(action: { goToPreviousStep() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(.quaternary))
+                    }
+                    .buttonStyle(.plain)
+                    .help(backText)
+                    .accessibilityLabel(backText)
+                }
+
                 Button(getContinueButtonText()) {
                     handleContinue()
                 }

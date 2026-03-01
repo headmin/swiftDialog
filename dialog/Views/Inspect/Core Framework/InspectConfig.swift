@@ -115,6 +115,7 @@ struct InspectConfig: Codable {
     let imageRotationInterval: Double?      // set interval for auto-rotation
     let imageShape: String?                  // rectangle, square, circle - used in preset6
     let imageSyncMode: String?              // "manual" | "sync" | "auto"
+    let backButtonStyle: String?             // "inline" (inside scroll, default) | "footer" (in footer bar)
     let stepStyle: String?                  // "plain" | "colored" | "cards"
     let listIndicatorStyle: String?         // "letters" | "numbers" | "roman" - list indicator format
     let progressMode: String?                // "shared" (single bar, X of Y) | "perItem" (indeterminate per item) — Preset4 toast installer
@@ -1628,6 +1629,7 @@ struct InspectConfig: Codable {
         try container.encodeIfPresent(imageRotationInterval, forKey: .imageRotationInterval)
         try container.encodeIfPresent(imageShape, forKey: .imageShape)
         try container.encodeIfPresent(imageSyncMode, forKey: .imageSyncMode)
+        try container.encodeIfPresent(backButtonStyle, forKey: .backButtonStyle)
         try container.encodeIfPresent(stepStyle, forKey: .stepStyle)
         try container.encodeIfPresent(listIndicatorStyle, forKey: .listIndicatorStyle)
         try container.encodeIfPresent(progressBarConfig, forKey: .progressBarConfig)
@@ -1739,6 +1741,7 @@ struct InspectConfig: Codable {
         imageRotationInterval = try container.decodeIfPresent(Double.self, forKey: .imageRotationInterval)
         imageShape = try container.decodeIfPresent(String.self, forKey: .imageShape)
         imageSyncMode = try container.decodeIfPresent(String.self, forKey: .imageSyncMode)
+        backButtonStyle = try container.decodeIfPresent(String.self, forKey: .backButtonStyle)
         stepStyle = try container.decodeIfPresent(String.self, forKey: .stepStyle)
         listIndicatorStyle = try container.decodeIfPresent(String.self, forKey: .listIndicatorStyle)
         progressMode = try container.decodeIfPresent(String.self, forKey: .progressMode)
@@ -1824,7 +1827,7 @@ struct InspectConfig: Codable {
         // Intro/outro screens
         case introSteps
         // Preset6 specific properties
-        case iconBasePath, overlayicon, rotatingImages, imageRotationInterval, imageShape, imageSyncMode, stepStyle, listIndicatorStyle
+        case iconBasePath, overlayicon, rotatingImages, imageRotationInterval, imageShape, imageSyncMode, backButtonStyle, stepStyle, listIndicatorStyle
         // Progress mode (Preset4 toast installer)
         case progressMode
         // Progress bar configuration
