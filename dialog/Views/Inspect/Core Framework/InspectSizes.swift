@@ -84,10 +84,10 @@ public enum InspectSizes {
             }
 
         case "preset6":
-            // Modern sidebar navigation — 220pt sidebar + Preset5-equivalent content width
+            // Modern sidebar navigation — 220pt sidebar + content panel
             switch mode {
-            case "large": return (1200, 750)
-            default: return (1024, 640)  // standard (sidebar 220 + content ~804)
+            case "large": return (1100, 700)
+            default: return (860, 620)  // standard (sidebar 220 + content 640)
             }
 
         default:

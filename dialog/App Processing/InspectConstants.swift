@@ -29,6 +29,7 @@ struct InspectConstants {
     static let longAnimationDuration: TimeInterval = 0.5
     static let scaleAnimationDuration: TimeInterval = 0.2
     static let stepTransition: Animation = .interpolatingSpring(mass: 2, stiffness: 300, damping: 50)
+    static let snappyExit: Animation = .interpolatingSpring(mass: 0.75, stiffness: 350, damping: 20)
     
     // MARK: - Performance Limits
     static let maxRetryAttempts = 3
