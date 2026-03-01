@@ -863,7 +863,7 @@ struct InspectConfig: Codable {
         let id: String?                 // Unique identifier for storing user input
         let required: Bool?             // Whether this input is required for step completion
         let options: [String]?          // Options for dropdown/radio selections
-        let value: String?              // Default/current value (for checkbox, toggle, dropdown, radio) or numeric value as string for slider
+        var value: String?              // Default/current value (for checkbox, toggle, dropdown, radio) or numeric value as string for slider
         var helpText: String?           // Optional help text displayed in info popover (i icon)
 
         // Slider-specific fields (for type="slider")

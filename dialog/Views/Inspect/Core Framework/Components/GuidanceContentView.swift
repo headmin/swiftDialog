@@ -190,7 +190,7 @@ struct GuidanceContentView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 13 * scaleFactor))
                     .foregroundStyle(palette.warning)
-                Text(block.content ?? "")
+                Text(attributedMarkdown(block.content ?? ""))
                     .font(.system(size: 13 * scaleFactor))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -207,7 +207,7 @@ struct GuidanceContentView: View {
                 Image(systemName: "info.circle.fill")
                     .font(.system(size: 13 * scaleFactor))
                     .foregroundStyle(palette.info)
-                Text(block.content ?? "")
+                Text(attributedMarkdown(block.content ?? ""))
                     .font(.system(size: 13 * scaleFactor))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -224,7 +224,7 @@ struct GuidanceContentView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 13 * scaleFactor))
                     .foregroundStyle(palette.success)
-                Text(block.content ?? "")
+                Text(attributedMarkdown(block.content ?? ""))
                     .font(.system(size: 13 * scaleFactor))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -308,8 +308,8 @@ struct GuidanceContentView: View {
                                         .font(.system(size: 13 * scaleFactor))
                                         .foregroundStyle(.secondary)
                                 }
-                                Text(item)
-                                    .font(.system(size: 13 * scaleFactor, weight: (block.numbered == true || block.icon != nil) ? .medium : .regular))
+                                Text(attributedMarkdown(item))
+                                    .font(.system(size: 13 * scaleFactor))
                                     .foregroundStyle(.primary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -389,6 +389,22 @@ struct GuidanceContentView: View {
                             .font(.system(size: (CGFloat(block.imageHeight ?? 200) * scaleFactor) * 0.5))
                             .foregroundStyle(accentColor ?? .secondary)
                             .frame(height: CGFloat(block.imageHeight ?? 200) * scaleFactor)
+
+                        if let caption = block.caption {
+                            Text(caption)
+                                .font(.system(size: 11 * scaleFactor))
+                                .foregroundStyle(.secondary)
+                                .italic()
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 2 * scaleFactor)
+                        }
+                    } else if contentPath.lowercased() == "computer" {
+                        // Device-specific hardware icon (same as --icon computer)
+                        Image(nsImage: NSImage(named: NSImage.computerName) ?? NSImage())
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: CGFloat(block.imageWidth ?? 128) * scaleFactor)
+                            .padding(.vertical, 4 * scaleFactor)
 
                         if let caption = block.caption {
                             Text(caption)

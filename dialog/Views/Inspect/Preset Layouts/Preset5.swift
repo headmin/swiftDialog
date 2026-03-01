@@ -3701,20 +3701,31 @@ struct Preset5View: View {
     /// - Parameters:
     ///   - block: The content block configuration
     ///   - blockIndex: Index of the block in the content array (for dynamic updates)
+    /// Apply dynamic state overrides from plistMonitors to a guidance content block
+    private func applyDynamicState(to block: InspectConfig.GuidanceContent, dynamicState: DynamicContentState?) -> InspectConfig.GuidanceContent {
+        guard let ds = dynamicState else { return block }
+        var b = block
+        if let actual = ds.actual, !actual.isEmpty { b.value = actual }
+        if let label = ds.label, !label.isEmpty { b.label = label }
+        if let content = ds.content, !content.isEmpty { b.content = content }
+        return b
+    }
+
     @ViewBuilder
     private func introContentBlock(_ block: InspectConfig.GuidanceContent, blockIndex: Int = 0) -> some View {
         // Get dynamic state for this block index (if monitoring is active)
         let dynamicState = introStepMonitor.stateForBlock(blockIndex)
+        let effectiveBlock = applyDynamicState(to: block, dynamicState: dynamicState)
 
-        switch block.type {
+        switch effectiveBlock.type {
         // MARK: - Delegated Content Types (rendered by GuidanceContentView with accent color)
         case "text", "bullets", "info", "warning", "success", "arrow",
              "highlight", "label-value", "explainer", "image", "video", "button":
             // Video blocks use full width; all others constrained to 480pt
-            let wideBlock = (block.type == "video" || block.type == "image")
+            let wideBlock = (effectiveBlock.type == "video" || effectiveBlock.type == "image")
             centeredContentContainer(maxWidth: wideBlock ? .infinity : 480) {
                 GuidanceContentView(
-                    contentBlocks: [block],
+                    contentBlocks: [effectiveBlock],
                     scaleFactor: 1.0,
                     iconBasePath: iconBasePathOverride ?? inspectState.uiConfiguration.iconBasePath,
                     inspectState: inspectState,
