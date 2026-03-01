@@ -81,10 +81,11 @@ struct IntroHeroImage: View {
     @ViewBuilder
     private func imageFileView(path: String) -> some View {
         let contentSize = size - 2 * effectivePadding
+        let usesFit = shape.lowercased() == "none"
         if let nsImage = loadImage(path: path) {
             Image(nsImage: nsImage)
                 .resizable()
-                .aspectRatio(contentMode: .fill)
+                .aspectRatio(contentMode: usesFit ? .fit : .fill)
                 .frame(width: max(contentSize, 10), height: max(contentSize, 10))
                 .clipped()
         } else {
@@ -209,6 +210,9 @@ struct IntroFooterView<PopoverContent: View>: View {
     let skipButtonText: String?
     let onSkip: (() -> Void)?
     let inspectConfig: InspectConfig?
+    let buttonControlSize: ControlSize
+    let footerVerticalPadding: CGFloat
+    let showDeferral: Bool
 
     @State private var showPopover: Bool = false
 
@@ -226,6 +230,9 @@ struct IntroFooterView<PopoverContent: View>: View {
         skipButtonText: String? = nil,
         onSkip: (() -> Void)? = nil,
         inspectConfig: InspectConfig? = nil,
+        buttonControlSize: ControlSize = .large,
+        footerVerticalPadding: CGFloat = 16,
+        showDeferral: Bool = true,
         @ViewBuilder popoverContent: @escaping () -> PopoverContent
     ) {
         self.footerText = footerText
@@ -242,6 +249,9 @@ struct IntroFooterView<PopoverContent: View>: View {
         self.skipButtonText = skipButtonText
         self.onSkip = onSkip
         self.inspectConfig = inspectConfig
+        self.buttonControlSize = buttonControlSize
+        self.footerVerticalPadding = footerVerticalPadding
+        self.showDeferral = showDeferral
     }
 
     var body: some View {
@@ -282,7 +292,7 @@ struct IntroFooterView<PopoverContent: View>: View {
                 Spacer()
 
                 // Deferral menu (right side, next to navigation buttons)
-                if isDeferralEnabled(config: inspectConfig) {
+                if showDeferral && isDeferralEnabled(config: inspectConfig) {
                     DeferralMenuView(
                         config: inspectConfig,
                         accentColor: accentColor,
@@ -294,7 +304,7 @@ struct IntroFooterView<PopoverContent: View>: View {
                 if showBackButton, let onBack = onBack {
                     Button(action: onBack) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(.secondary)
                             .frame(width: 28, height: 28)
                             .background(Circle().fill(.quaternary))
@@ -308,19 +318,19 @@ struct IntroFooterView<PopoverContent: View>: View {
                 if let skipText = skipButtonText, let onSkip = onSkip {
                     Button(skipText, action: onSkip)
                         .buttonStyle(.bordered)
-                        .controlSize(.large)
+                        .controlSize(buttonControlSize)
                 }
 
                 // Continue button
                 Button(continueButtonText, action: onContinue)
                     .buttonStyle(.borderedProminent)
                     .tint(accentColor)
-                    .controlSize(.large)
+                    .controlSize(buttonControlSize)
                     .disabled(continueDisabled)
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .padding(.vertical, footerVerticalPadding)
         .tint(accentColor)  // Ensure all buttons inherit tint
     }
 }
@@ -339,7 +349,10 @@ extension IntroFooterView where PopoverContent == EmptyView {
         footerLink: String? = nil,
         skipButtonText: String? = nil,
         onSkip: (() -> Void)? = nil,
-        inspectConfig: InspectConfig? = nil
+        inspectConfig: InspectConfig? = nil,
+        buttonControlSize: ControlSize = .large,
+        footerVerticalPadding: CGFloat = 16,
+        showDeferral: Bool = true
     ) {
         self.footerText = footerText
         self.backButtonText = backButtonText
@@ -355,6 +368,9 @@ extension IntroFooterView where PopoverContent == EmptyView {
         self.skipButtonText = skipButtonText
         self.onSkip = onSkip
         self.inspectConfig = inspectConfig
+        self.buttonControlSize = buttonControlSize
+        self.footerVerticalPadding = footerVerticalPadding
+        self.showDeferral = showDeferral
     }
 }
 
@@ -526,6 +542,9 @@ struct IntroStepContainer<Content: View>: View {
         let skipButtonText: String?
         let onSkip: (() -> Void)?
         let inspectConfig: InspectConfig?
+        let buttonControlSize: ControlSize
+        let footerVerticalPadding: CGFloat
+        let showDeferral: Bool
 
         init(
             footerText: String? = nil,
@@ -538,7 +557,10 @@ struct IntroStepContainer<Content: View>: View {
             footerLink: String? = nil,
             skipButtonText: String? = nil,
             onSkip: (() -> Void)? = nil,
-            inspectConfig: InspectConfig? = nil
+            inspectConfig: InspectConfig? = nil,
+            buttonControlSize: ControlSize = .large,
+            footerVerticalPadding: CGFloat = 16,
+            showDeferral: Bool = true
         ) {
             self.footerText = footerText
             self.backButtonText = backButtonText
@@ -551,6 +573,9 @@ struct IntroStepContainer<Content: View>: View {
             self.skipButtonText = skipButtonText
             self.onSkip = onSkip
             self.inspectConfig = inspectConfig
+            self.buttonControlSize = buttonControlSize
+            self.footerVerticalPadding = footerVerticalPadding
+            self.showDeferral = showDeferral
         }
     }
 
@@ -606,7 +631,10 @@ struct IntroStepContainer<Content: View>: View {
                 footerLink: footerConfig.footerLink,
                 skipButtonText: footerConfig.skipButtonText,
                 onSkip: footerConfig.onSkip,
-                inspectConfig: footerConfig.inspectConfig
+                inspectConfig: footerConfig.inspectConfig,
+                buttonControlSize: footerConfig.buttonControlSize,
+                footerVerticalPadding: footerConfig.footerVerticalPadding,
+                showDeferral: footerConfig.showDeferral
             )
         }
     }
@@ -631,6 +659,9 @@ extension IntroStepContainer.IntroFooterConfig {
         self.skipButtonText = nil
         self.onSkip = nil
         self.inspectConfig = nil
+        self.buttonControlSize = .large
+        self.footerVerticalPadding = 16
+        self.showDeferral = true
     }
 }
 

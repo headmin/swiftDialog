@@ -326,6 +326,23 @@ struct Preset5View: View {
         return appArguments.inspectMode.present ? "dev" : "prod"
     }
 
+    // MARK: - Setup Size Helpers
+
+    /// Whether the window is using the compact 800×600 "setup" size
+    private var isSetupSize: Bool {
+        inspectState.uiConfiguration.size == "setup"
+    }
+
+    /// Button control size: `.regular` for setup, `.large` for standard
+    private var setupButtonControlSize: ControlSize {
+        isSetupSize ? .regular : .large
+    }
+
+    /// Footer vertical padding: Apple uses 20pt from bottom edge
+    private var setupFooterPadding: CGFloat {
+        isSetupSize ? 20 : 16
+    }
+
     /// Save current step index for resume (linear step model)
     private func saveCurrentStepIndex() {
         stateDefaults.set(currentStepIndex, forKey: "lastStepIndex")
@@ -1376,7 +1393,7 @@ struct Preset5View: View {
             if config?.button2Visible ?? false {
                 Button(action: { handleButton2() }) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(.secondary)
                         .frame(width: 28, height: 28)
                         .background(Circle().fill(.quaternary))
@@ -1483,7 +1500,9 @@ struct Preset5View: View {
                 onBack: canGoBackFromStep ? { goToPreviousStep() } : nil,
                 onContinue: { goToNextStep() },
                 continueDisabled: false,  // Always allow skipping installation steps
-                inspectConfig: config
+                inspectConfig: config,
+                buttonControlSize: setupButtonControlSize,
+                footerVerticalPadding: setupFooterPadding
             )
         ) {
             VStack(spacing: 16) {
@@ -1737,7 +1756,9 @@ struct Preset5View: View {
                 onContinue: { goToNextStep() },
                 continueDisabled: autoEnable && !allCompleted,
                 popupButtonText: step.popupButtonText,
-                inspectConfig: config
+                inspectConfig: config,
+                buttonControlSize: setupButtonControlSize,
+                footerVerticalPadding: setupFooterPadding
             ) {
                 InstallationInfoPopoverView(inspectState: inspectState)
             }
@@ -1801,8 +1822,8 @@ struct Preset5View: View {
 
         VStack(spacing: 0) {
             // Fixed content area (zones 2–4) — NOT scrollable; carousel manages its own horizontal scroll
-            VStack(spacing: 16) {
-                Spacer(minLength: 20)
+            VStack(spacing: isSetupSize ? 8 : 16) {
+                Spacer(minLength: isSetupSize ? 8 : 20)
 
                 // Zone 2: Banner or hero image
                 if useBanner, let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
@@ -1865,12 +1886,12 @@ struct Preset5View: View {
                 }
 
                 // Zone 4: Card carousel with navigation arrows
-                HStack(spacing: 16) {
+                HStack(spacing: isSetupSize ? 10 : 16) {
                     // Left arrow (hidden when all items fit)
                     if !allItemsFit {
                         Button(action: { carouselScrollLeft(itemCount: installationData.count) }) {
                             Image(systemName: "chevron.left.circle.fill")
-                                .font(.system(size: 28))
+                                .font(.system(size: isSetupSize ? 22 : 28))
                                 .foregroundStyle(carouselScrollOffset > 0 ? branding.primaryColor : .gray.opacity(0.3))
                         }
                         .disabled(carouselScrollOffset <= 0)
@@ -1878,16 +1899,16 @@ struct Preset5View: View {
                     }
 
                     // Visible cards
-                    HStack(spacing: 12) {
+                    HStack(spacing: isSetupSize ? 6 : 12) {
                         let visibleItems = carouselVisibleItems(from: installationData)
                         ForEach(visibleItems) { item in
-                            CarouselCardView(item: item, accentColor: branding.primaryColor)
+                            CarouselCardView(item: item, accentColor: branding.primaryColor, compact: isSetupSize)
                         }
 
                         // Placeholder cards when at end of list
                         if !allItemsFit {
                             ForEach(0..<max(0, visibleCount - carouselVisibleItems(from: installationData).count), id: \.self) { _ in
-                                CarouselPlaceholderCardView()
+                                CarouselPlaceholderCardView(compact: isSetupSize)
                             }
                         }
                     }
@@ -1897,14 +1918,14 @@ struct Preset5View: View {
                     if !allItemsFit {
                         Button(action: { carouselScrollRight(itemCount: installationData.count) }) {
                             Image(systemName: "chevron.right.circle.fill")
-                                .font(.system(size: 28))
+                                .font(.system(size: isSetupSize ? 22 : 28))
                                 .foregroundStyle(carouselScrollOffset + visibleCount < installationData.count ? branding.primaryColor : .gray.opacity(0.3))
                         }
                         .disabled(carouselScrollOffset + visibleCount >= installationData.count)
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, isSetupSize ? 24 : 40)
 
                 Spacer()
 
@@ -1913,7 +1934,8 @@ struct Preset5View: View {
                     completed: installationData.filter { $0.status == .completed }.count,
                     total: installationData.count,
                     accentColor: branding.primaryColor,
-                    progressFormat: step.progressFormat
+                    progressFormat: step.progressFormat,
+                    compact: isSetupSize
                 )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1929,7 +1951,9 @@ struct Preset5View: View {
                 onContinue: { goToNextStep() },
                 continueDisabled: autoEnable && !allCompleted,
                 popupButtonText: step.popupButtonText,
-                inspectConfig: config
+                inspectConfig: config,
+                buttonControlSize: setupButtonControlSize,
+                footerVerticalPadding: setupFooterPadding
             ) {
                 InstallationInfoPopoverView(inspectState: inspectState)
             }
@@ -1993,7 +2017,9 @@ struct Preset5View: View {
                     showBackButton: (step.showBackButton ?? true) && canGoBackFromStep,
                     onBack: canGoBackFromStep ? { goToPreviousStep() } : nil,
                     onContinue: { goToNextStep() },
-                    inspectConfig: config
+                    inspectConfig: config,
+                    buttonControlSize: setupButtonControlSize,
+                    footerVerticalPadding: setupFooterPadding
                 )
             ) {
                 BentoGridStepLayout(
@@ -2145,7 +2171,9 @@ struct Preset5View: View {
                 showBackButton: (step.showBackButton ?? true) && canGoBackFromStep,
                 onBack: canGoBackFromStep ? { goToPreviousStep() } : nil,
                 onContinue: { goToNextStep() },
-                inspectConfig: config
+                inspectConfig: config,
+                buttonControlSize: setupButtonControlSize,
+                footerVerticalPadding: setupFooterPadding
             )
         }
         .background(Color(NSColor.windowBackgroundColor))
@@ -2216,7 +2244,9 @@ struct Preset5View: View {
                     goToNextStep()
                 },
                 continueDisabled: selectedBrandId == nil,
-                inspectConfig: config
+                inspectConfig: config,
+                buttonControlSize: setupButtonControlSize,
+                footerVerticalPadding: setupFooterPadding
             )
         }
         .background(Color(NSColor.windowBackgroundColor))
@@ -2344,7 +2374,9 @@ struct Preset5View: View {
                 onBack: canGoBackFromStep ? { stopProcessingCountdown(); goToPreviousStep() } : nil,
                 onContinue: { goToNextStep() },
                 continueDisabled: !isCompleted,  // Enable continue button only when completed
-                inspectConfig: config
+                inspectConfig: config,
+                buttonControlSize: setupButtonControlSize,
+                footerVerticalPadding: setupFooterPadding
             )
         }
         .background(Color(NSColor.windowBackgroundColor))
@@ -2963,6 +2995,9 @@ struct Preset5View: View {
             ?? localized("backButtonText", forStep: step, fallback: nil)
             ?? step.backButtonText ?? "Back"
 
+        // Show button2 as a skip/deferral button when back navigation isn't available (e.g., first step)
+        let button2AsSkip = !canGoBackFromStep ? branding.button2Text : nil
+
         IntroStepContainer(
             accentColor: branding.primaryColor,
             accentBorderHeight: 0,
@@ -2977,7 +3012,12 @@ struct Preset5View: View {
                 onBack: canGoBackFromStep ? { goToPreviousStep() } : nil,
                 onContinue: { goToNextStep() },
                 continueDisabled: !allRequiredFieldsFilled(step: step),
-                inspectConfig: config
+                skipButtonText: button2AsSkip,
+                onSkip: button2AsSkip != nil ? { handleButton2() } : nil,
+                inspectConfig: config,
+                buttonControlSize: setupButtonControlSize,
+                footerVerticalPadding: setupFooterPadding,
+                showDeferral: !canGoBackFromStep
             )
         ) {
             GeometryReader { geometry in
@@ -2987,7 +3027,9 @@ struct Preset5View: View {
 
                         // Hero Image - check for override first
                         if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
-                            let proportionalSize = min(max(geometry.size.height * 0.28, 100), 220)
+                            let heroRatio: CGFloat = isSetupSize ? 0.38 : 0.28
+                            let heroMax: CGFloat = isSetupSize ? 260 : 220
+                            let proportionalSize = min(max(geometry.size.height * heroRatio, 100), heroMax)
                             IntroHeroImage(
                                 path: heroImage,
                                 shape: step.heroImageShape ?? "circle",
@@ -3116,13 +3158,133 @@ struct Preset5View: View {
     // MARK: - Showcase Step View (Immersive Full-Bleed Layout)
 
     /// Renders a showcase step with showcase immersive layout:
-    /// full-bleed image (60% height), overlay controls, progress dots, title/subtitle, buttons
+    /// At setup size: vertical Apple-style layout (hero icon → title → content → footer)
+    /// At larger sizes: full-bleed image (60% height), overlay controls, progress dots, title/subtitle, buttons
     @ViewBuilder
     private func showcaseStepView(step: InspectConfig.IntroStep, stepIndex: Int) -> some View {
         let canGoBackFromStep = canGoBack(fromStepIndex: stepIndex)
         let continueText = localized("continueButtonText", forStep: step, fallback: nil) ?? step.continueButtonText ?? "Continue"
         let backText = branding.button2Text ?? localized("backButtonText", forStep: step, fallback: nil) ?? step.backButtonText ?? "Back"
 
+        if isSetupSize {
+            // SETUP SIZE: Vertical Apple-style layout (like standard intro step)
+            showcaseVerticalLayout(step: step, stepIndex: stepIndex, canGoBack: canGoBackFromStep, continueText: continueText, backText: backText)
+        } else {
+            // LARGER SIZES: Cinematic 60/40 split layout
+            showcaseImmersiveLayout(step: step, stepIndex: stepIndex, canGoBack: canGoBackFromStep, continueText: continueText, backText: backText)
+        }
+    }
+
+    /// Setup-size showcase: vertical layout matching Apple Setup Assistant
+    @ViewBuilder
+    private func showcaseVerticalLayout(step: InspectConfig.IntroStep, stepIndex: Int, canGoBack: Bool, continueText: String, backText: String) -> some View {
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Scrollable content area
+                VStack(spacing: 10) {
+                    Spacer(minLength: 10)
+
+                    // Hero image (standard intro size, not full-bleed)
+                    if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
+                        IntroHeroImage(
+                            path: heroImage,
+                            shape: step.heroImageShape ?? "none",
+                            size: step.heroImageSize ?? 100,
+                            accentColor: heroImageColor(step: step),
+                            sfSymbolColor: step.heroImageSFSymbolColor.map { Color(hex: $0) },
+                            sfSymbolWeight: sfSymbolWeight(from: step.heroImageSFSymbolWeight),
+                            basePath: effectiveIconBasePath,
+                            padding: step.heroImagePadding
+                        )
+                    }
+
+                    // Title + subtitle (centered, Apple-style)
+                    VStack(spacing: 8) {
+                        if let title = localized("title", forStep: step, fallback: step.title) {
+                            Text(title)
+                                .font(.system(size: 26, weight: .bold))
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: 480)
+                        }
+
+                        if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
+                            Text(subtitle)
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: 480)
+                        }
+                    }
+                    .padding(.horizontal, 40)
+
+                    // Rich content (scrollable)
+                    if let content = step.content, !content.isEmpty {
+                        ScrollView {
+                            VStack(spacing: 10) {
+                                ForEach(content.indices, id: \.self) { index in
+                                    let block = localizedContentBlock(content[index], stepId: step.id, blockIndex: index)
+                                    centeredContentContainer {
+                                        GuidanceContentView(
+                                            contentBlocks: [block],
+                                            scaleFactor: 1.0,
+                                            iconBasePath: iconBasePathOverride ?? inspectState.uiConfiguration.iconBasePath,
+                                            inspectState: inspectState,
+                                            itemId: "showcase-block-\(index)",
+                                            accentColor: branding.primaryColor,
+                                            contentAlignment: .center
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        .scrollIndicators(.automatic)
+                    }
+
+                    // Grid picker
+                    if let gridItems = step.gridItems, !gridItems.isEmpty {
+                        let key = step.gridSelectionKey ?? step.id
+                        let binding = Binding<Set<String>>(
+                            get: { gridSelections[key] ?? [] },
+                            set: { gridSelections[key] = $0 }
+                        )
+
+                        ScrollView {
+                            showcaseGridPicker(
+                                gridItems: gridItems,
+                                selectionMode: step.gridSelectionMode ?? "single",
+                                selectedIds: binding,
+                                textColor: .primary
+                            )
+                            .padding(.horizontal, 40)
+                        }
+                    }
+
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 20)
+
+                // Standard footer
+                IntroFooterView(
+                    footerText: branding.footerText,
+                    backButtonText: backText,
+                    continueButtonText: continueText,
+                    accentColor: branding.primaryColor,
+                    showBackButton: (step.showBackButton ?? true) && canGoBack,
+                    onBack: canGoBack ? { goToPreviousStep() } : nil,
+                    onContinue: { goToNextStep() },
+                    inspectConfig: config,
+                    buttonControlSize: setupButtonControlSize,
+                    footerVerticalPadding: setupFooterPadding
+                )
+            }
+            .background(Color(NSColor.windowBackgroundColor))
+        }
+    }
+
+    /// Larger-size showcase: cinematic immersive 60/40 split layout
+    @ViewBuilder
+    private func showcaseImmersiveLayout(step: InspectConfig.IntroStep, stepIndex: Int, canGoBack: Bool, continueText: String, backText: String) -> some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
                 // Full-bleed image area (60% of height by default)
@@ -3238,10 +3400,12 @@ struct Preset5View: View {
                         backButtonText: backText,
                         continueButtonText: continueText,
                         accentColor: branding.primaryColor,
-                        showBackButton: (step.showBackButton ?? true) && canGoBackFromStep,
-                        onBack: canGoBackFromStep ? { goToPreviousStep() } : nil,
+                        showBackButton: (step.showBackButton ?? true) && canGoBack,
+                        onBack: canGoBack ? { goToPreviousStep() } : nil,
                         onContinue: { goToNextStep() },
-                        inspectConfig: config
+                        inspectConfig: config,
+                        buttonControlSize: setupButtonControlSize,
+                        footerVerticalPadding: setupFooterPadding
                     )
                 }
                 .background(Color(NSColor.windowBackgroundColor))
@@ -4700,7 +4864,9 @@ struct Preset5View: View {
                         footerLink: step.footerLink,
                         skipButtonText: step.skipButtonText,
                         onSkip: step.skipButtonText != nil ? { goToNextStep() } : nil,
-                        inspectConfig: config
+                        inspectConfig: config,
+                        buttonControlSize: setupButtonControlSize,
+                        footerVerticalPadding: setupFooterPadding
                     )
                 }
 
@@ -4805,14 +4971,98 @@ struct Preset5View: View {
     /// Main renderer for guide step — split-screen: 65% hero + 35% editorial sidebar
     @ViewBuilder
     private func guideStepView(step: InspectConfig.IntroStep, stepIndex: Int) -> some View {
-        let imageRatio = step.guideImageRatio ?? 0.65
         let accent = guideAccentColor(for: step)
+
+        Group {
+            if isSetupSize {
+                guideVerticalLayout(step: step, stepIndex: stepIndex, accent: accent)
+            } else {
+                guideHorizontalLayout(step: step, stepIndex: stepIndex, accent: accent)
+            }
+        }
+        .onAppear {
+            let hasMonitoredSteps = allSteps.contains { $0.stepType == "guide" && ($0.paths ?? []).isEmpty == false }
+            if hasMonitoredSteps {
+                startGuideMonitoring()
+            }
+        }
+        .onDisappear {
+            stopGuideMonitoring()
+        }
+    }
+
+    /// Setup-size guide: vertical layout matching Apple Setup Assistant
+    @ViewBuilder
+    private func guideVerticalLayout(step: InspectConfig.IntroStep, stepIndex: Int, accent: Color) -> some View {
+        let canGoBackFromStep = canGoBack(fromStepIndex: stepIndex)
+        let continueText = localized("continueButtonText", forStep: step, fallback: nil) ?? step.continueButtonText ?? "Continue"
+        let backText = localized("backButtonText", forStep: step, fallback: nil) ?? step.backButtonText ?? "Back"
+
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Hero strip at top (35% of height)
+                ZStack {
+                    guideGradient(step: step)
+
+                    guideLeftPanelContent(step: step, size: CGSize(
+                        width: geometry.size.width,
+                        height: geometry.size.height * 0.35
+                    ))
+
+                    // No title overlay at setup size — title is shown in content area below
+                }
+                .frame(height: geometry.size.height * 0.28)
+
+                // Content area below hero
+                VStack(spacing: 0) {
+                    GeometryReader { contentGeo in
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack(alignment: .center, spacing: 8) {
+                                // Title
+                                if let title = localized("title", forStep: step, fallback: step.title) {
+                                    Text(title)
+                                        .font(.system(size: 26, weight: .bold))
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                }
+
+                                guideSidebarContent(step: step, accent: accent, alignment: .center)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 16)
+                            .frame(minHeight: contentGeo.size.height)
+                        }
+                    }
+
+                    // Standard footer
+                    IntroFooterView(
+                        footerText: branding.footerText,
+                        backButtonText: backText,
+                        continueButtonText: continueText,
+                        accentColor: accent,
+                        showBackButton: (step.showBackButton ?? true) && canGoBackFromStep,
+                        onBack: canGoBackFromStep ? { goToPreviousStep() } : nil,
+                        onContinue: { goToNextStep() },
+                        inspectConfig: config,
+                        buttonControlSize: setupButtonControlSize,
+                        footerVerticalPadding: setupFooterPadding
+                    )
+                }
+                .background(Color(NSColor.windowBackgroundColor))
+            }
+        }
+    }
+
+    /// Larger-size guide: horizontal split layout (hero left, sidebar right)
+    @ViewBuilder
+    private func guideHorizontalLayout(step: InspectConfig.IntroStep, stepIndex: Int, accent: Color) -> some View {
+        let defaultRatio: CGFloat = 0.65
+        let imageRatio = step.guideImageRatio ?? defaultRatio
 
         GeometryReader { geometry in
             HStack(spacing: 0) {
                 // Left panel — full-bleed image/SF symbol on gradient
                 ZStack {
-                    // Layered background shapes for depth
                     guideLayeredBackground(step: step, size: CGSize(
                         width: geometry.size.width * imageRatio,
                         height: geometry.size.height
@@ -4824,9 +5074,6 @@ struct Preset5View: View {
                     ))
 
                     guideLeftPanelOverlays(step: step, stepIndex: stepIndex)
-
-                    // Logo overlay — rendered by guideLeftPanelOverlays bottom VStack
-                    // (logo is now handled as a persistent overlay at Preset5 root level)
 
                     // Fullscreen expand button (non-SF images only)
                     if let heroImage = heroImageOverrides[step.id] ?? step.heroImage,
@@ -4877,16 +5124,6 @@ struct Preset5View: View {
                     .frame(width: geometry.size.width * (1.0 - imageRatio))
                     .background(Color(NSColor.windowBackgroundColor))
             }
-        }
-        .onAppear {
-            // Start monitoring if any guide steps have paths
-            let hasMonitoredSteps = allSteps.contains { $0.stepType == "guide" && ($0.paths ?? []).isEmpty == false }
-            if hasMonitoredSteps {
-                startGuideMonitoring()
-            }
-        }
-        .onDisappear {
-            stopGuideMonitoring()
         }
     }
 
@@ -5128,26 +5365,28 @@ struct Preset5View: View {
     @ViewBuilder
     private func guideSidebar(step: InspectConfig.IntroStep, stepIndex: Int) -> some View {
         let accent = guideAccentColor(for: step)
+        let hPad: CGFloat = isSetupSize ? 16 : 28
+        let topPad: CGFloat = isSetupSize ? 16 : 24
 
         VStack(spacing: 0) {
             // Header: step counter + optional monitoring status
             guideSidebarHeader(step: step, stepIndex: stepIndex, accent: accent)
-                .padding(.horizontal, 28)
-                .padding(.top, 24)
+                .padding(.horizontal, hPad)
+                .padding(.top, topPad)
                 .padding(.bottom, 8)
 
             // Scrollable content (fills available space)
             ScrollView(.vertical, showsIndicators: false) {
                 guideSidebarContent(step: step, accent: accent)
-                    .padding(.horizontal, 28)
+                    .padding(.horizontal, hPad)
                     .padding(.top, 8)
                     .padding(.bottom, 12)
             }
 
             // Buttons pinned to bottom
             guideSidebarButtons(step: step, stepIndex: stepIndex, accent: accent)
-                .padding(.horizontal, 28)
-                .padding(.vertical, 16)
+                .padding(.horizontal, hPad)
+                .padding(.vertical, setupFooterPadding)
         }
     }
 
@@ -5202,13 +5441,15 @@ struct Preset5View: View {
 
     /// Scrollable content in sidebar: subtitle, key points, bullets, rich content (title is on hero overlay)
     @ViewBuilder
-    private func guideSidebarContent(step: InspectConfig.IntroStep, accent: Color) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
+    private func guideSidebarContent(step: InspectConfig.IntroStep, accent: Color, alignment: HorizontalAlignment = .leading) -> some View {
+        let textAlign: TextAlignment = alignment == .center ? .center : .leading
+        return VStack(alignment: alignment, spacing: 20) {
             // Subtitle / description
             if let subtitle = localized("subtitle", forStep: step, fallback: step.subtitle) {
                 Text(subtitle)
                     .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(textAlign)
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineSpacing(5)
@@ -5273,14 +5514,13 @@ struct Preset5View: View {
                             inspectState: inspectState,
                             itemId: "guide-block-\(index)",
                             accentColor: accent,
-                            contentAlignment: .leading
+                            contentAlignment: alignment
                         )
                     }
                 }
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 20)
+        .padding(.vertical, 8)
     }
 
     /// Navigation buttons in sidebar: right-aligned horizontal [Back] [Continue]
@@ -5301,7 +5541,7 @@ struct Preset5View: View {
                 if (step.showBackButton ?? true) && canGoBackFromStep {
                     Button(action: { goToPreviousStep() }) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(.secondary)
                             .frame(width: 28, height: 28)
                             .background(Circle().fill(.quaternary))
@@ -5331,10 +5571,10 @@ struct Preset5View: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .controlSize(setupButtonControlSize)
                 .tint(accent)
             }
-            .padding(.top, 16)
+            .padding(.top, setupFooterPadding)
         }
     }
 

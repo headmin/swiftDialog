@@ -79,6 +79,7 @@ public enum InspectSizes {
             case "compact": return (1024, 640)   // Minimum/default
             case "large": return (1200, 800)     // Maximum
             case "assistant": return (1024, 700)  // Apple-size inspired
+            case "setup": return (800, 600)          // Apple Setup Assistant
             default: return (1100, 700)          // Ideal
             }
 

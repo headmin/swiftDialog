@@ -196,7 +196,7 @@ struct GuidanceContentView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10 * scaleFactor)
+            .padding(12 * scaleFactor)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(palette.warningBackground)
@@ -213,7 +213,7 @@ struct GuidanceContentView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10 * scaleFactor)
+            .padding(12 * scaleFactor)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(palette.infoBackground)
@@ -230,7 +230,7 @@ struct GuidanceContentView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10 * scaleFactor)
+            .padding(12 * scaleFactor)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(palette.successBackground)
@@ -274,7 +274,7 @@ struct GuidanceContentView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(10 * scaleFactor)
+                    .padding(12 * scaleFactor)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
                             .fill(backgroundColor)
