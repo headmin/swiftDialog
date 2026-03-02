@@ -1760,7 +1760,7 @@ struct Preset5View: View {
                 popupButtonText: step.popupButtonText,
                 inspectConfig: config,
                 buttonControlSize: setupButtonControlSize,
-                footerVerticalPadding: setupFooterPadding
+                footerVerticalPadding: setupFooterPadding,
             ) {
                 InstallationInfoPopoverView(inspectState: inspectState)
             }
@@ -1959,7 +1959,7 @@ struct Preset5View: View {
                 popupButtonText: step.popupButtonText,
                 inspectConfig: config,
                 buttonControlSize: setupButtonControlSize,
-                footerVerticalPadding: setupFooterPadding
+                footerVerticalPadding: setupFooterPadding,
             ) {
                 InstallationInfoPopoverView(inspectState: inspectState)
             }
@@ -2025,7 +2025,7 @@ struct Preset5View: View {
                     onContinue: { goToNextStep() },
                     inspectConfig: config,
                     buttonControlSize: setupButtonControlSize,
-                    footerVerticalPadding: setupFooterPadding
+                    footerVerticalPadding: setupFooterPadding,
                 )
             ) {
                 BentoGridStepLayout(
@@ -3037,7 +3037,7 @@ struct Preset5View: View {
                 inspectConfig: config,
                 buttonControlSize: setupButtonControlSize,
                 footerVerticalPadding: setupFooterPadding,
-                showDeferral: !canGoBackFromStep
+                showDeferral: !canGoBackFromStep,
             )
         ) {
             GeometryReader { geometry in
@@ -3322,7 +3322,7 @@ struct Preset5View: View {
                     onContinue: { goToNextStep() },
                     inspectConfig: config,
                     buttonControlSize: setupButtonControlSize,
-                    footerVerticalPadding: setupFooterPadding
+                    footerVerticalPadding: setupFooterPadding,
                 )
             }
             .background(Color(NSColor.windowBackgroundColor))
@@ -3452,7 +3452,7 @@ struct Preset5View: View {
                         onContinue: { goToNextStep() },
                         inspectConfig: config,
                         buttonControlSize: setupButtonControlSize,
-                        footerVerticalPadding: setupFooterPadding
+                        footerVerticalPadding: setupFooterPadding,
                     )
                 }
                 .background(Color(NSColor.windowBackgroundColor))
@@ -4948,11 +4948,9 @@ struct Preset5View: View {
                         onSkip: step.skipButtonText != nil ? { goToNextStep() } : nil,
                         inspectConfig: config,
                         buttonControlSize: setupButtonControlSize,
-                        footerVerticalPadding: setupFooterPadding
+                        footerVerticalPadding: setupFooterPadding,
                     )
                 }
-
-                // Logo is now a persistent overlay at Preset5 root level
             }
         }
         .onAppear {
@@ -5173,7 +5171,7 @@ struct Preset5View: View {
                     onContinue: { goToNextStep() },
                     inspectConfig: config,
                     buttonControlSize: setupButtonControlSize,
-                    footerVerticalPadding: setupFooterPadding
+                    footerVerticalPadding: setupFooterPadding,
                 )
             }
             .background(Color(NSColor.windowBackgroundColor))

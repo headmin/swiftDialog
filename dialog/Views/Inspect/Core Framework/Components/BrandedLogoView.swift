@@ -55,12 +55,10 @@ struct BrandedLogoView: View {
     }
 
     private var edgePaddingH: CGFloat {
-        // Bottom logos: 4pt from edge for tight left alignment
-        CGFloat(logoConfig.padding ?? (isBottom ? 4 : 20))
+        CGFloat(logoConfig.padding ?? 12)
     }
 
     private var edgePaddingV: CGFloat {
-        // Bottom logos: 20pt from bottom to vertically center with footer buttons
         CGFloat(logoConfig.padding ?? (isBottom ? 20 : 16))
     }
 
