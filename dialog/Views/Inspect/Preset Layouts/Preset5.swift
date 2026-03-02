@@ -3044,7 +3044,9 @@ struct Preset5View: View {
                 let sp = InspectSizes.SetupSpacing.self
                 ScrollView {
                     VStack(spacing: sp.sectionGap) {
-                        Spacer()
+                        // Top spacer: capped so content anchors near top.
+                        // Remaining space pools in the bottom Spacer() instead.
+                        Spacer().frame(maxHeight: 40)
 
                         // Hero Image - check for override first
                         if let heroImage = heroImageOverrides[step.id] ?? step.heroImage {
