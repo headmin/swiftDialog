@@ -55,7 +55,7 @@ func resolveInspectConfigSource(
     inspectConfigPath: String?,
     envPath: String?,
     standardLocationPath: String?,
-    readFile: (String) -> Data?
+    readFile: (String) -> Data? = { FileManager.default.contents(atPath: $0) }
 ) -> ResolvedInspectSource? {
     if let s = jsonString, !s.isEmpty {
         return ResolvedInspectSource(data: Data(s.utf8), origin: "--jsonstring", path: nil)
@@ -64,7 +64,7 @@ func resolveInspectConfigSource(
         ("--jsonfile", jsonFilePath),
         ("--inspect-config", inspectConfigPath),
         ("DIALOG_INSPECT_CONFIG", envPath),
-        ("standard location", standardLocationPath),
+        ("standard location", standardLocationPath)
     ]
     for src in fileSources {
         guard let p = src.path, !p.isEmpty, let data = readFile(p) else { continue }
@@ -293,7 +293,7 @@ func parseBoundaryDate(_ string: String) -> Date? {
 func clampDate(_ date: Date, min: Date?, max: Date?) -> Date {
     var result = date
     if let min, result < min { result = min }
-    if let max, (min == nil || min! <= max), result > max { result = max }
+    if let max, min == nil || min! <= max, result > max { result = max }
     return result
 }
 
@@ -305,8 +305,11 @@ func parseBoundaryTime(_ string: String) -> DateComponents? {
     var trimmed = string.lowercased().trimmingCharacters(in: .whitespaces)
     guard !trimmed.isEmpty else { return nil }
     var isPM = false, isAM = false
-    if trimmed.hasSuffix("pm") { isPM = true; trimmed.removeLast(2) }
-    else if trimmed.hasSuffix("am") { isAM = true; trimmed.removeLast(2) }
+    if trimmed.hasSuffix("pm") {
+        isPM = true; trimmed.removeLast(2)
+    } else if trimmed.hasSuffix("am") {
+        isAM = true; trimmed.removeLast(2)
+    }
     trimmed = trimmed.trimmingCharacters(in: .whitespaces)
     let parts = trimmed.split(separator: ":", maxSplits: 1).map(String.init)
     guard let first = parts.first, var hour = Int(first) else { return nil }
@@ -528,6 +531,15 @@ func processCLOptions(json: JSON = getJSON()) {
     // Monitor Mode - Use InspectView for all monitor scenarios (with or without config)
     writeLog("inspectMode.present = \(appArguments.inspectMode.present)", logLevel: .debug)
     if appArguments.inspectMode.present {
+        // AppKit's launch scan pairs each "-"-prefixed argv token with the token FOLLOWING it
+        // (regardless of what either is) and treats any leftover bare token as a file to open;
+        // a launch with pending open-file requests is a non-default launch, for which SwiftUI
+        // never creates the WindowGroup's window. A boolean flag ahead of a value-taking flag
+        // shifts that pairing by one — `--inspect-mode --title Hello` orphans "Hello" and the
+        // process runs windowless. Registering this default (before finishLaunching, which is
+        // what runs the scan) turns the open-file interpretation off. Scoped to inspect mode:
+        // classic mode keeps upstream behaviour, including this quirk.
+        UserDefaults.standard.register(defaults: ["NSTreatUnknownArgumentsAsOpen": "NO"])
         writeLog("Inspect Mode activated", logLevel: .info)
         writeLog("Inspect Mode: Activated", logLevel: .info)
         writeLog("Inspect Mode: Config can be provided via:", logLevel: .info)
@@ -542,8 +554,7 @@ func processCLOptions(json: JSON = getJSON()) {
             jsonFilePath: appArguments.jsonFile.present ? CLOptionText(optionName: appArguments.jsonFile) : nil,
             inspectConfigPath: appArguments.inspectConfig.present ? CLOptionText(optionName: appArguments.inspectConfig) : nil,
             envPath: ProcessInfo.processInfo.environment["DIALOG_INSPECT_CONFIG"],
-            standardLocationPath: FileManager.default.fileExists(atPath: stdLocation) ? stdLocation : nil,
-            readFile: { FileManager.default.contents(atPath: $0) }
+            standardLocationPath: FileManager.default.fileExists(atPath: stdLocation) ? stdLocation : nil
         )
 
         guard let source = resolved else {
@@ -598,7 +609,8 @@ func processCLOptions(json: JSON = getJSON()) {
                 writeLog("Inspect Mode: Using default size (\(Int(width))×\(Int(height)))", logLevel: .info)
             }
 
-            // Apply allowlisted general dialog options (moveable, ontop, …) from the JSON config (#693)
+            // `options` sets the vetted general flags (moveable, ontop, resizable, windowbuttons)
+            // here, before the window exists; a flag already given on the command line wins.
             if let options = config.options {
                 applyInspectGeneralOptions(options)
             }
@@ -644,10 +656,16 @@ func processCLOptions(json: JSON = getJSON()) {
         }
     }
 
-    // Monitor mode: Always center horizontally (left-to-right)
-    if appArguments.inspectMode.present {
+    // Inspect Mode: default to TRUE center (both axes) UNLESS an explicit --position was given.
+    // The generic `.center` biases the window UP by 15% of the vertical slack (fine for small
+    // alerts, but an 800×600 setup-style window lands ~100pt too high — "odd" placement). Apple's
+    // Setup Assistant / Setup Manager sits at screen center, so use `.deadcenter` vertically.
+    // Horizontal `.center` is already true-center. Keeping this config-driven lets guided-setup
+    // start the window at a side and slide it via the live `window:` command.
+    if appArguments.inspectMode.present && !appArguments.position.present {
         appvars.windowPositionHorozontal = NSWindow.Position.Horizontal.center
-        writeLog("Inspect Mode: Forcing horizontal position to center", logLevel: .info)
+        appvars.windowPositionVertical = NSWindow.Position.Vertical.deadcenter
+        writeLog("Inspect Mode: Defaulting position to true center (deadcenter)", logLevel: .info)
     }
     if appArguments.positionOffset.present {
         appvars.windowPositionOffset = appArguments.positionOffset.value.floatValue()
