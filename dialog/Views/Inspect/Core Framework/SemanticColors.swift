@@ -2,16 +2,12 @@
 //  SemanticColors.swift
 //  Dialog
 //
-//  Created by Henry Stamerjohann, Declarative IT GmbH
-//
-//  Semantic color constants for the Inspect framework
-//  Consolidates hardcoded hex values into reusable named constants
+//  Semantic status colours for the inspect framework, matching the system colours.
 //
 
 import SwiftUI
 
-/// Semantic colors for status indicators and UI elements
-/// These match Apple's Human Interface Guidelines system colors
+/// Semantic colors for status indicators and UI elements.
 extension Color {
 
     // MARK: - Status Colors
@@ -47,40 +43,45 @@ extension Color {
 
     // MARK: - Background Variants
 
-    /// Light success background for cards/badges
-    static let successBackground = semanticSuccess.opacity(0.15)
+    /// Light success background for cards/badges. 8% keeps text contrast without a second foreground colour.
+    static let successBackground = semanticSuccess.opacity(0.08)
 
     /// Light failure background for cards/badges
-    static let failureBackground = semanticFailure.opacity(0.15)
+    static let failureBackground = semanticFailure.opacity(0.08)
 
     /// Light warning background for cards/badges
-    static let warningBackground = semanticWarning.opacity(0.15)
+    static let warningBackground = semanticWarning.opacity(0.08)
 
     /// Light info background for cards/badges
-    static let infoBackground = semanticInfo.opacity(0.15)
+    static let infoBackground = semanticInfo.opacity(0.08)
 }
 
 // MARK: - Status Enum Support
 
 extension Color {
-    /// Get semantic color for a status string
-    static func forStatus(_ status: String) -> Color {
-        switch status.lowercased() {
-        case "success", "complete", "completed", "pass", "passed", "ok", "true":
-            return .semanticSuccess
-        case "error", "fail", "failed", "false":
-            return .semanticFailure
-        case "warning", "caution", "attention", "pending":
-            return .semanticWarning
-        case "info", "active", "running", "processing":
-            return .semanticInfo
-        default:
-            return .semanticPending
-        }
-    }
-
     /// Get semantic color for a boolean match result
     static func forMatch(_ isMatch: Bool) -> Color {
         isMatch ? .semanticSuccess : .semanticFailure
+    }
+}
+
+// MARK: - StatusGlyph → palette
+
+/// Inspect's palette-aware reading of a `StatusGlyph`. Additive: `StatusGlyph.color` is shared
+/// with classic Dialog and stays unchanged. `.error` and `.pending` fall through to the system
+/// map because no inspect site constructs them.
+extension StatusGlyph {
+    func paletteColor(_ palette: ResolvedPalette) -> Color {
+        switch self {
+        case .success: palette.success
+        case .failure: palette.error
+        case .warning: palette.warning
+        case .error, .pending: color
+        }
+    }
+
+    /// The active/running tint: the accent, so a spinner matches the chip wash and status word.
+    static func paletteActiveColor(_ palette: ResolvedPalette) -> Color {
+        palette.accent
     }
 }
