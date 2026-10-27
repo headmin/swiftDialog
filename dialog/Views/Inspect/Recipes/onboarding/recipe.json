@@ -1,0 +1,12 @@
+{
+  "name": "onboarding",
+  "title": "Onboarding",
+  "summary": "One window: team splash, that team's installs, Dock, screen recording guide, receipt.",
+  "titleStep": "splash",
+  "defaultGradient": "g13",
+  "screens": {
+    "screen-recording": "Screen recording guide",
+    "finish": "Receipt"
+  },
+  "workVerb": "install"
+}

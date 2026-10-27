@@ -1,0 +1,10 @@
+{
+  "name": "deployment",
+  "title": "Deployment (Preset 1)",
+  "summary": "Sidebar with progress, and a list of apps that tick as they install.",
+  "itemsChooser": true,
+  "defaultGradient": "g09",
+  "screens": {},
+  "workVerb": "install",
+  "addApps": true
+}

@@ -1,0 +1,15 @@
+{
+  "name": "repair-toolkit",
+  "title": "Repair toolkit",
+  "summary": "Switches in sections, rules between fixes, a review, live progress and a restart offer.",
+  "chooserStep": "choose",
+  "titleStep": "welcome",
+  "defaultGradient": "g09",
+  "screens": {
+    "welcome": "Welcome",
+    "review": "Review before running",
+    "restart": "Restart offer",
+    "finish": "Receipt"
+  },
+  "workVerb": "fix"
+}

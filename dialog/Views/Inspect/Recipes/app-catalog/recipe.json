@@ -1,0 +1,10 @@
+{
+  "name": "app-catalog",
+  "title": "App catalog (Preset 2)",
+  "summary": "A row of app cards that tick as they install.",
+  "itemsChooser": true,
+  "defaultGradient": "g05",
+  "screens": {},
+  "workVerb": "install",
+  "addApps": true
+}

@@ -169,6 +169,15 @@ struct CommandLineArguments {
     // Inspect Mode Arguments
     var inspectMode               = CommandlineArgument(long: "inspect-mode", isbool: true)
     var inspectConfig             = CommandlineArgument(long: "inspect-config")
+    /// Print the detection report for a config and exit. No window, no monitoring — the product
+    /// explaining, in its own matcher's words, why a row would never move.
+    var explainConfig             = CommandlineArgument(long: "explain-config")
+    var inspectLint               = CommandlineArgument(long: "inspect-lint")
+    var inspectNew                = CommandlineArgument(long: "inspect-new")
+    /// Print the mechanic table as JSON and exit. ONE table: the wizard is a shell script and
+    /// must not carry a second copy of these paths — that duplication is the drift this whole
+    /// suite exists to prevent, and reproducing it inside the suite would be the joke.
+    var mechanics                 = CommandlineArgument(long: "mechanics", isbool: true)
 
     // IPC: directory where each running Dialog publishes a <pid>.json
     // session-discovery file. Pass an empty value or "none" to disable.
@@ -266,7 +275,7 @@ extension CommandLineArguments {
         \.jamfHelperMode, \.miniMode, \.eulaMode, \.presentationMode, \.windowButtonsEnabled,
         \.windowResizable, \.showOnAllScreens, \.notificationGoPing, \.loginWindow, \.hideDefaultKeyboardAction,
         \.alwaysReturnUserInput, \.removeNotification, \.showSoundControls, \.hideOtherApps, \.notificationStyle,
-        \.inspectMode, \.inspectConfig, \.publishedSessionsDir,
+        \.inspectMode, \.inspectConfig, \.explainConfig, \.inspectLint, \.inspectNew, \.mechanics, \.publishedSessionsDir
     ]
 
     /// Session/meta-level arguments that must persist across a `resetToDefaults`
@@ -277,7 +286,7 @@ extension CommandLineArguments {
         \.jsonFile, \.jsonString, \.statusLogFile, \.authkey, \.hash,
         \.getVersion, \.helpOption, \.demoOption, \.buyCoffee, \.licence,
         \.verboseLogging, \.constructionKit, \.jamfHelperMode, \.setAppIcon, \.notificationIdentifier,
-        \.inspectMode, \.inspectConfig, \.publishedSessionsDir, \.callingPid,
+        \.inspectMode, \.inspectConfig, \.publishedSessionsDir, \.callingPid
     ]
 
     /// Evaluate every argument against the supplied JSON and the command line.

@@ -568,7 +568,9 @@ func processCLOptions(json: JSON = getJSON()) {
             return
         }
 
-        switch validateInspectSchema(source.data) {
+        // The EFFECTIVE config: a profile's look under this file, or the neutral look for an orbit
+        // run with none yet — the same that will load, so Gate A and the window size agree with it.
+        switch validateInspectSchema(Config.effectiveData(source.data)) {
         case .notInspect:
             let msg = "Error: \(source.origin) is not an inspect config (expected preset, introSteps, or items). If you meant a standard dialog, drop --inspect-mode.\n"
             FileHandle.standardError.write(Data(msg.utf8))
@@ -587,27 +589,20 @@ func processCLOptions(json: JSON = getJSON()) {
             writeLog("Inspect Mode: config accepted from \(source.origin)", logLevel: .info)
 
             // Window sizing from the already-resolved config (no extra file read).
-            // Priority 1: Explicit width/height
-            if let w = config.width, let h = config.height {
-                appvars.windowWidth = CGFloat(w)
-                appvars.windowHeight = CGFloat(h)
-                writeLog("Inspect Mode: Custom size \(w)×\(h)", logLevel: .info)
-            }
-            // Priority 2: Use shared sizing definitions
-            else if !config.preset.isEmpty {
-                let sizeMode = config.size ?? "standard"
-                let (width, height) = InspectSizes.getSize(preset: config.preset, mode: sizeMode)
-                appvars.windowWidth = width
-                appvars.windowHeight = height
-                writeLog("Inspect Mode: \(config.preset) \(sizeMode) (\(Int(width))×\(Int(height)))", logLevel: .info)
-            }
-            // Priority 3: Default
-            else {
-                let (width, height) = InspectSizes.defaultSize
-                appvars.windowWidth = width
-                appvars.windowHeight = height
-                writeLog("Inspect Mode: Using default size (\(Int(width))×\(Int(height)))", logLevel: .info)
-            }
+            // ONE ladder — InspectSizes.windowSize: explicit width/height →
+            // preset×mode table (item count keeps preset 3's launch sizing consistent
+            // with the rendered frame) → default. Same resolver the runtime
+            // InspectLayoutProtocol.windowSize uses, so launch and render can't drift.
+            let resolved = InspectSizes.windowSize(
+                width: config.width, height: config.height,
+                preset: config.preset, mode: config.size,
+                itemCount: config.items.count,
+                chrome: config.chrome,
+                bandGrowth: InspectSizes.cardBandGrowth(config: config)
+            )
+            appvars.windowWidth = resolved.size.width
+            appvars.windowHeight = resolved.size.height
+            writeLog("Inspect Mode: \(resolved.origin)", logLevel: .info)
 
             // `options` sets the vetted general flags (moveable, ontop, resizable, windowbuttons)
             // here, before the window exists; a flag already given on the command line wins.
@@ -1250,6 +1245,84 @@ func processCLOptions(json: JSON = getJSON()) {
     if appArguments.ignoreDND.present {
         writeLog("\(appArguments.ignoreDND.long) set")
         appvars.willDisturb = true
+    }
+
+    // `--mechanics` — the four delivery mechanics as JSON, then out. It exists so a shell tool
+    // can DERIVE paths instead of carrying its own copy of them; `DetectionMechanics.swift` stays
+    // the only place any of these strings is written down.
+    if appArguments.mechanics.present {
+        writeLog("\(appArguments.mechanics.long) called")
+        var table: [String: Any] = [:]
+        for mechanic in DetectionMechanic.allCases {
+            let paths = mechanic.paths
+            table[mechanic.rawValue] = [
+                "logPath": paths.logPath,
+                "logPreset": paths.logPreset,
+                "cachePath": paths.cachePath as Any,
+                "receiptGlob": paths.receiptGlob as Any,
+                "caveat": paths.caveat as Any
+            ]
+        }
+        if let data = try? JSONSerialization.data(withJSONObject: table,
+                                                  options: [.prettyPrinted, .sortedKeys]),
+           let text = String(data: data, encoding: .utf8) {
+            print(text)
+            quitDialog(exitCode: appDefaults.exit0.code)
+        } else {
+            print("mechanics: could not serialise the table")
+            quitDialog(exitCode: appDefaults.exit1.code)
+        }
+        return
+    }
+
+    // `--explain-config <path>` — the detection report, then out. Placed beside listFonts because
+    // it is the same kind of thing: a question answered on stdout with no window at all.
+    //
+    // The exit code IS the verdict, so this is usable from a build step: 0 when the config has no
+    // detection fault, 1 when it has any. Never a window, never monitoring — nothing here starts
+    // the poller or FSEvents, so running it cannot change what it is reporting on.
+    if appArguments.explainConfig.present {
+        let path = CLOptionText(optionName: appArguments.explainConfig)
+        writeLog("\(appArguments.explainConfig.long) called for \(path)")
+        guard let data = FileManager.default.contents(atPath: path) else {
+            print("explain: cannot read \(path)")
+            quitDialog(exitCode: appDefaults.exit1.code)
+            return
+        }
+        do {
+            let config = try JSONDecoder().decode(InspectConfig.self, from: data)
+            let result = DetectionExplain.evaluate(for: config)
+            print(result.text)
+            quitDialog(exitCode: result.faults == 0 ? appDefaults.exit0.code : appDefaults.exit1.code)
+        } catch {
+            // A config Dialog cannot load has no detection story to tell, and saying so is more
+            // use than an empty report — `ignitecli dialog validate` is a spell-check, not a load
+            // check, so this is where a config first meets the real decoder.
+            print("explain: \(path) does not decode as an inspect config — \(error)")
+            quitDialog(exitCode: appDefaults.exit1.code)
+        }
+        return
+    }
+
+    // `--inspect-lint <path> [--json]` — every finding for an inspect config, then out
+    // (0 clean, 1 errors, 2 warnings). The checks live in Inspect (`InspectLint`).
+    if appArguments.inspectLint.present {
+        let path = CLOptionText(optionName: appArguments.inspectLint)
+        let code = MainActor.assumeIsolated {   // option processing runs on the main thread at launch
+            InspectLint.runCommandLine(path: path, json: CommandLine.arguments.contains("--json"))
+        }
+        // `exit`, not `quitDialog`: there is no dialog result to report, and quitDialog would print
+        // one — `--json` is also the classic "print results as JSON" flag.
+        exit(code)
+        return
+    }
+
+    // `--inspect-new <recipe> [folder]` / `--inspect-new list` — a working flow from a recipe
+    // (`InspectRecipeComposer`), then out.
+    if appArguments.inspectNew.present {
+        let code = MainActor.assumeIsolated { InspectRecipeComposer.runCommandLine(arguments: CommandLine.arguments) }
+        exit(code)   // no dialog result to report (see --inspect-lint)
+        return
     }
 
     if appArguments.listFonts.present {

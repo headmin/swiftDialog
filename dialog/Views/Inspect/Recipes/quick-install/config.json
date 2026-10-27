@@ -1,0 +1,234 @@
+{
+  "preset": "3",
+  "title": "Quick Install",
+  "message": "Installing essentials…",
+  "icon": "SF=list.bullet.rectangle.fill",
+  "highlightColor": "#5856D6",
+  "secondaryColor": "#AF52DE",
+  "items": [
+    {
+      "id": "slack",
+      "displayName": "Slack",
+      "icon": "/Applications/Slack.app",
+      "paths": [
+        "/Applications/Slack.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.tinyspeck.slackmacgap"
+        }
+      ],
+      "guiIndex": 0,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "zoom",
+      "displayName": "Zoom",
+      "icon": "/Applications/zoom.us.app",
+      "paths": [
+        "/Applications/zoom.us.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "us.zoom.xos"
+        }
+      ],
+      "guiIndex": 1,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "chrome",
+      "displayName": "Google Chrome",
+      "icon": "/Applications/Google Chrome.app",
+      "paths": [
+        "/Applications/Google Chrome.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.google.Chrome"
+        }
+      ],
+      "guiIndex": 2,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "1password",
+      "displayName": "1Password",
+      "icon": "/Applications/1Password.app",
+      "paths": [
+        "/Applications/1Password.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.1password.1password"
+        }
+      ],
+      "guiIndex": 3,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "company-portal",
+      "displayName": "Company Portal",
+      "icon": "/Applications/Company Portal.app",
+      "paths": [
+        "/Applications/Company Portal.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.microsoft.CompanyPortalMac"
+        }
+      ],
+      "guiIndex": 4,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "teams",
+      "displayName": "Microsoft Teams",
+      "icon": "/Applications/Microsoft Teams.app",
+      "paths": [
+        "/Applications/Microsoft Teams.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.microsoft.teams2"
+        }
+      ],
+      "guiIndex": 5,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "word",
+      "displayName": "Microsoft Word",
+      "icon": "/Applications/Microsoft Word.app",
+      "paths": [
+        "/Applications/Microsoft Word.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.microsoft.Word"
+        }
+      ],
+      "guiIndex": 6,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "excel",
+      "displayName": "Microsoft Excel",
+      "icon": "/Applications/Microsoft Excel.app",
+      "paths": [
+        "/Applications/Microsoft Excel.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.microsoft.Excel"
+        }
+      ],
+      "guiIndex": 7,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "powerpoint",
+      "displayName": "Microsoft PowerPoint",
+      "icon": "/Applications/Microsoft PowerPoint.app",
+      "paths": [
+        "/Applications/Microsoft PowerPoint.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.microsoft.Powerpoint"
+        }
+      ],
+      "guiIndex": 8,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "outlook",
+      "displayName": "Microsoft Outlook",
+      "icon": "/Applications/Microsoft Outlook.app",
+      "paths": [
+        "/Applications/Microsoft Outlook.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.microsoft.Outlook"
+        }
+      ],
+      "guiIndex": 9,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "onenote",
+      "displayName": "Microsoft OneNote",
+      "icon": "/Applications/Microsoft OneNote.app",
+      "paths": [
+        "/Applications/Microsoft OneNote.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.microsoft.onenote.mac"
+        }
+      ],
+      "guiIndex": 10,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "onedrive",
+      "displayName": "OneDrive",
+      "icon": "/Applications/OneDrive.app",
+      "paths": [
+        "/Applications/OneDrive.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.microsoft.OneDrive"
+        }
+      ],
+      "guiIndex": 11,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "vscode",
+      "displayName": "Visual Studio Code",
+      "icon": "/Applications/Visual Studio Code.app",
+      "paths": [
+        "/Applications/Visual Studio Code.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "com.microsoft.VSCode"
+        }
+      ],
+      "guiIndex": 12,
+      "showBundleInfo": "all"
+    },
+    {
+      "id": "privileges",
+      "displayName": "Privileges",
+      "icon": "/Applications/Privileges.app",
+      "paths": [
+        "/Applications/Privileges.app"
+      ],
+      "requirements": [
+        {
+          "type": "app",
+          "bundleId": "corp.sap.privileges"
+        }
+      ],
+      "guiIndex": 13,
+      "showBundleInfo": "all"
+    }
+  ]
+}

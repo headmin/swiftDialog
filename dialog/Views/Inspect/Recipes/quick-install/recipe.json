@@ -1,0 +1,10 @@
+{
+  "name": "quick-install",
+  "title": "Quick install (Preset 3)",
+  "summary": "A compact window that ticks off the essentials.",
+  "itemsChooser": true,
+  "defaultGradient": "g12",
+  "screens": {},
+  "workVerb": "install",
+  "addApps": true
+}

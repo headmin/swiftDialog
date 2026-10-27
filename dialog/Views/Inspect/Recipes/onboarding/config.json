@@ -1,0 +1,804 @@
+{
+  "preset": "5",
+  "chrome": "provisioning",
+  "appearance": "dark",
+  "width": 820,
+  "height": 600,
+  "title": "Welcome",
+  "highlightColor": "#0A84FF",
+  "triggerFile": "/tmp/onboarding.trigger",
+  "readinessFile": "/tmp/onboarding.ready",
+  "eventFile": "/tmp/onboarding.events.jsonl",
+  "resultFile": "/tmp/onboarding.result.json",
+  "introSteps": [
+    {
+      "id": "splash",
+      "stepType": "splash",
+      "title": "Welcome",
+      "subtitle": "Your Mac is about to be set up by your IT team.",
+      "continueButtonText": "Set up my Mac",
+      "backButtonText": "Remind me later",
+      "footerNote": "Takes about 8 minutes",
+      "environmentLabel": "Team",
+      "environments": [
+        {
+          "id": "workstations",
+          "title": "Workstations",
+          "subtitle": "Most employees"
+        },
+        {
+          "id": "engineering",
+          "title": "Engineering",
+          "subtitle": "Developer tooling and admin rights"
+        },
+        {
+          "id": "design",
+          "title": "Design",
+          "subtitle": "Creative apps and colour-managed displays"
+        }
+      ],
+      "learnMoreText": "How teams work",
+      "learnMoreURL": "https://support.example.com/mac/teams",
+      "environmentKey": "team",
+      "showBackButton": false
+    },
+    {
+      "id": "install-workstations",
+      "stepType": "cadence",
+      "cadenceStyle": "minimal",
+      "title": "Setting up your Mac",
+      "completedTitle": "Your Mac is ready",
+      "subtitle": "Your IT team is installing your software. Keep working — nothing here needs you.",
+      "completedMessage": "Everything's installed.",
+      "continueButtonText": "Continue",
+      "continueWhileRunning": "disabled",
+      "cadenceInterval": 0.5,
+      "totalTimeEstimate": 420,
+      "cadence": [
+        {
+          "id": "fleetd",
+          "label": "Management agent",
+          "subtitle": "Keeps your Mac's settings current",
+          "message": "Installing the management agent…",
+          "sfSymbol": "shield.lefthalf.filled",
+          "size": "42 MB",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "profiles",
+          "label": "Wi-Fi, VPN and security",
+          "subtitle": "Configuration profiles from your team",
+          "message": "Installing Wi-Fi, VPN and security…",
+          "sfSymbol": "lock.shield",
+          "size": "—",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "filevault",
+          "label": "FileVault",
+          "subtitle": "Disk encryption, key escrowed to IT",
+          "message": "Installing FileVault…",
+          "sfSymbol": "lock.fill",
+          "size": "—",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "slack",
+          "label": "Slack",
+          "subtitle": "Team chat",
+          "message": "Installing Slack…",
+          "sfSymbol": "bubble.left.and.bubble.right",
+          "size": "186 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Slack.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "zoom",
+          "label": "Zoom",
+          "subtitle": "Video calls",
+          "message": "Installing Zoom…",
+          "sfSymbol": "video",
+          "size": "142 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Zoom.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "1password",
+          "label": "1Password",
+          "subtitle": "Passwords and passkeys",
+          "message": "Installing 1Password…",
+          "sfSymbol": "key.fill",
+          "size": "98 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/1Password.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "chrome",
+          "label": "Google Chrome",
+          "subtitle": "Browser",
+          "message": "Installing Google Chrome…",
+          "sfSymbol": "globe",
+          "size": "255 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Google Chrome.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "drive",
+          "label": "Google Drive",
+          "subtitle": "Files, synced",
+          "message": "Installing Google Drive…",
+          "sfSymbol": "externaldrive.connected.to.line.below",
+          "size": "310 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Google Drive.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "office",
+          "label": "Microsoft Office",
+          "subtitle": "Word, Excel, PowerPoint",
+          "message": "Installing Microsoft Office…",
+          "sfSymbol": "doc.richtext",
+          "size": "2.1 GB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Microsoft Office.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        }
+      ],
+      "autoAdvance": false,
+      "showWhen": {
+        "key": "team",
+        "anyOf": [
+          "workstations"
+        ]
+      }
+    },
+    {
+      "id": "install-engineering",
+      "stepType": "cadence",
+      "cadenceStyle": "minimal",
+      "title": "Setting up your engineering Mac",
+      "completedTitle": "Your Mac is ready",
+      "subtitle": "Your IT team is installing your software. Keep working — nothing here needs you.",
+      "completedMessage": "Everything's installed.",
+      "continueButtonText": "Continue",
+      "continueWhileRunning": "disabled",
+      "cadenceInterval": 0.5,
+      "totalTimeEstimate": 420,
+      "cadence": [
+        {
+          "id": "fleetd",
+          "label": "Management agent",
+          "subtitle": "Keeps your Mac's settings current",
+          "message": "Installing the management agent…",
+          "sfSymbol": "shield.lefthalf.filled",
+          "size": "42 MB",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "profiles",
+          "label": "Wi-Fi, VPN and security",
+          "subtitle": "Configuration profiles from your team",
+          "message": "Installing Wi-Fi, VPN and security…",
+          "sfSymbol": "lock.shield",
+          "size": "—",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "filevault",
+          "label": "FileVault",
+          "subtitle": "Disk encryption, key escrowed to IT",
+          "message": "Installing FileVault…",
+          "sfSymbol": "lock.fill",
+          "size": "—",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "slack",
+          "label": "Slack",
+          "subtitle": "Team chat",
+          "message": "Installing Slack…",
+          "sfSymbol": "bubble.left.and.bubble.right",
+          "size": "186 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Slack.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "1password",
+          "label": "1Password",
+          "subtitle": "Passwords and passkeys",
+          "message": "Installing 1Password…",
+          "sfSymbol": "key.fill",
+          "size": "98 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/1Password.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "xcode-clt",
+          "label": "Xcode command-line tools",
+          "subtitle": "Compilers and git",
+          "message": "Installing Xcode command-line tools…",
+          "sfSymbol": "hammer",
+          "size": "1.4 GB",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "homebrew",
+          "label": "Homebrew",
+          "subtitle": "Managed by IT",
+          "message": "Installing Homebrew…",
+          "sfSymbol": "mug",
+          "size": "60 MB",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "docker",
+          "label": "Docker Desktop",
+          "subtitle": "Containers",
+          "message": "Installing Docker Desktop…",
+          "sfSymbol": "shippingbox",
+          "size": "620 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Docker Desktop.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "vscode",
+          "label": "Visual Studio Code",
+          "subtitle": "Editor",
+          "message": "Installing Visual Studio Code…",
+          "sfSymbol": "chevron.left.forwardslash.chevron.right",
+          "size": "380 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Visual Studio Code.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        }
+      ],
+      "autoAdvance": false,
+      "showWhen": {
+        "key": "team",
+        "anyOf": [
+          "engineering"
+        ]
+      }
+    },
+    {
+      "id": "install-design",
+      "stepType": "cadence",
+      "cadenceStyle": "minimal",
+      "title": "Setting up your design Mac",
+      "completedTitle": "Your Mac is ready",
+      "subtitle": "Your IT team is installing your software. Keep working — nothing here needs you.",
+      "completedMessage": "Everything's installed.",
+      "continueButtonText": "Continue",
+      "continueWhileRunning": "disabled",
+      "cadenceInterval": 0.5,
+      "totalTimeEstimate": 420,
+      "cadence": [
+        {
+          "id": "fleetd",
+          "label": "Management agent",
+          "subtitle": "Keeps your Mac's settings current",
+          "message": "Installing the management agent…",
+          "sfSymbol": "shield.lefthalf.filled",
+          "size": "42 MB",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "profiles",
+          "label": "Wi-Fi, VPN and security",
+          "subtitle": "Configuration profiles from your team",
+          "message": "Installing Wi-Fi, VPN and security…",
+          "sfSymbol": "lock.shield",
+          "size": "—",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "filevault",
+          "label": "FileVault",
+          "subtitle": "Disk encryption, key escrowed to IT",
+          "message": "Installing FileVault…",
+          "sfSymbol": "lock.fill",
+          "size": "—",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "slack",
+          "label": "Slack",
+          "subtitle": "Team chat",
+          "message": "Installing Slack…",
+          "sfSymbol": "bubble.left.and.bubble.right",
+          "size": "186 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Slack.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "1password",
+          "label": "1Password",
+          "subtitle": "Passwords and passkeys",
+          "message": "Installing 1Password…",
+          "sfSymbol": "key.fill",
+          "size": "98 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/1Password.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "figma",
+          "label": "Figma",
+          "subtitle": "Design and prototyping",
+          "message": "Installing Figma…",
+          "sfSymbol": "pencil.and.outline",
+          "size": "210 MB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Figma.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "creative-cloud",
+          "label": "Adobe Creative Cloud",
+          "subtitle": "Photoshop, Illustrator and more",
+          "message": "Installing Adobe Creative Cloud…",
+          "sfSymbol": "paintpalette",
+          "size": "3.2 GB",
+          "attribute": {
+            "source": "native",
+            "type": "file",
+            "path": "/Applications/Adobe Creative Cloud.app",
+            "evaluation": "exists"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        },
+        {
+          "id": "fonts",
+          "label": "Team fonts",
+          "subtitle": "Synced from the brand library",
+          "message": "Installing Team fonts…",
+          "sfSymbol": "textformat",
+          "size": "40 MB",
+          "attribute": {
+            "source": "ipc"
+          },
+          "minDwell": 0.6,
+          "timeout": 900
+        }
+      ],
+      "autoAdvance": false,
+      "showWhen": {
+        "key": "team",
+        "anyOf": [
+          "design"
+        ]
+      }
+    },
+    {
+      "id": "dock-workstations",
+      "stepType": "dock",
+      "title": "Set up your Dock",
+      "subtitle": "Pick a starting layout. It's added to your Dock — nothing you have is removed.",
+      "dock": {
+        "mode": "flavors",
+        "selectionKey": "dock-workstations",
+        "decline": {
+          "label": "Keep my Dock as it is",
+          "subtitle": "Nothing added. You can pick a layout later.",
+          "value": "keep"
+        },
+        "flavors": [
+          {
+            "id": "essentials",
+            "name": "Essentials",
+            "summary": "Everyday basics",
+            "sfSymbol": "square.grid.2x2",
+            "recommended": true,
+            "items": [
+              {
+                "label": "Safari",
+                "path": "/Applications/Safari.app"
+              },
+              {
+                "label": "Mail",
+                "path": "/System/Applications/Mail.app"
+              },
+              {
+                "label": "Calendar",
+                "path": "/System/Applications/Calendar.app"
+              },
+              {
+                "label": "Notes",
+                "path": "/System/Applications/Notes.app"
+              }
+            ]
+          },
+          {
+            "id": "communication",
+            "name": "Communication",
+            "summary": "Talk & meet",
+            "sfSymbol": "bubble.left.and.bubble.right",
+            "items": [
+              {
+                "label": "Mail",
+                "path": "/System/Applications/Mail.app"
+              },
+              {
+                "label": "Calendar",
+                "path": "/System/Applications/Calendar.app"
+              },
+              {
+                "label": "Messages",
+                "path": "/System/Applications/Messages.app"
+              },
+              {
+                "label": "FaceTime",
+                "path": "/System/Applications/FaceTime.app"
+              }
+            ],
+            "recommended": false
+          }
+        ]
+      },
+      "dockApplyMode": "additive",
+      "optionLayout": "cards",
+      "continueButtonText": "Continue",
+      "showWhen": {
+        "key": "team",
+        "anyOf": [
+          "workstations"
+        ]
+      }
+    },
+    {
+      "id": "dock-engineering",
+      "stepType": "dock",
+      "title": "Set up your Dock",
+      "subtitle": "Pick a starting layout. It's added to your Dock — nothing you have is removed.",
+      "dock": {
+        "mode": "flavors",
+        "selectionKey": "dock-engineering",
+        "decline": {
+          "label": "Keep my Dock as it is",
+          "subtitle": "Nothing added. You can pick a layout later.",
+          "value": "keep"
+        },
+        "flavors": [
+          {
+            "id": "developer",
+            "name": "Developer",
+            "summary": "Build & ship",
+            "sfSymbol": "chevron.left.forwardslash.chevron.right",
+            "items": [
+              {
+                "label": "Safari",
+                "path": "/Applications/Safari.app"
+              },
+              {
+                "label": "Terminal",
+                "path": "/System/Applications/Utilities/Terminal.app"
+              },
+              {
+                "label": "Activity Monitor",
+                "path": "/System/Applications/Utilities/Activity Monitor.app"
+              },
+              {
+                "label": "Notes",
+                "path": "/System/Applications/Notes.app"
+              }
+            ],
+            "recommended": true
+          },
+          {
+            "id": "essentials",
+            "name": "Essentials",
+            "summary": "Everyday basics",
+            "sfSymbol": "square.grid.2x2",
+            "recommended": false,
+            "items": [
+              {
+                "label": "Safari",
+                "path": "/Applications/Safari.app"
+              },
+              {
+                "label": "Mail",
+                "path": "/System/Applications/Mail.app"
+              },
+              {
+                "label": "Calendar",
+                "path": "/System/Applications/Calendar.app"
+              },
+              {
+                "label": "Notes",
+                "path": "/System/Applications/Notes.app"
+              }
+            ]
+          }
+        ]
+      },
+      "dockApplyMode": "additive",
+      "optionLayout": "cards",
+      "continueButtonText": "Continue",
+      "showWhen": {
+        "key": "team",
+        "anyOf": [
+          "engineering"
+        ]
+      }
+    },
+    {
+      "id": "dock-design",
+      "stepType": "dock",
+      "title": "Set up your Dock",
+      "subtitle": "Pick a starting layout. It's added to your Dock — nothing you have is removed.",
+      "dock": {
+        "mode": "flavors",
+        "selectionKey": "dock-design",
+        "decline": {
+          "label": "Keep my Dock as it is",
+          "subtitle": "Nothing added. You can pick a layout later.",
+          "value": "keep"
+        },
+        "flavors": [
+          {
+            "id": "creative",
+            "name": "Creative",
+            "summary": "Make & plan",
+            "sfSymbol": "paintbrush",
+            "items": [
+              {
+                "label": "Safari",
+                "path": "/Applications/Safari.app"
+              },
+              {
+                "label": "Photos",
+                "path": "/System/Applications/Photos.app"
+              },
+              {
+                "label": "Freeform",
+                "path": "/System/Applications/Freeform.app"
+              },
+              {
+                "label": "Preview",
+                "path": "/System/Applications/Preview.app"
+              }
+            ],
+            "recommended": true
+          },
+          {
+            "id": "essentials",
+            "name": "Essentials",
+            "summary": "Everyday basics",
+            "sfSymbol": "square.grid.2x2",
+            "recommended": false,
+            "items": [
+              {
+                "label": "Safari",
+                "path": "/Applications/Safari.app"
+              },
+              {
+                "label": "Mail",
+                "path": "/System/Applications/Mail.app"
+              },
+              {
+                "label": "Calendar",
+                "path": "/System/Applications/Calendar.app"
+              },
+              {
+                "label": "Notes",
+                "path": "/System/Applications/Notes.app"
+              }
+            ]
+          }
+        ]
+      },
+      "dockApplyMode": "additive",
+      "optionLayout": "cards",
+      "continueButtonText": "Continue",
+      "showWhen": {
+        "key": "team",
+        "anyOf": [
+          "design"
+        ]
+      }
+    },
+    {
+      "id": "screen-recording",
+      "stepType": "media",
+      "title": "Let call apps share your screen",
+      "subtitle": "Teams and Zoom ask for this before they can share your screen, or the sound from your Mac, in a call.",
+      "heroImage": "/System/Applications/System Settings.app/Contents/Resources/Settings.icns",
+      "windowPosition": "left",
+      "content": [
+        {
+          "type": "bullets",
+          "numbered": true,
+          "items": [
+            "Press **Open Privacy settings** below",
+            "Find **Screen & System Audio Recording**",
+            "Switch on **Microsoft Teams** and **Zoom**",
+            "Quit and reopen the app if it asks"
+          ]
+        },
+        {
+          "type": "settings-mockup",
+          "style": "screen-recording",
+          "title": "Microsoft Teams",
+          "items": [
+            "Microsoft Teams",
+            "Zoom"
+          ]
+        },
+        {
+          "type": "button",
+          "content": "Open Privacy settings",
+          "icon": "gearshape",
+          "buttonStyle": "borderedProminent",
+          "action": "url",
+          "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+        },
+        {
+          "type": "info",
+          "style": "chip",
+          "content": "This window moved aside · it re-centres when you continue"
+        }
+      ],
+      "media": {
+        "fit": "fit",
+        "ratio": 0.4,
+        "side": "right"
+      },
+      "continueButtonText": "Continue"
+    },
+    {
+      "id": "finish",
+      "stepType": "outro",
+      "title": "You're all set",
+      "heroImage": "SF=checkmark.seal.fill",
+      "heroImageSize": 44,
+      "subtitle": "Your Mac is set up. Change any of these later.",
+      "receipt": [
+        {
+          "stepId": "splash",
+          "label": "Team",
+          "selectionKey": "team"
+        },
+        {
+          "stepId": "dock-workstations",
+          "label": "Dock",
+          "selectionKey": "dock-workstations"
+        },
+        {
+          "stepId": "dock-engineering",
+          "label": "Dock",
+          "selectionKey": "dock-engineering"
+        },
+        {
+          "stepId": "dock-design",
+          "label": "Dock",
+          "selectionKey": "dock-design"
+        }
+      ],
+      "continueButtonText": "Start using my Mac",
+      "phase": "outro"
+    }
+  ],
+  "phaseBackground": "splash",
+  "phaseBackgroundPalette": [
+    "preset:g13"
+  ]
+}

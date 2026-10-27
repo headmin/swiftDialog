@@ -1,0 +1,247 @@
+{
+  "preset": "5",
+  "chrome": "provisioning",
+  "width": 820,
+  "height": 640,
+  "title": "Repair & Reset",
+  "highlightColor": "#0A84FF",
+  "triggerFile": "/tmp/repair-toolkit.trigger",
+  "readinessFile": "/tmp/repair-toolkit.ready",
+  "eventFile": "/tmp/repair-toolkit.events.jsonl",
+  "resultFile": "/tmp/repair-toolkit.result.json",
+  "introSteps": [
+    {
+      "id": "welcome",
+      "stepType": "intro",
+      "title": "Repair & Reset",
+      "subtitle": "Fixes for the most common Mac problems. Save your work first: some fixes quit apps, and a few remove local data.",
+      "heroImage": "SF=wrench.and.screwdriver",
+      "heroImageSize": 44,
+      "stats": [
+        {
+          "value": "Repair",
+          "label": "Reinstall what is damaged"
+        },
+        {
+          "value": "Reset",
+          "label": "Back to known-good settings"
+        },
+        {
+          "value": "Remove",
+          "label": "Take out what is in the way"
+        },
+        {
+          "value": "Save first",
+          "label": "Apps may quit without saving"
+        }
+      ],
+      "continueButtonText": "Choose fixes",
+      "phase": "intro"
+    },
+    {
+      "id": "choose",
+      "stepType": "options",
+      "optionMultiSelect": true,
+      "optionKey": "tasks",
+      "optionLayout": "rows",
+      "title": "What should we fix?",
+      "subtitle": "Switch on what should run. Fix everything includes the safe resets; red sections remove something for good.",
+      "optionCards": [
+        {
+          "id": "full_tuneup",
+          "label": "Fix everything",
+          "subtitle": "Runs every reset below that loses nothing",
+          "category": "Quick fixes",
+          "sfSymbol": "wand.and.stars",
+          "includes": [
+            "clear_caches",
+            "reset_dock",
+            "renew_network",
+            "rebuild_spotlight",
+            "sign_out_everywhere"
+          ],
+          "iconPath": "/System/Applications/System Settings.app"
+        },
+        {
+          "id": "clear_caches",
+          "label": "Clear app caches",
+          "subtitle": "Caches rebuild themselves on next launch",
+          "category": "Quick fixes",
+          "sfSymbol": "internaldrive",
+          "iconPath": "/System/Applications/Utilities/Disk Utility.app"
+        },
+        {
+          "id": "reset_dock",
+          "label": "Reset the Dock",
+          "subtitle": "Back to the standard layout",
+          "category": "Quick fixes",
+          "sfSymbol": "dock.rectangle",
+          "iconPath": "/System/Library/CoreServices/Dock.app"
+        },
+        {
+          "id": "reset_printing",
+          "label": "Reset printing",
+          "subtitle": "Removes printers and stuck jobs; re-add printers after",
+          "category": "Quick fixes",
+          "sfSymbol": "printer",
+          "iconPath": "/System/Applications/Utilities/Print Center.app"
+        },
+        {
+          "id": "renew_network",
+          "label": "Renew network",
+          "subtitle": "Flushes DNS and renews the DHCP lease",
+          "category": "Quick fixes",
+          "sfSymbol": "network",
+          "iconPath": "/System/Library/CoreServices/Applications/Wireless Diagnostics.app"
+        },
+        {
+          "id": "reset_bluetooth",
+          "label": "Reset Bluetooth",
+          "subtitle": "Forgets the module state; devices reconnect",
+          "category": "Quick fixes",
+          "sfSymbol": "wave.3.right",
+          "iconPath": "/System/Applications/Utilities/Bluetooth File Exchange.app"
+        },
+        {
+          "id": "rebuild_spotlight",
+          "label": "Rebuild Spotlight",
+          "subtitle": "Search is slow for an hour while it re-indexes",
+          "category": "Quick fixes",
+          "sfSymbol": "magnifyingglass",
+          "iconPath": "/System/Library/CoreServices/Spotlight.app"
+        },
+        {
+          "id": "forget_password",
+          "label": "Forget saved app passwords",
+          "subtitle": "Apps ask you to sign in again",
+          "category": "Sign-in",
+          "sfSymbol": "key",
+          "iconPath": "/System/Applications/Passwords.app"
+        },
+        {
+          "id": "sign_out_everywhere",
+          "label": "Sign out of company apps",
+          "subtitle": "Every company app signs out; includes saved passwords",
+          "category": "Sign-in",
+          "sfSymbol": "person.crop.circle.badge.xmark",
+          "cancels": [
+            "forget_password"
+          ]
+        },
+        {
+          "id": "erase_offline_data",
+          "label": "Erase offline files",
+          "subtitle": "Cached copies of synced folders",
+          "differentiator": "Data loss",
+          "exposure": "Permanently deletes files not yet synced",
+          "category": "Removes data",
+          "sfSymbol": "icloud.slash",
+          "iconPath": "/System/Library/CoreServices/Finder.app"
+        },
+        {
+          "id": "reinstall_apps",
+          "label": "Reinstall company apps",
+          "subtitle": "Removes and reinstalls every company app",
+          "differentiator": "Data loss",
+          "exposure": "Deletes local app data; documents in your folders are kept",
+          "category": "Removes data",
+          "sfSymbol": "arrow.triangle.2.circlepath",
+          "cancels": [
+            "category:Quick fixes",
+            "category:Sign-in"
+          ],
+          "iconPath": "/System/Applications/Utilities/Migration Assistant.app",
+          "runOrder": 2
+        },
+        {
+          "id": "remove_login_items",
+          "label": "Remove login items",
+          "subtitle": "Apps that open at login",
+          "category": "Removes software",
+          "sfSymbol": "power",
+          "iconPath": "/System/Applications/Utilities/Activity Monitor.app",
+          "runOrder": 1
+        },
+        {
+          "id": "remove_agent",
+          "label": "Remove the management agent",
+          "subtitle": "Security and update checks stop",
+          "differentiator": "Security",
+          "exposure": "Stops security checks on this Mac until IT reinstalls it",
+          "category": "Removes software",
+          "sfSymbol": "shield.slash",
+          "runOrder": 1
+        }
+      ],
+      "continueButtonText": "Review",
+      "optionControl": "switch"
+    },
+    {
+      "id": "review",
+      "stepType": "review",
+      "title": "Ready to run",
+      "subtitle": "This is everything that will run, and anything you picked that won't — and why.",
+      "reviewAcknowledge": {
+        "label": "I understand these fixes remove data for good",
+        "subtitle": "There is no undo"
+      },
+      "continueButtonText": "Run"
+    },
+    {
+      "id": "run",
+      "stepType": "cadence",
+      "cadenceStyle": "minimal",
+      "title": "Repairing this Mac",
+      "completedTitle": "All fixes done",
+      "subtitle": "Keep this window open. Apps may quit while a fix runs.",
+      "completedMessage": "Every fix you picked has run.",
+      "continueButtonText": "Continue",
+      "continueWhileRunning": "disabled",
+      "autoAdvance": false,
+      "cadenceInterval": 0.5
+    },
+    {
+      "id": "restart",
+      "stepType": "options",
+      "optionKey": "restart",
+      "optionLayout": "rows",
+      "title": "Restart recommended",
+      "subtitle": "A restart finishes most resets. Save your work in other apps first.",
+      "optionCards": [
+        {
+          "id": "now",
+          "label": "Restart now",
+          "subtitle": "Your Mac restarts when you continue"
+        },
+        {
+          "id": "later",
+          "label": "Later",
+          "subtitle": "Restart before you report the problem again",
+          "recommended": true
+        }
+      ],
+      "continueButtonText": "Continue"
+    },
+    {
+      "id": "finish",
+      "stepType": "outro",
+      "title": "Repair finished",
+      "heroImage": "SF=checkmark.seal.fill",
+      "heroImageSize": 44,
+      "subtitle": "If the problem comes back, contact IT and mention which fixes you ran.",
+      "receipt": [
+        {
+          "stepId": "restart",
+          "label": "Restart",
+          "selectionKey": "restart"
+        }
+      ],
+      "continueButtonText": "Done",
+      "phase": "outro"
+    }
+  ],
+  "phaseBackground": "gradient",
+  "phaseBackgroundPalette": [
+    "preset:g09"
+  ]
+}

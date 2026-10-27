@@ -1,0 +1,143 @@
+{
+  "preset": "5",
+  "chrome": "provisioning",
+  "width": 820,
+  "height": 640,
+  "title": "Self-service apps",
+  "highlightColor": "#0A84FF",
+  "phaseBackground": "gradient",
+  "phaseBackgroundPalette": [
+    "preset:g11"
+  ],
+  "triggerFile": "/tmp/self-service-picks.trigger",
+  "readinessFile": "/tmp/self-service-picks.ready",
+  "eventFile": "/tmp/self-service-picks.events.jsonl",
+  "resultFile": "/tmp/self-service-picks.result.json",
+  "introSteps": [
+    {
+      "id": "welcome",
+      "stepType": "intro",
+      "title": "Get your apps",
+      "subtitle": "Pick what you need. Everything installs in the background while you work.",
+      "heroImage": "SF=square.and.arrow.down.on.square",
+      "heroImageSize": 44,
+      "continueButtonText": "Choose apps",
+      "phase": "intro"
+    },
+    {
+      "id": "choose",
+      "stepType": "options",
+      "optionMultiSelect": true,
+      "optionKey": "apps",
+      "optionLayout": "rows",
+      "optionControl": "switch",
+      "title": "Which apps do you want?",
+      "subtitle": "Switch on everything you need; you can come back for more.",
+      "optionCards": [
+        {
+          "id": "slack",
+          "label": "Slack",
+          "subtitle": "Team chat",
+          "category": "Communication",
+          "iconPath": "/Applications/Slack.app",
+          "sfSymbol": "bubble.left.and.bubble.right"
+        },
+        {
+          "id": "zoom",
+          "label": "Zoom",
+          "subtitle": "Video calls",
+          "category": "Communication",
+          "iconPath": "/Applications/zoom.us.app",
+          "sfSymbol": "video"
+        },
+        {
+          "id": "chrome",
+          "label": "Google Chrome",
+          "subtitle": "Browser",
+          "category": "Productivity",
+          "iconPath": "/Applications/Google Chrome.app",
+          "sfSymbol": "globe"
+        },
+        {
+          "id": "firefox",
+          "label": "Firefox",
+          "subtitle": "Browser",
+          "category": "Productivity",
+          "iconPath": "/Applications/Firefox.app",
+          "sfSymbol": "flame"
+        },
+        {
+          "id": "1password",
+          "label": "1Password",
+          "subtitle": "Passwords and passkeys",
+          "category": "Productivity",
+          "iconPath": "/Applications/1Password.app",
+          "sfSymbol": "key.fill"
+        },
+        {
+          "id": "office",
+          "label": "Microsoft 365",
+          "subtitle": "Word, Excel, PowerPoint, Outlook",
+          "category": "Productivity",
+          "iconPath": "/Applications/Microsoft Word.app",
+          "sfSymbol": "doc.richtext"
+        },
+        {
+          "id": "vscode",
+          "label": "Visual Studio Code",
+          "subtitle": "Code editor",
+          "category": "Developer",
+          "iconPath": "/Applications/Visual Studio Code.app",
+          "sfSymbol": "chevron.left.forwardslash.chevron.right"
+        },
+        {
+          "id": "docker",
+          "label": "Docker Desktop",
+          "subtitle": "Containers",
+          "category": "Developer",
+          "iconPath": "/Applications/Docker.app",
+          "sfSymbol": "shippingbox"
+        },
+        {
+          "id": "iterm",
+          "label": "iTerm2",
+          "subtitle": "Terminal",
+          "category": "Developer",
+          "iconPath": "/Applications/iTerm.app",
+          "sfSymbol": "terminal"
+        }
+      ],
+      "continueButtonText": "Review"
+    },
+    {
+      "id": "review",
+      "stepType": "review",
+      "title": "Ready to install",
+      "subtitle": "These apps will install now.",
+      "continueButtonText": "Install"
+    },
+    {
+      "id": "run",
+      "stepType": "cadence",
+      "cadenceStyle": "minimal",
+      "title": "Installing your apps",
+      "completedTitle": "All installed",
+      "subtitle": "Keep working — this runs in the background.",
+      "completedMessage": "Every app you picked is installed.",
+      "continueButtonText": "Continue",
+      "continueWhileRunning": "disabled",
+      "autoAdvance": false,
+      "cadenceInterval": 0.5
+    },
+    {
+      "id": "finish",
+      "stepType": "outro",
+      "title": "You're set",
+      "heroImage": "SF=checkmark.seal.fill",
+      "heroImageSize": 44,
+      "subtitle": "Your apps are in /Applications and on Launchpad.",
+      "continueButtonText": "Done",
+      "phase": "outro"
+    }
+  ]
+}

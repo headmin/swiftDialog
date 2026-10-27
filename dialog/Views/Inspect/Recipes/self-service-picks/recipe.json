@@ -1,0 +1,15 @@
+{
+  "name": "self-service-picks",
+  "title": "Self-service picks",
+  "summary": "Pick apps with switches, review, install with live progress.",
+  "chooserStep": "choose",
+  "titleStep": "welcome",
+  "defaultGradient": "g11",
+  "screens": {
+    "welcome": "Welcome",
+    "review": "Review before installing",
+    "finish": "Receipt"
+  },
+  "workVerb": "install",
+  "addApps": true
+}
