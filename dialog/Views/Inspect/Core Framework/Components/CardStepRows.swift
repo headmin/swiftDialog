@@ -232,7 +232,7 @@ struct CardPanelView: View {
 
             Group {
                 if let path = panel.image,
-                   let nsImage = NSImage(contentsOfFile: path) {
+                   let nsImage = InspectImageCache.shared.image(atPath: path) {
                     Image(nsImage: nsImage)
                         .resizable()
                         .scaledToFill()

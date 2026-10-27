@@ -156,8 +156,8 @@ struct DetailRowView<Context: UserInputContext & ObservableObject>: View {
             : (iconBasePath.map { ($0 as NSString).appendingPathComponent(path) } ?? path)
         let ext = (full as NSString).pathExtension.lowercased()
         let imageExts: Set<String> = ["png", "jpg", "jpeg", "heic", "gif", "tiff", "bmp", "icns", "pdf", "svg"]
-        if imageExts.contains(ext) { return NSImage(contentsOfFile: full) }
+        if imageExts.contains(ext) { return InspectImageCache.shared.image(atPath: full) }
         if FileManager.default.fileExists(atPath: full) { return NSWorkspace.shared.icon(forFile: full) }
-        return NSImage(contentsOfFile: full)
+        return InspectImageCache.shared.image(atPath: full)
     }
 }

@@ -292,7 +292,7 @@ struct GuidanceDropZoneBlock<Context: UserInputContext & ObservableObject>: View
 
     /// An app's own icon, an image's own picture, else the file's Finder icon.
     static func thumbnail(_ path: String) -> NSImage {
-        if !path.lowercased().hasSuffix(".app"), let image = NSImage(contentsOfFile: path) { return image }
+        if !path.lowercased().hasSuffix(".app"), let image = InspectImageCache.shared.image(atPath: path) { return image }
         return NSWorkspace.shared.icon(forFile: path)
     }
 }

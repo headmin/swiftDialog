@@ -556,7 +556,7 @@ class GalleryImageCache: ObservableObject {
             let loaded = await Task.detached(priority: .userInitiated) {
                 var images: [String: NSImage] = [:]
                 for path in paths {
-                    if let image = NSImage(contentsOfFile: path) { images[path] = image }
+                    if let image = InspectImageCache.shared.image(atPath: path) { images[path] = image }
                 }
                 return images
             }.value

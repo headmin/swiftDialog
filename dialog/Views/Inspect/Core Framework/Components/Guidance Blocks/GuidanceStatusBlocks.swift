@@ -330,6 +330,6 @@ struct InstallRow28: View {
         if resolved.hasSuffix(".app") {
             return NSWorkspace.shared.icon(forFile: resolved)
         }
-        return NSImage(contentsOfFile: resolved)
+        return InspectImageCache.shared.image(atPath: resolved)
     }
 }

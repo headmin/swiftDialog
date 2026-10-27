@@ -179,7 +179,7 @@ struct CardHeroBand: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(accent.opacity(0.12))
             if FileManager.default.fileExists(atPath: hero.icon),
-               let nsImage = NSImage(contentsOfFile: hero.icon) {
+               let nsImage = InspectImageCache.shared.image(atPath: hero.icon) {
                 Image(nsImage: nsImage)
                     .resizable()
                     .scaledToFit()
@@ -226,7 +226,7 @@ struct SmallBrandMark: View {
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.white)
                     }
-                } else if let nsImage = NSImage(contentsOfFile: icon) {
+                } else if let nsImage = InspectImageCache.shared.image(atPath: icon) {
                     Image(nsImage: nsImage)
                         .resizable()
                         .scaledToFit()

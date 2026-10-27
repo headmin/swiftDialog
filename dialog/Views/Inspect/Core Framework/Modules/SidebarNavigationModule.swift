@@ -293,7 +293,7 @@ struct SidebarNavigationModule: View {
         Divider()
             .padding(.horizontal, 16 * scaleFactor)
 
-        if let nsImage = NSImage(contentsOfFile: logoPath) {
+        if let nsImage = InspectImageCache.shared.image(atPath: logoPath) {
             Image(nsImage: nsImage)
                 .resizable()
                 .scaledToFit()

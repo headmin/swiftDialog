@@ -155,7 +155,7 @@ struct GuidanceImageBlock: View {
             // A resolved value without a leading slash is an SF Symbol or URL, not loadable here.
             if resolvedPath.hasPrefix("/") && FileManager.default.fileExists(atPath: resolvedPath) {
                 writeLog("GuidanceImageBlock: Loading image from resolved file path: \(resolvedPath)", logLevel: .info)
-                return NSImage(contentsOfFile: resolvedPath)
+                return InspectImageCache.shared.image(atPath: resolvedPath)
             } else if !resolvedPath.hasPrefix("/") {
                 writeLog("GuidanceImageBlock: Resolved path is not a file path (SF Symbol or URL?): \(resolvedPath)", logLevel: .info)
             } else {
@@ -168,7 +168,7 @@ struct GuidanceImageBlock: View {
         if path.hasPrefix("/") {
             if FileManager.default.fileExists(atPath: path) {
                 writeLog("GuidanceImageBlock: Loading image from original absolute path: \(path)", logLevel: .info)
-                return NSImage(contentsOfFile: path)
+                return InspectImageCache.shared.image(atPath: path)
             } else {
                 writeLog("GuidanceImageBlock: Original absolute path does not exist: \(path)", logLevel: .info)
             }

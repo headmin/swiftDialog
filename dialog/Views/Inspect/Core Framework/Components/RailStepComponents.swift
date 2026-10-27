@@ -409,7 +409,7 @@ private struct RailStepIconView: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(accent.opacity(0.12))
             if FileManager.default.fileExists(atPath: icon),
-               let nsImage = NSImage(contentsOfFile: icon) {
+               let nsImage = InspectImageCache.shared.image(atPath: icon) {
                 Image(nsImage: nsImage)
                     .resizable()
                     .scaledToFit()

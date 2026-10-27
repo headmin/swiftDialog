@@ -124,7 +124,7 @@ struct IntroGridCell: View {
 
     @ViewBuilder
     private var imageContent: some View {
-        if let imagePath = item.imagePath, let nsImage = NSImage(contentsOfFile: imagePath) {
+        if let imagePath = item.imagePath, let nsImage = InspectImageCache.shared.image(atPath: imagePath) {
             Image(nsImage: nsImage)
                 .resizable()
                 .scaledToFill()

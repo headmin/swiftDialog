@@ -249,6 +249,6 @@ struct AdvisoryIcon: View {
     private func loadImage() -> NSImage? {
         let p = resolved
         if p.hasSuffix(".app") { return NSWorkspace.shared.icon(forFile: p) }
-        return NSImage(contentsOfFile: p)
+        return InspectImageCache.shared.image(atPath: p)
     }
 }

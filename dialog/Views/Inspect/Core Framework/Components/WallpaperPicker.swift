@@ -399,6 +399,7 @@ struct WallpaperPickerView<Context: UserInputContext & ObservableObject>: View {
             ThumbnailService.shared.preloadThumbnails(for: allImages.map { $0.thumbnail ?? $0.path })
         }
         .onDisappear {
+            ThumbnailService.shared.releaseThumbnails()
             // Pending selections commit when the step transitions away.
             if !isConfirmed && !pendingSelections.isEmpty {
                 confirmSelection()

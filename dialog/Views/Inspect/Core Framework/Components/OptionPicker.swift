@@ -270,7 +270,7 @@ struct OptionPickerView<Context: UserInputContext & ObservableObject>: View {
     @ViewBuilder
     private func iconView(for card: InspectConfig.OptionCard) -> some View {
         if let iconPath = card.iconPath,
-           let nsImage = NSImage(contentsOfFile: (iconPath as NSString).expandingTildeInPath) {
+           let nsImage = InspectImageCache.shared.image(atPath: (iconPath as NSString).expandingTildeInPath) {
             Image(nsImage: nsImage).resizable().scaledToFit()
         } else if let iconPath = card.iconPath,
                   FileManager.default.fileExists(atPath: (iconPath as NSString).expandingTildeInPath) {

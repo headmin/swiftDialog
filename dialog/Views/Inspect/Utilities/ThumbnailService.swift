@@ -3,7 +3,7 @@
 //  dialog
 //
 //  Downsampled thumbnails for the wallpaper picker, decoded via CGImageSource so the full image
-//  is never loaded, and cached in memory and on disk.
+//  is never loaded, and cached on disk and in memory while the picker is on screen.
 //
 
 import AppKit
@@ -13,6 +13,7 @@ class ThumbnailService: ObservableObject {
     static let shared = ThumbnailService()
 
     @Published var thumbnails: [String: NSImage] = [:]
+    private var preloadTask: Task<Void, Never>?
 
     private let cacheDir = "/var/tmp/dialog-thumbnails"
     private let maxPixelSize: Int = 384
@@ -60,15 +61,24 @@ class ThumbnailService: ObservableObject {
             return image
         }.value
 
-        if let thumb {
+        if let thumb, !Task.isCancelled {
             thumbnails[path] = thumb
         }
     }
 
-    /// Preloads thumbnails for all paths, in order.
+    /// Drops the in-memory thumbnails when the picker goes away; the disk cache makes a return quick.
+    func releaseThumbnails() {
+        preloadTask?.cancel()
+        preloadTask = nil
+        thumbnails.removeAll()
+    }
+
+    /// Preloads thumbnails for all paths, in order. A new preload replaces one still running.
     func preloadThumbnails(for paths: [String]) {
-        Task {
+        preloadTask?.cancel()
+        preloadTask = Task {
             for path in paths {
+                if Task.isCancelled { return }
                 if thumbnails[path] != nil { continue }
                 await loadThumbnail(for: path)
             }

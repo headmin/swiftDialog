@@ -456,7 +456,7 @@ struct SetupAssistantFullBleedShell<Media: View>: View {
                 RoundedRectangle(cornerRadius: SetupAssistantMetrics.tileRadius, style: .continuous)
                     .strokeBorder(glassInk.opacity(SetupAssistantMetrics.tileStrokeOpacity), lineWidth: 0.5))
             .overlay {
-                if hero.hasPrefix("/"), let image = NSImage(contentsOfFile: hero) {
+                if hero.hasPrefix("/"), let image = InspectImageCache.shared.image(atPath: hero) {
                     Image(nsImage: image).resizable().scaledToFit()
                         .frame(width: SetupAssistantMetrics.tileGlyph, height: SetupAssistantMetrics.tileGlyph)
                 } else {

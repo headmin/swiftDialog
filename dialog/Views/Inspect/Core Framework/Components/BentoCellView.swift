@@ -547,7 +547,7 @@ struct AsyncBentoImageView: View {
         DispatchQueue.global(qos: .userInitiated).async {
             let resolvedPath = resolveImagePath(imagePath, basePath: basePath)
 
-            if let path = resolvedPath, let image = NSImage(contentsOfFile: path) {
+            if let path = resolvedPath, let image = InspectImageCache.shared.image(atPath: path) {
                 DispatchQueue.main.async {
                     self.loadedImage = image
                     self.isLoading = false

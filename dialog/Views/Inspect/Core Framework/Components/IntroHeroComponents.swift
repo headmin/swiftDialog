@@ -135,25 +135,25 @@ struct IntroHeroImage: View {
     /// Absolute path, then relative to `basePath`, then `ImageResolver`, then the raw path.
     private func loadImage(path: String) -> NSImage? {
         if path.hasPrefix("/") {
-            if let image = NSImage(contentsOfFile: path) {
+            if let image = InspectImageCache.shared.image(atPath: path) {
                 return image
             }
         }
 
         if let base = basePath {
             let fullPath = (base as NSString).appendingPathComponent(path)
-            if let image = NSImage(contentsOfFile: fullPath) {
+            if let image = InspectImageCache.shared.image(atPath: fullPath) {
                 return image
             }
         }
 
         if let resolvedPath = ImageResolver.shared.resolveImagePath(path, basePath: basePath, fallbackIcon: nil),
            resolvedPath.hasPrefix("/"),
-           let image = NSImage(contentsOfFile: resolvedPath) {
+           let image = InspectImageCache.shared.image(atPath: resolvedPath) {
             return image
         }
 
-        return NSImage(contentsOfFile: path)
+        return InspectImageCache.shared.image(atPath: path)
     }
 
     private var clipShape: some Shape {

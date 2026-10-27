@@ -88,7 +88,7 @@ extension Preset5View {
             AsyncImageView(iconPath: resolvedMediaPath(path), basePath: nil, maxWidth: maxW, maxHeight: maxH, imageFit: .fit, fallback: { EmptyView() })
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
-        } else if let img = NSImage(contentsOfFile: resolvedMediaPath(path)) {
+        } else if let img = InspectImageCache.shared.image(atPath: resolvedMediaPath(path)) {
             Image(nsImage: img).resizable().scaledToFit().frame(maxHeight: maxH)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)

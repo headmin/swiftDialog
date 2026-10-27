@@ -104,10 +104,12 @@ struct PlainSimpleListScreen: View {
 
     /// The hero, sized by its visible content: bitmaps are trimmed of transparent margin so an app
     /// icon, the `computer` image and a brand mark fill the slot alike. SF symbols stay on `IconView`.
+    /// Trimmed once per image version: this view redraws on every poll.
     @ViewBuilder
     private var heroMark: some View {
         let path = iconCache.getMainIconPath(for: inspectState)
-        if let trimmed = Self.trimmedHeroImage(for: path) {
+        if let trimmed = InspectImageCache.shared.derivedImage("trimmed-hero", fromPath: path,
+                                                               make: { Self.trimmedHeroImage(for: path) }) {
             Image(nsImage: trimmed)
                 .resizable()
                 .scaledToFit()
@@ -132,7 +134,7 @@ struct PlainSimpleListScreen: View {
         } else if lower.hasSuffix(".app") || lower.hasSuffix(".app/") {
             resolved = NSWorkspace.shared.icon(forFile: (path as NSString).expandingTildeInPath)
         } else {
-            resolved = NSImage(contentsOfFile: (path as NSString).expandingTildeInPath)
+            resolved = InspectImageCache.shared.image(atPath: (path as NSString).expandingTildeInPath)
         }
         guard let resolved, resolved.size.width > 0, resolved.size.height > 0 else { return nil }
         return resolved.trimmingTransparentBorder()

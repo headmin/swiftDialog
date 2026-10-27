@@ -315,3 +315,87 @@ final class NativeVideoLifetimeTests: XCTestCase {
         if let observer { NotificationCenter.default.removeObserver(observer) }
     }
 }
+
+/// Views that draw a file inside `body` decode it once per file version, never above `maxPixel`.
+final class InspectImageCacheTests: XCTestCase {
+
+    private var dir: URL!
+
+    override func setUpWithError() throws {
+        dir = FileManager.default.temporaryDirectory.appendingPathComponent("image-cache-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: dir)
+    }
+
+    private func writePNG(width: Int, height: Int, named name: String) throws -> String {
+        let rep = try XCTUnwrap(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height,
+                                                 bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                                 colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0))
+        let path = dir.appendingPathComponent(name).path
+        try XCTUnwrap(rep.representation(using: .png, properties: [:])).write(to: URL(fileURLWithPath: path))
+        return path
+    }
+
+    func testARedrawGetsTheSameDecodedImage() throws {
+        let path = try writePNG(width: 64, height: 64, named: "icon.png")
+        let first = try XCTUnwrap(InspectImageCache.shared.image(atPath: path))
+        XCTAssertTrue(first === InspectImageCache.shared.image(atPath: path), "a second draw decoded again")
+    }
+
+    func testALargeImageIsCappedInPixelsButKeepsItsPointSize() throws {
+        let path = try writePNG(width: 4000, height: 1000, named: "wide.png")
+        let image = try XCTUnwrap(InspectImageCache.shared.image(atPath: path))
+        let widest = image.cgImage(forProposedRect: nil, context: nil, hints: nil)?.width ?? .max
+        XCTAssertLessThanOrEqual(widest, InspectImageCache.maxPixel)
+        XCTAssertEqual(image.size.width, NSImage(contentsOfFile: path)?.size.width ?? -1, accuracy: 0.5)
+        XCTAssertEqual(image.size.height, NSImage(contentsOfFile: path)?.size.height ?? -1, accuracy: 0.5)
+    }
+
+    func testAChangedFileIsDecodedAgain() throws {
+        let path = try writePNG(width: 32, height: 32, named: "logo.png")
+        let before = try XCTUnwrap(InspectImageCache.shared.image(atPath: path))
+        _ = try writePNG(width: 48, height: 48, named: "logo.png")
+        try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(60)], ofItemAtPath: path)
+        let after = try XCTUnwrap(InspectImageCache.shared.image(atPath: path))
+        XCTAssertFalse(before === after)
+        XCTAssertEqual(after.size.width, 48, accuracy: 0.5)
+    }
+
+    func testAMissingFileOrADirectoryGivesNoImage() {
+        XCTAssertNil(InspectImageCache.shared.image(atPath: dir.appendingPathComponent("absent.png").path))
+        XCTAssertNil(InspectImageCache.shared.image(atPath: dir.path))
+    }
+
+    func testADerivedImageIsMadeOncePerFileVersion() throws {
+        let path = try writePNG(width: 16, height: 16, named: "hero.png")
+        var made = 0
+        for _ in 0..<5 {
+            _ = InspectImageCache.shared.derivedImage("test-trim", fromPath: path) { made += 1; return NSImage(size: NSSize(width: 1, height: 1)) }
+        }
+        XCTAssertEqual(made, 1)
+    }
+}
+
+/// The wallpaper picker's thumbnails are dropped from memory when it goes away.
+@MainActor
+final class ThumbnailReleaseTests: XCTestCase {
+
+    func testReleasingDropsEveryThumbnailFromMemory() async throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("thumbs-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let rep = try XCTUnwrap(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 800, pixelsHigh: 600,
+                                                 bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                                 colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0))
+        let path = dir.appendingPathComponent("wall.png").path
+        try XCTUnwrap(rep.representation(using: .png, properties: [:])).write(to: URL(fileURLWithPath: path))
+
+        await ThumbnailService.shared.loadThumbnail(for: path)
+        XCTAssertNotNil(ThumbnailService.shared.thumbnails[path])
+        ThumbnailService.shared.releaseThumbnails()
+        XCTAssertTrue(ThumbnailService.shared.thumbnails.isEmpty)
+    }
+}

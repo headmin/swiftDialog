@@ -87,7 +87,7 @@ class PresetIconCache: ObservableObject {
 
         if let resolvedPath = resolvedPath,
            FileManager.default.fileExists(atPath: resolvedPath),
-           let nsImage = NSImage(contentsOfFile: resolvedPath) {
+           let nsImage = InspectImageCache.shared.image(atPath: resolvedPath) {
             DispatchQueue.main.async { [weak self] in
                 self?.bannerImage = nsImage
             }
@@ -239,7 +239,7 @@ enum ItemArt {
             return FileManager.default.fileExists(atPath: path)
                 ? NSWorkspace.shared.icon(forFile: path) : nil
         }
-        return NSImage(contentsOfFile: path)
+        return InspectImageCache.shared.image(atPath: path)
     }
 }
 
@@ -248,5 +248,78 @@ extension MonitoredItem {
     /// seat that turns a row into artwork without `PresetIconCache`.
     var resolvedArt: String? {
         icon ?? ItemIconLadder.shared.installedAppPath(for: self)
+    }
+}
+
+/// Decoded images for views that draw a file inside `body`, which redraws on every poll. Each file
+/// version (path plus modification date) is decoded once, rasters at most `maxPixel` on the long
+/// side with their original point size, and kept in a bounded cache.
+final class InspectImageCache: @unchecked Sendable {
+    static let shared = InspectImageCache()
+    static let maxPixel = 2048
+    /// Kept as authored: vector and multi-image formats lose detail or frames when downsampled.
+    private static let undownsampled: Set<String> = ["pdf", "svg", "icns", "gif", "ico"]
+
+    private let cache = NSCache<NSString, NSImage>()
+
+    private init() {
+        cache.countLimit = 60
+        cache.totalCostLimit = 150_000_000
+    }
+
+    /// The image at `path` (a leading `~` is expanded), or nil for a missing file or a directory.
+    func image(atPath path: String) -> NSImage? {
+        let expanded = (path as NSString).expandingTildeInPath
+        guard let version = Self.version(of: expanded) else { return nil }
+        return image(forKey: "\(expanded)@\(version)") { Self.decode(expanded) }
+    }
+
+    /// An image derived from a file (a trimmed copy, say), made once per file version.
+    func derivedImage(_ kind: String, fromPath path: String, make: () -> NSImage?) -> NSImage? {
+        let expanded = (path as NSString).expandingTildeInPath
+        let version = Self.version(of: expanded) ?? 0
+        return image(forKey: "\(kind):\(expanded)@\(version)", make: make)
+    }
+
+    private func image(forKey key: String, make: () -> NSImage?) -> NSImage? {
+        if let cached = cache.object(forKey: key as NSString) { return cached }
+        guard let image = make() else { return nil }
+        // The bitmap actually held: a representation reports pixels at screen scale, not what it stores.
+        let bitmap = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+        cache.setObject(image, forKey: key as NSString, cost: max((bitmap?.width ?? 1) * (bitmap?.height ?? 1), 1) * 4)
+        return image
+    }
+
+    private static func version(of path: String) -> TimeInterval? {
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: path),
+              attributes[.type] as? FileAttributeType != .typeDirectory else { return nil }
+        return (attributes[.modificationDate] as? Date)?.timeIntervalSinceReferenceDate ?? 0
+    }
+
+    /// A raster no larger than `maxPixel`, keeping the point size `NSImage(contentsOfFile:)` would give.
+    static func decode(_ path: String, maxPixel: Int = maxPixel) -> NSImage? {
+        let ext = (path as NSString).pathExtension.lowercased()
+        guard !undownsampled.contains(ext),
+              let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL,
+                                                      [kCGImageSourceShouldCache: false] as CFDictionary),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int, width > 0, height > 0 else {
+            return NSImage(contentsOfFile: path)
+        }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: min(maxPixel, max(width, height))
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            return NSImage(contentsOfFile: path)
+        }
+        let dpi = (properties[kCGImagePropertyDPIWidth] as? Double).flatMap { $0 > 0 ? $0 : nil } ?? 72
+        let shrink = Double(max(cgImage.width, cgImage.height)) / Double(max(width, height))
+        let pointsPerPixel = 72 / dpi / shrink
+        return NSImage(cgImage: cgImage, size: NSSize(width: Double(cgImage.width) * pointsPerPixel,
+                                                      height: Double(cgImage.height) * pointsPerPixel))
     }
 }

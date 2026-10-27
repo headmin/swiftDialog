@@ -50,7 +50,7 @@ struct CardTopBand: View {
             // Full strength; the band paints its text white for contrast.
             LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
         } else if band.ground?.lowercased() == "image", let path = band.groundImage,
-                  let img = NSImage(contentsOfFile: path) {
+                  let img = InspectImageCache.shared.image(atPath: path) {
             Image(nsImage: img)
                 .resizable()
                 .scaledToFill()   // cover the measured box, never letterbox

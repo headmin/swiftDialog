@@ -118,7 +118,7 @@ struct BrandCard: View {
 
     @ViewBuilder
     private var brandImage: some View {
-        if let logoPath = brand.logoPath, let nsImage = NSImage(contentsOfFile: logoPath) {
+        if let logoPath = brand.logoPath, let nsImage = InspectImageCache.shared.image(atPath: logoPath) {
             Image(nsImage: nsImage)
                 .resizable()
                 .scaledToFit()
