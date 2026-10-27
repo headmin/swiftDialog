@@ -162,6 +162,8 @@ struct MessageContent: View {
                 AudioControl()
             }
 
+            GuidanceBridgeView(observedData: observedData)
+
             Group {
                 ForEach(Array(observedData.appProperties.viewOrder.indices), id: \.self) { index in
                     switch index {
