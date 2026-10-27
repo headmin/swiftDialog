@@ -263,6 +263,7 @@ class InspectState: ObservableObject, FileMonitorDelegate, @MainActor CadenceCon
         validateAllItems()
         fsEventsMonitor.stopMonitoring()
         setupOptimizedFileMonitoring()
+        setupOptimizedPeriodicUpdates()
         if newConfig.logMonitor != nil || newConfig.logMonitors != nil {
             LogMonitorService.shared.setItems(items)
             LogMonitorService.shared.configure(with: newConfig)
@@ -395,6 +396,8 @@ class InspectState: ObservableObject, FileMonitorDelegate, @MainActor CadenceCon
                 InspectAppearance.apply(self.config?.appearance)
                 self.validateAllItems()
                 self.setupOptimizedFileMonitoring()
+                // Started before the config arrived; restart it at the config's `scanInterval`.
+                self.setupOptimizedPeriodicUpdates()
                 self.initializeProgressTracker()
                 self.setupLogMonitoring(config: loadedConfig)
             }
@@ -468,7 +471,7 @@ class InspectState: ObservableObject, FileMonitorDelegate, @MainActor CadenceCon
     
     private func setupOptimizedPeriodicUpdates() {
         updatePoll?.cancel()
-        let poll = Poll(every: InspectConstants.robustUpdateInterval)
+        let poll = Poll(every: InspectConstants.scanInterval(config?.scanInterval))
         poll.start { [weak self] in
             self?.performRobustAppCheck()
         }

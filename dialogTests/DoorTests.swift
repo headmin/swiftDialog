@@ -303,3 +303,88 @@ final class MonitoringServiceRemovalTests: XCTestCase {
         XCTAssertTrue(service.removedItems.isEmpty, "a row that has come back must stop saying it went")
     }
 }
+
+/// Presets 1–4 and 6 complete an item from its declared `requirements`, which replace the paths checks.
+@MainActor
+final class RequirementCompletionTests: XCTestCase {
+
+    private var dir: URL!
+
+    override func setUpWithError() throws {
+        dir = FileManager.default.temporaryDirectory.appendingPathComponent("RequirementCompletionTests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: dir)
+    }
+
+    private func settle() {
+        let settled = XCTestExpectation(description: "the debounced poller pass has run")
+        DispatchQueue.main.asyncAfter(deadline: .now() + InspectConstants.debounceDelay + 0.3) { settled.fulfill() }
+        wait(for: [settled], timeout: 3)
+    }
+
+    private func item(_ json: String) throws -> InspectConfig.ItemConfig {
+        try JSONDecoder().decode(InspectConfig.ItemConfig.self, from: Data(json.utf8))
+    }
+
+    private func touch(_ name: String) -> String {
+        let path = dir.appendingPathComponent(name).path
+        FileManager.default.createFile(atPath: path, contents: Data())
+        return path
+    }
+
+    func testAnItemWithOnlyRequirementsCompletesWhenTheyAreMet() throws {
+        let first = touch("first.marker")
+        let second = dir.appendingPathComponent("second.marker").path
+        let state = InspectState()
+        state.items = [try item(#"{"id": "a", "displayName": "A", "paths": [], "requirements": ["#
+            + #"{"type": "path", "paths": ["\#(first)"]}, {"type": "path", "paths": ["\#(second)"]}]}"#)]
+
+        state.checkDirectInstallationStatus(); settle()
+        XCTAssertFalse(state.completedItems.contains("a"), "all requirements must pass by default")
+
+        _ = touch("second.marker")
+        state.checkDirectInstallationStatus(); settle()
+        XCTAssertTrue(state.completedItems.contains("a"))
+    }
+
+    func testSatisfyAnyCompletesOnOneRequirement() throws {
+        let present = touch("present.marker")
+        let state = InspectState()
+        state.items = [try item(#"{"id": "a", "displayName": "A", "paths": [], "satisfy": "any", "requirements": ["#
+            + #"{"type": "path", "paths": ["\#(present)"]}, {"type": "path", "paths": ["/nonexistent/x"]}]}"#)]
+
+        state.checkDirectInstallationStatus(); settle()
+        XCTAssertTrue(state.completedItems.contains("a"))
+    }
+
+    func testRequirementsWinOverAnExistingPath() throws {
+        let app = touch("A.app")
+        let state = InspectState()
+        state.items = [try item(#"{"id": "a", "displayName": "A", "paths": ["\#(app)"], "requirements": ["#
+            + #"{"type": "path", "paths": ["/nonexistent/not-yet"]}]}"#)]
+
+        state.checkDirectInstallationStatus(); settle()
+        XCTAssertFalse(state.completedItems.contains("a"), "the path exists, but the declared requirement does not pass")
+    }
+}
+
+/// `scanInterval` sets the item status poll on every preset: 2 s when absent, never under 1 s.
+@MainActor
+final class ScanIntervalTests: XCTestCase {
+
+    func testTheResolvedInterval() {
+        XCTAssertEqual(InspectConstants.scanInterval(nil), InspectConstants.robustUpdateInterval)
+        XCTAssertEqual(InspectConstants.scanInterval(5), 5)
+        XCTAssertEqual(InspectConstants.scanInterval(0), 1, "a zero or negative interval would spin")
+    }
+
+    func testPreset5MonitoringUsesTheConfiguredInterval() {
+        let service = UnifiedMonitoringService()
+        service.startMonitoring(items: [], scanInterval: 7)
+        XCTAssertEqual(service.statusInterval, 7)
+        service.stopMonitoring()
+    }
+}

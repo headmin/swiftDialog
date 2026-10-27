@@ -2957,7 +2957,7 @@
         },
         "portalConfig": {
           "$ref": "#/definitions/PortalConfig",
-          "description": "Per-block portal configuration overriding the global portalConfig, including ephemeralSession, errorDetectionPhrases, errorDetectionThreshold and openExternalLinksInBrowser. Flat portal* keys on the block still take precedence."
+          "description": "Per-block portal configuration overriding the global portalConfig, including openExternalLinksInBrowser. Flat portal* keys on the block still take precedence."
         },
         "portalHeight": {
           "type": "number",
@@ -5193,7 +5193,7 @@
     },
     "PortalConfig": {
       "type": "object",
-      "description": "Self-service portal configuration with optional authentication. URL can be provided via portalURL or portalURLFile.",
+      "description": "Self-service portal configuration; pages load without sign-in or custom request headers. URL can be provided via portalURL or portalURLFile.",
       "properties": {
         "button1Text": {
           "type": "string",

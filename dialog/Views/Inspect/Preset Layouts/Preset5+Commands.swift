@@ -371,15 +371,14 @@ extension Preset5View {
 
         // Form values as flat strings.
         if let content = step.content {
-            let formTypes = ["checkbox", "dropdown", "radio", "toggle", "textfield", "slider", "segmented"]
             let stepValues = legacyFormValues(for: step)
-            for block in content where formTypes.contains(block.type) {
+            for block in content where Self.formValueTypes.contains(block.type) {
                 if let fieldId = block.id, let value = stepValues[fieldId] {
                     preferencesService?.setValue(value, forKey: fieldId)
                     writeLog("Preset5: Persisted form value '\(fieldId)' = '\(value)'", logLevel: .debug)
                 }
             }
-            if content.contains(where: { formTypes.contains($0.type) }) {
+            if content.contains(where: { Self.formValueTypes.contains($0.type) }) {
                 preferencesService?.writeToPlist()
             }
         }

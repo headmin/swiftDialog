@@ -139,6 +139,7 @@ extension Preset5View {
         monitoringService.startMonitoring(items: items, cachePaths: config?.cachePaths ?? [], cacheExtensions: config?.resolvedCacheExtensions,
                                           receiptsBasePath: config?.receiptsBasePath,
                                           receiptCensus: config?.receiptCensus ?? false,
+                                          scanInterval: config?.scanInterval,
                                           owner: step.id)
 
         // Start log monitoring when configured at the top level.

@@ -21,6 +21,11 @@ struct InspectConstants {
     static let updateTimerInterval: TimeInterval = 5.0
     static let fileSystemCheckInterval: TimeInterval = 3.0
     static let robustUpdateInterval: TimeInterval = 2.0
+
+    /// The item status poll interval: the config's `scanInterval` seconds, else `robustUpdateInterval`, never under 1 s.
+    static func scanInterval(_ authored: Int?) -> TimeInterval {
+        max(1, authored.map(TimeInterval.init) ?? robustUpdateInterval)
+    }
     /// How often a preset re-reads plist-backed item statuses (Presets 3 and 4). Slow on purpose:
     /// a faster poll competes with the software being installed. `IntroStepMonitorService` has
     /// its own clocks.

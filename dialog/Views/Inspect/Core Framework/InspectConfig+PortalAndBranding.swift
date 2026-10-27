@@ -24,6 +24,50 @@ extension InspectConfig {
         let button2Text: String?                // Portal-specific secondary button text (overrides global button2text)
         let openExternalLinksInBrowser: Bool?   // Non-portal links open in the browser (default true)
     }
+}
+
+extension InspectConfig.PortalConfig {
+    static let knownKeys: Set<String> = [
+        "portalURL", "portalURLFile", "selfServicePath", "fallbackMessage", "supportURL", "supportContact",
+        "stateDomain", "selfServiceOnly", "button1Text", "button2Text", "openExternalLinksInBrowser"
+    ]
+
+    /// Sign-in, request and offline keys of earlier versions. Portal pages load without credentials or
+    /// custom requests, so lint names these on their own rather than as typos.
+    static let noLongerReadKeys: Set<String> = [
+        "provider", "tokenEndpoint", "tokenRefreshInterval", "authSources", "clientCertSubject",
+        "offlineMode", "retryCount", "retryDelay", "cacheContentForOffline", "cacheDuration",
+        "userAgent", "brandingKey", "brandingHeaderName", "customHeaders",
+        "ephemeralSession", "errorDetectionPhrases", "errorDetectionThreshold"
+    ]
+
+    /// Decodes the fields, and reports any other key the way root, step and item keys are reported.
+    /// Root, step (and its `portal` alias) and block `portalConfig` all decode through here.
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.container(keyedBy: RawCodingKey.self)
+        let authored = Set(raw.allKeys.map(\.stringValue))
+        for key in InspectConfig.unknownKeys(in: authored, against: Self.knownKeys) {
+            InspectConfig.unknownKeyWarnings.append(Self.noLongerReadKeys.contains(key)
+                ? "'\(key)' in portalConfig is no longer read: portal pages load without sign-in or custom requests"
+                : "Unknown key '\(key)' in portalConfig")
+        }
+
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        portalURL = try container.decodeIfPresent(String.self, forKey: .portalURL)
+        portalURLFile = try container.decodeIfPresent(String.self, forKey: .portalURLFile)
+        selfServicePath = try container.decodeIfPresent(String.self, forKey: .selfServicePath)
+        fallbackMessage = try container.decodeIfPresent(String.self, forKey: .fallbackMessage)
+        supportURL = try container.decodeIfPresent(String.self, forKey: .supportURL)
+        supportContact = try container.decodeIfPresent(String.self, forKey: .supportContact)
+        stateDomain = try container.decodeIfPresent(String.self, forKey: .stateDomain)
+        selfServiceOnly = try container.decodeIfPresent(Bool.self, forKey: .selfServiceOnly)
+        button1Text = try container.decodeIfPresent(String.self, forKey: .button1Text)
+        button2Text = try container.decodeIfPresent(String.self, forKey: .button2Text)
+        openExternalLinksInBrowser = try container.decodeIfPresent(Bool.self, forKey: .openExternalLinksInBrowser)
+    }
+}
+
+extension InspectConfig {
 
     /// Where to read MDM-managed preferences for branding. Each `*Key` names the preference key
     /// that overrides the matching config field; managed values always win over the JSON.

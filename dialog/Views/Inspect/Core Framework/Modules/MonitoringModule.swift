@@ -103,6 +103,8 @@ final class UnifiedMonitoringService: ObservableObject {
     private var cachePaths: [String] = []
     private var cacheExtensions: [String] = [".download", ".pkg", ".dmg"]
     private var receiptsBasePath: String = "/var/db/receipts"
+    /// Status poll interval, from the config's `scanInterval`.
+    private(set) var statusInterval: TimeInterval = InspectConstants.robustUpdateInterval
     /// `receiptCensus`: the receipts present at start; nil when the census is off.
     private var receiptBaseline: Set<String>?
     /// Rows the census completed. A one-way latch the other engines respect, so a row does not flap.
@@ -163,8 +165,9 @@ final class UnifiedMonitoringService: ObservableObject {
     ///   - receiptsBasePath: Base directory for `receipt` requirements (overridable for tests)
     func startMonitoring(items: [any MonitoredItem], cachePaths: [String] = [], cacheExtensions: [String]? = nil,
                          receiptsBasePath: String? = nil, reflectsCurrentState: Bool = false,
-                         receiptCensus: Bool = false,
+                         receiptCensus: Bool = false, scanInterval: Int? = nil,
                          owner: String? = nil) {
+        self.statusInterval = InspectConstants.scanInterval(scanInterval)
         self.monitoringOwner = owner
         self.items = items
         self.cachePaths = cachePaths
@@ -309,7 +312,7 @@ final class UnifiedMonitoringService: ObservableObject {
     /// Status, plist and JSON polls are `Poll`s (Clocks.swift), main-actor by type.
     private func startStatusCheckTimer() {
         statusCheck?.cancel()
-        let poll = Poll(every: 2.0)
+        let poll = Poll(every: statusInterval)
         statusCheck = poll
         poll.start { [weak self] in self?.performStatusCheck() }
     }

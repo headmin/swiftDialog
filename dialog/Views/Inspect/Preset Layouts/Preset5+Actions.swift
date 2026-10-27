@@ -16,14 +16,19 @@ extension Preset5View {
     /// Current step id used as the guidanceFormInputs store key.
     var formStoreStepId: String { currentStep?.id ?? "" }
 
+    /// Every block type that holds a form value; the outputs, the preferences plist and the required-field
+    /// gate all read this one list. The last seven store their value in `textfields`.
+    static let formValueTypes: Set<String> = ["checkbox", "dropdown", "radio", "toggle", "textfield", "slider", "segmented",
+                                              "drop-zone", "color-picker", "stepper", "search",
+                                              "multi-select", "select-list", "select-grid"]
+
     /// Whether all required fields in a step are filled (shared validation, as on Preset 6).
     func allRequiredFieldsFilled(step: InspectConfig.IntroStep) -> Bool {
         guard let content = step.content else { return true }
 
         // Until onAppear seeds the store, any required field counts as unfilled.
         if inspectState.guidanceFormInputs[step.id] == nil {
-            let formTypes = ["checkbox", "dropdown", "radio", "toggle", "textfield", "slider", "segmented"]
-            return !content.contains { $0.required == true && formTypes.contains($0.type) }
+            return !content.contains { $0.required == true && Self.formValueTypes.contains($0.type) }
         }
 
         return inspectState.validateGuidanceInputs(content: content, itemId: step.id)
@@ -124,8 +129,14 @@ extension Preset5View {
                 if let value = state.dropdowns[fieldId] { result[fieldId] = value }
             case "radio":
                 if let value = state.radios[fieldId] { result[fieldId] = value }
-            case "textfield":
+            case "textfield", "color-picker", "stepper", "search":
                 if let value = state.textfields[fieldId] { result[fieldId] = value }
+            case "drop-zone", "multi-select", "select-list", "select-grid":
+                // Several values: comma-joined, as Preset 5 writes multi-select picks everywhere else.
+                if let value = state.textfields[fieldId] {
+                    result[fieldId] = value.split(whereSeparator: { $0 == "\u{001F}" || $0 == "\n" })
+                        .map(String.init).joined(separator: ",")
+                }
             case "slider":
                 if let value = state.sliders[fieldId] {
                     result[fieldId] = value == value.rounded() ? "\(Int(value))" : "\(value)"

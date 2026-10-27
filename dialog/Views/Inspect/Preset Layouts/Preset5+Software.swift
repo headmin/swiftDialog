@@ -24,6 +24,7 @@ extension Preset5View {
                                           receiptsBasePath: config?.receiptsBasePath,
                                           reflectsCurrentState: true,
                                           receiptCensus: config?.receiptCensus ?? false,
+                                          scanInterval: config?.scanInterval,
                                           owner: step.id)
         // Bundle install progress arrives through LogMonitor's itemIds routing.
         if let config {

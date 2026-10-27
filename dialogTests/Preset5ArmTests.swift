@@ -302,6 +302,30 @@ final class Preset5FormWireContractTests: XCTestCase {
                         "analytics": "true", "notifications": "false", "volume": "40"])
     }
 
+    /// The pickers that keep their value in `textfields` reach the outputs too; several values join with ",".
+    func testLegacyFormValuesIncludeEveryTextfieldBackedPicker() throws {
+        let step = try Self.decodeStep(#"""
+        {"id": "prefs", "content": [
+          {"type": "drop-zone", "id": "files"}, {"type": "color-picker", "id": "accent"},
+          {"type": "stepper", "id": "copies"}, {"type": "search", "id": "printer"},
+          {"type": "multi-select", "id": "apps"}, {"type": "select-list", "id": "langs"},
+          {"type": "select-grid", "id": "tiles"}]}
+        """#)
+        var s = GuidanceFormInputState()
+        s.textfields["files"] = "/tmp/a.pdf\n/tmp/b.pdf"
+        s.textfields["accent"] = "#0A84FF"
+        s.textfields["copies"] = "3"
+        s.textfields["printer"] = "Floor 2"
+        s.textfields["apps"] = "Slack\u{001F}Zoom"
+        s.textfields["langs"] = "en\u{001F}de"
+        s.textfields["tiles"] = "mail"
+        state.guidanceFormInputs["prefs"] = s
+
+        XCTAssertEqual(view.legacyFormValues(for: step),
+                       ["files": "/tmp/a.pdf,/tmp/b.pdf", "accent": "#0A84FF", "copies": "3", "printer": "Floor 2",
+                        "apps": "Slack,Zoom", "langs": "en,de", "tiles": "mail"])
+    }
+
     /// Integral slider values flatten to "40", fractional ones keep the decimal.
     func testSliderFlatteningDropsTheDecimalOnlyWhenIntegral() {
         var s = GuidanceFormInputState()

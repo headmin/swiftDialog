@@ -3075,3 +3075,40 @@ final class WatchReloadTests: XCTestCase {
         XCTAssertTrue(InspectConfig.knownRootKeys.contains("watch"))
     }
 }
+
+/// Lint reads inside `portalConfig`: unknown keys are named, and earlier sign-in keys say they are no longer read.
+@MainActor
+final class PortalConfigLintTests: XCTestCase {
+
+    private func messages(_ json: String) -> [String] {
+        InspectLint.lint(data: Data(json.utf8)).map(\.message)
+    }
+
+    func testRootPortalKeysThatAreNoLongerReadAreNamed() {
+        let found = messages(#"""
+        {"preset": "5", "portalConfig": {"portalURL": "https://portal.example.com",
+                                         "authSources": [], "customHeaders": {}, "portalURl": "typo"},
+         "introSteps": [{"id": "p", "stepType": "portal"}]}
+        """#)
+        XCTAssertTrue(found.contains { $0.contains("'authSources' in portalConfig is no longer read") }, "\(found)")
+        XCTAssertTrue(found.contains { $0.contains("'customHeaders' in portalConfig is no longer read") }, "\(found)")
+        XCTAssertTrue(found.contains { $0.contains("Unknown key 'portalURl' in portalConfig") }, "\(found)")
+    }
+
+    func testABlockPortalConfigIsCheckedToo() {
+        let found = messages(#"""
+        {"preset": "5", "introSteps": [{"id": "s", "content": [
+          {"type": "portal-webview", "portalConfig": {"portalURL": "https://portal.example.com", "userAgent": "x"}}]}]}
+        """#)
+        XCTAssertTrue(found.contains { $0.contains("'userAgent' in portalConfig is no longer read") }, "\(found)")
+    }
+
+    func testAPortalConfigOfKnownKeysRaisesNothing() {
+        let found = messages(#"""
+        {"preset": "5", "portalConfig": {"portalURL": "https://portal.example.com", "selfServicePath": "/apps",
+                                         "selfServiceOnly": true, "openExternalLinksInBrowser": false},
+         "introSteps": [{"id": "p", "stepType": "portal"}]}
+        """#)
+        XCTAssertFalse(found.contains { $0.contains("portalConfig") }, "\(found)")
+    }
+}

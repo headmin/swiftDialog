@@ -76,8 +76,15 @@ extension InspectState {
             }
         }
 
+        let receiptsBasePath = config?.receiptsBasePath ?? "/var/db/receipts"
         for item in items {
-            guard !item.paths.isEmpty else {
+            // Declared requirements replace the paths/plist checks, as the schema documents, so such an
+            // item needs no paths.
+            let requirementVerdict = RequirementEvaluator.evaluate(item, receiptsBasePath: receiptsBasePath)
+            // Log words name what decided: declared requirements, or the paths and cache files.
+            let source = requirementVerdict != nil ? "REQUIREMENTS" : "FILESYSTEM"
+            let gone = requirementVerdict != nil ? "requirements no longer met" : "deleted"
+            guard requirementVerdict != nil || !item.paths.isEmpty else {
                 writeLog("InspectState: Skipping filesystem check for item \(item.id) - empty paths array", logLevel: .debug)
                 continue
             }
@@ -92,7 +99,9 @@ extension InspectState {
 
             // With plistKey + evaluation, the file existing is not enough; the value must pass.
             let isInstalled: Bool
-            if fileExists, let plistKey = item.plistKey, !plistKey.isEmpty, let evaluation = item.evaluation {
+            if let requirementVerdict {
+                isInstalled = requirementVerdict.done
+            } else if fileExists, let plistKey = item.plistKey, !plistKey.isEmpty, let evaluation = item.evaluation {
                 let plistPath = item.paths.first { $0.hasSuffix(".plist") } ?? item.paths.first ?? ""
                 let expandedPath = (plistPath as NSString).expandingTildeInPath
                 let actualValue: String?
@@ -178,11 +187,12 @@ extension InspectState {
                                                      isInstalled: isInstalled, isDownloading: isDownloading)
                 self.debouncedUpdater.debounce(key: "item-install-\(item.id)") { [weak self] in
                     guard let self = self else { return }
-                    DetectionLog.note(itemId: item.id, from: words.from, to: words.to, by: .poller)
+                    DetectionLog.note(itemId: item.id, from: words.from, to: words.to,
+                                      by: requirementVerdict != nil ? .requirements : .poller)
                     self.completedItems.insert(item.id)
                     self.downloadingItems.remove(item.id)
                 }
-                writeLog("InspectState: FILESYSTEM - \(item.displayName) detection completed", logLevel: .info)
+                writeLog("InspectState: \(source) - \(item.displayName) detection completed", logLevel: .info)
                 changesDetected = true
 
             } else if !isInstalled && wasCompleted && pathCheckSawInstalled.contains(item.id) {
@@ -194,7 +204,7 @@ extension InspectState {
                         self.completedItems.remove(item.id)
                         self.downloadingItems.insert(item.id)
                     }
-                    writeLog("InspectState: FILESYSTEM - \(item.displayName) deleted but still downloading", logLevel: .info)
+                    writeLog("InspectState: \(source) - \(item.displayName) \(gone) but still downloading", logLevel: .info)
                 } else {
                     self.debouncedUpdater.debounce(key: "item-remove-\(item.id)") { [weak self] in
                         guard let self = self else { return }
@@ -204,9 +214,10 @@ extension InspectState {
                         self.removedItems[item.id] = Date()
                         let words = DetectionLog.pollerWords(wasCompleted: wasCompleted, wasDownloading: wasDownloading,
                                                              isInstalled: isInstalled, isDownloading: isDownloading)
-                        DetectionLog.note(itemId: item.id, from: words.from, to: words.to, by: .poller)
+                        DetectionLog.note(itemId: item.id, from: words.from, to: words.to,
+                                          by: requirementVerdict != nil ? .requirements : .poller)
                     }
-                    writeLog("InspectState: FILESYSTEM - \(item.displayName) deleted, reset to pending with a removal notice", logLevel: .info)
+                    writeLog("InspectState: \(source) - \(item.displayName) \(gone), reset to pending with a removal notice", logLevel: .info)
                 }
                 changesDetected = true
 
@@ -216,7 +227,8 @@ extension InspectState {
                     self.downloadingItems.insert(item.id)
                     let words = DetectionLog.pollerWords(wasCompleted: wasCompleted, wasDownloading: wasDownloading,
                                                          isInstalled: isInstalled, isDownloading: isDownloading)
-                    DetectionLog.note(itemId: item.id, from: words.from, to: words.to, by: .poller)
+                    DetectionLog.note(itemId: item.id, from: words.from, to: words.to,
+                                      by: requirementVerdict != nil ? .requirements : .poller)
                     writeLog("InspectState: Added \(item.id) to downloadingItems (cache detected)", logLevel: .info)
                 }
                 writeLog("InspectState: FILESYSTEM - \(item.displayName) downloading", logLevel: .info)
