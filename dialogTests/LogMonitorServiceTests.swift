@@ -1656,3 +1656,19 @@ extension LogMonitorServiceTests {
         XCTAssertEqual(lock.withLock { statuses }, ["half done"])
     }
 }
+
+/// Log patterns are compiled once, not for every line read.
+final class LogPatternRegexCacheTests: XCTestCase {
+
+    func testAPatternIsCompiledOnceAndReused() {
+        let cache = LogPatternRegexCache.shared
+        let first = cache.regex(for: #"Installed (.+?), version"#)
+        XCTAssertNotNil(first)
+        XCTAssertTrue(first === cache.regex(for: #"Installed (.+?), version"#))
+    }
+
+    func testAnInvalidPatternGivesNoRegexAndNoCapture() {
+        XCTAssertNil(LogPatternRegexCache.shared.regex(for: "(unclosed"))
+        XCTAssertNil(LogPatternPreset.firstCapture(in: "anything", pattern: "(unclosed", group: 0))
+    }
+}

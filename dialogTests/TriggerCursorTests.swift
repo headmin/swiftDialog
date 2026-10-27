@@ -3,7 +3,8 @@
 //  dialogTests
 //
 //  `TriggerCursor` reads the trigger file incrementally. It trusts its offset only while the bytes
-//  already consumed are unchanged; a rewritten or replaced file is read from the start.
+//  just before its offset are unchanged; a rewritten or replaced file is read from the start. The
+//  router around it keeps one watcher per start.
 //
 
 import XCTest
@@ -131,5 +132,57 @@ final class TriggerCursorTests: XCTestCase {
         _ = cursor.advance(over: data("next\n"))
         XCTAssertNil(cursor.advance(over: data("next\n")),
                      "indistinguishable from an idle re-read; idle must win")
+    }
+}
+
+/// The check before each read compares a bounded anchor, so a long command history costs no more per tick.
+final class TriggerCursorAnchorTests: XCTestCase {
+
+    private let history = Data(String(repeating: "next\n", count: 20_000).utf8)
+
+    func testALongHistoryStillYieldsOnlyTheAppendedLine() {
+        var cursor = TriggerCursor()
+        cursor.seekToEnd(of: history)
+        let slice = cursor.advance(over: history + Data("quit:\n".utf8))
+        XCTAssertEqual(slice.flatMap { String(bytes: $0, encoding: .utf8) }, "quit:\n")
+    }
+
+    func testARewriteNearTheOffsetOfALongFileIsReadFromTheStart() {
+        var cursor = TriggerCursor()
+        cursor.seekToEnd(of: history)
+        var rewritten = history
+        rewritten[rewritten.count - 3] = UInt8(ascii: "X")
+        XCTAssertEqual(cursor.advance(over: rewritten)?.count, rewritten.count)
+    }
+
+    func testAnUnfinishedLastLineIsReportedAsHeld() {
+        var cursor = TriggerCursor()
+        XCTAssertNil(cursor.advance(over: Data("next".utf8), now: 0))
+        XCTAssertTrue(cursor.isHoldingTail, "the router must keep reading while a tail waits")
+        _ = cursor.advance(over: Data("next\n".utf8), now: 0.1)
+        XCTAssertFalse(cursor.isHoldingTail)
+    }
+}
+
+/// Starting the router again replaces its watchers instead of stacking them.
+@MainActor
+final class CommandRouterRestartTests: XCTestCase {
+
+    private func openDescriptors() -> Int {
+        (try? FileManager.default.contentsOfDirectory(atPath: "/dev/fd").count) ?? -1
+    }
+
+    func testStartingTwiceThenStoppingLeavesNoDescriptorOpen() throws {
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent("router-\(UUID().uuidString).trigger").path
+        XCTAssertTrue(FileManager.default.createFile(atPath: path, contents: Data()))
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        let before = openDescriptors()
+        let router = CommandRouter()
+        router.startMonitoring(triggerFilePath: path)
+        router.startMonitoring(triggerFilePath: path)
+        router.stopMonitoring()
+        // Cancel handlers close the descriptors on the main queue.
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        XCTAssertEqual(openDescriptors(), before)
     }
 }

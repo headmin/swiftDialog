@@ -12,27 +12,32 @@ import AppKit
 
 // MARK: - Trigger-file read position
 
-/// Incremental read position in the trigger file. The offset is trusted only while the bytes
-/// already consumed are still there unchanged (`consumedDigest`); a file whose prefix no longer
-/// matches was rewritten, not appended to, and is read from the start.
+/// Incremental read position in the trigger file. The offset is trusted only while the bytes just
+/// before it are still there unchanged (`anchor`, the last `anchorLength` consumed bytes); a file
+/// whose bytes there no longer match was rewritten, not appended to, and is read from the start.
+/// Comparing a bounded anchor instead of the whole consumed prefix keeps each check the same cost
+/// however long the deployment's command history grows.
 struct TriggerCursor {
     private var offset: Int = 0
-    private var consumedDigest: Int = TriggerCursor.digest(of: Data())
+    private var anchor = Data()
     /// The unfinished last line: the file length it ends at, and the uptime first seen there.
     private var tail: (length: Int, since: TimeInterval)?
     static let tailGrace: TimeInterval = 0.5
+    static let anchorLength = 256
 
-    private static func digest(of data: Data) -> Int {
-        var hasher = Hasher()
-        hasher.combine(data)
-        return hasher.finalize()
+    /// True while a last line without a newline waits out `tailGrace`: the file must be read again
+    /// even though it has not changed.
+    var isHoldingTail: Bool { tail != nil }
+
+    private mutating func consume(through end: Int, of data: Data) {
+        offset = end
+        anchor = data.subdata(in: max(0, end - Self.anchorLength)..<end)
     }
 
     /// Adopts the file's current contents without yielding them, so a file left by a previous run
     /// does not replay on launch.
     mutating func seekToEnd(of data: Data) {
-        offset = data.count
-        consumedDigest = Self.digest(of: data)
+        consume(through: data.count, of: data)
     }
 
     /// The bytes to process now, or nil when nothing is new. Runs on every poll tick, so an
@@ -41,10 +46,10 @@ struct TriggerCursor {
     /// so a half-written line is never dispatched but `printf next` still runs.
     mutating func advance(over data: Data,
                           now: TimeInterval = ProcessInfo.processInfo.systemUptime) -> Data? {
-        guard data.count >= offset, Self.digest(of: Data(data.prefix(offset))) == consumedDigest else {
+        guard data.count >= offset, data.subdata(in: (offset - anchor.count)..<offset) == anchor else {
             // The file was replaced: read all of it.
             offset = 0
-            consumedDigest = Self.digest(of: Data())
+            anchor = Data()
             tail = nil
             return advance(over: data, now: now)
         }
@@ -59,8 +64,7 @@ struct TriggerCursor {
             return nil
         }
         let slice = data.subdata(in: offset..<end)
-        offset = end
-        consumedDigest = Self.digest(of: Data(data.prefix(end)))
+        consume(through: end, of: data)
         tail = end < data.count ? (data.count, now) : nil
         return slice
     }
@@ -188,7 +192,10 @@ final class CommandRouter: ObservableObject {
 
     /// Starts watching the trigger file and the notification channel.
     func startMonitoring(triggerFilePath: String, notificationHandler: ((String) -> Void)? = nil) {
+        // A second start replaces the watchers: the old source must be cancelled or its descriptor stays open.
+        stopMonitoring()
         monitoredPath = triggerFilePath
+        lastSeen = nil
 
         writeLog("\(presetLabel): startMonitoring path='\(triggerFilePath)' exists=\(FileManager.default.fileExists(atPath: triggerFilePath))", logLevel: .debug)
 
@@ -234,9 +241,17 @@ final class CommandRouter: ObservableObject {
         DialogNotifications.stopObserving()
     }
 
+    /// Size and modification date at the last read: the 0.2 s poll reads the file only when it changed.
+    private var lastSeen: (size: Int, modified: Date)?
+
     private func checkForNewLines() {
-        guard !monitoredPath.isEmpty,
-              let data = FileManager.default.contents(atPath: monitoredPath) else { return }
+        guard !monitoredPath.isEmpty else { return }
+        let attributes = try? FileManager.default.attributesOfItem(atPath: monitoredPath)
+        if let size = attributes?[.size] as? Int, let modified = attributes?[.modificationDate] as? Date {
+            if let seen = lastSeen, seen.size == size, seen.modified == modified, !cursor.isHoldingTail { return }
+            lastSeen = (size, modified)
+        }
+        guard let data = FileManager.default.contents(atPath: monitoredPath) else { return }
         guard let newData = cursor.advance(over: data) else { return }
         guard let newContent = String(bytes: newData, encoding: .utf8) else { return }
 

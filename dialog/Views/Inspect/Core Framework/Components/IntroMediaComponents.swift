@@ -184,16 +184,7 @@ struct IntroNativeVideoPlayer: NSViewRepresentable {
             player.play()
         }
 
-        NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: player.currentItem,
-            queue: .main
-        ) { _ in
-            player.seek(to: .zero)
-            if autoplay {
-                player.play()
-            }
-        }
+        context.coordinator.endObserver = Self.loopObserver(for: player, autoplay: autoplay)
 
         return playerView
     }
@@ -201,9 +192,34 @@ struct IntroNativeVideoPlayer: NSViewRepresentable {
     func updateNSView(_ nsView: AVPlayerView, context: Context) {
     }
 
-    /// The loop observer keeps the player alive, so a removed view must stop it or its sound plays on.
-    static func dismantleNSView(_ nsView: AVPlayerView, coordinator: ()) {
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    final class Coordinator {
+        var endObserver: NSObjectProtocol?
+    }
+
+    /// Rewinds at the end, and plays again when autoplaying. Holds the player weakly, so the
+    /// observer never keeps a removed player (and its decode buffers) alive.
+    static func loopObserver(for player: AVPlayer, autoplay: Bool) -> NSObjectProtocol {
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [weak player] _ in
+            player?.seek(to: .zero)
+            if autoplay { player?.play() }
+        }
+    }
+
+    /// A removed view stops and releases its player, so no sound plays on and no buffers are kept.
+    static func dismantleNSView(_ nsView: AVPlayerView, coordinator: Coordinator) {
+        if let observer = coordinator.endObserver {
+            NotificationCenter.default.removeObserver(observer)
+            coordinator.endObserver = nil
+        }
         nsView.player?.pause()
+        nsView.player?.replaceCurrentItem(with: nil)
+        nsView.player = nil
     }
 }
 

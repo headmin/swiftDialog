@@ -42,6 +42,22 @@ struct LogRouteCandidate {
 }
 
 /// Named regex presets for common log formats.
+/// Compiled log patterns, so a busy log does not compile the same patterns for every line.
+/// The patterns come from the presets and the config, so the cap is never reached in practice.
+final class LogPatternRegexCache: @unchecked Sendable {
+    static let shared = LogPatternRegexCache()
+    private let cache = NSCache<NSString, NSRegularExpression>()
+
+    private init() { cache.countLimit = 64 }
+
+    func regex(for pattern: String) -> NSRegularExpression? {
+        if let cached = cache.object(forKey: pattern as NSString) { return cached }
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        cache.setObject(regex, forKey: pattern as NSString)
+        return regex
+    }
+}
+
 struct LogPatternPreset {
     let pattern: String
     let captureGroup: Int
@@ -119,7 +135,7 @@ struct LogPatternPreset {
     }
 
     static func firstCapture(in line: String, pattern: String, group: Int) -> String? {
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        guard let regex = LogPatternRegexCache.shared.regex(for: pattern) else { return nil }
         let range = NSRange(line.startIndex..., in: line)
         guard let match = regex.firstMatch(in: line, range: range),
               group < match.numberOfRanges,

@@ -7,6 +7,7 @@
 //
 
 import XCTest
+import AVFoundation
 @testable import Dialog
 
 final class MediaLayoutTests: XCTestCase {
@@ -294,5 +295,23 @@ extension MediaLayoutTests {
                        "a wide frame still honours showDots: false — it has arrows")
         XCTAssertFalse(carousel(width: 180, showDots: false, images: ["only.png"]).dotsVisible,
                        "one image is not a carousel")
+    }
+}
+
+/// A looping native video must not outlive its view: the end-of-item observer holds the player weakly.
+final class NativeVideoLifetimeTests: XCTestCase {
+
+    func testTheLoopObserverDoesNotKeepThePlayerAlive() {
+        weak var released: AVPlayer?
+        var observer: NSObjectProtocol?
+        autoreleasepool {
+            let player = AVPlayer(url: URL(fileURLWithPath: "/nonexistent/clip.mp4"))
+            released = player
+            observer = IntroNativeVideoPlayer.loopObserver(for: player, autoplay: true)
+        }
+        // AVFoundation lets go of a player on the main queue shortly after its last owner.
+        RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+        XCTAssertNil(released, "the observer kept the player, and its buffers, alive")
+        if let observer { NotificationCenter.default.removeObserver(observer) }
     }
 }
