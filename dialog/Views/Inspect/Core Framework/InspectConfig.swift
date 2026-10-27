@@ -314,6 +314,10 @@ struct InspectConfig: Codable, Sendable {
     /// resolved form through `GuidanceCalloutBlock.resolveForm`: `.chip` and `.card` are admitted,
     /// `.flat` is not.
     static func plainBrandedPermits(_ block: GuidanceContent) -> Bool {
+        if block.type == "info" {
+            let form = GuidanceCalloutBlock.resolveForm(style: .info, rawStyle: block.style, title: block.title)
+            return form == .chip || form == .card
+        }
         return plainBrandedAllowedBlockTypes.contains(block.type)
     }
 
@@ -559,7 +563,55 @@ struct InspectConfig: Codable, Sendable {
                                          advisories: &guidanceBlockAdvisories)
         InspectConfig.unknownKeyWarnings.append(contentsOf: guidanceBlockAdvisories)
 
-        guidanceContent = decodedGuidanceContent
+        // Warn, never drop: every authored block renders, and one outside plain-branded's
+        // allowlist earns an advisory. Gated on `chrome` because the field is inert elsewhere.
+        if chrome.flatMap(InspectSizes.Construction.init(rawValue:)) == .plainBranded,
+           let decodedGuidanceContent {
+            for (index, block) in decodedGuidanceContent.enumerated()
+            where !InspectConfig.plainBrandedPermits(block) {
+                // Types turned away for a reason the author cannot guess from the JSON get it by
+                // name; anything else is an untried type.
+                let namedReason: String
+                switch block.type {
+                case "compliance-header":
+                    namedReason = " It fits at 500 and was still turned away: it draws a second, "
+                        + "LARGER header pair under the construction's own."
+                case "option-picker":
+                    namedReason = " It draws its selection in the flow's accent (highlightColor), "
+                        + "the action pill's own colour; and in its default layout the selected "
+                        + "row's tint starts left of the title's edge and each card's subtitle "
+                        + "is dropped."
+                case "dock-picker":
+                    namedReason = " It draws its selection in the flow's accent (highlightColor), "
+                        + "the action pill's own colour; and at 500pt its flavour cards are about "
+                        + "150pt each, so every line wraps mid-phrase."
+                case "bento-grid":
+                    namedReason = " bentoLayout 'hero' and 'summary' draw BentoModule and render "
+                        + "in this column, but neither has been judged against this "
+                        + "construction's composition rules, so they are untried rather than "
+                        + "approved. The default grid arm does render, and WAS judged and turned "
+                        + "away: three cells at the "
+                        + "schema's own row height leave 86.5 of 572pt below them (15%) where "
+                        + "rule 6 asks for 40%, the hero tile carries a further 41.5pt void of "
+                        + "its own inside a composition whose ONE void is the layout, and "
+                        + "BentoCellView draws no actionLabel, meta or badge — so the reference "
+                        + "shape's inner button silently never appears."
+                default:
+                    namedReason = ""
+                }
+                InspectConfig.unknownKeyWarnings.append(
+                    "plain-branded is built around 'text'/'bullets'/'info', images, controls, "
+                    + "and the catalogue's callout, list, table and interactive families; see "
+                    + "InspectConfig.plainBrandedAllowedBlockTypes for the set judged to fit "
+                    + "its 500pt column. guidanceContent[\(index)], type '\(block.type)', is "
+                    + "outside that set and is RENDERED ANYWAY — check it against the column "
+                    + "width and this construction's composition rather than assuming it fits."
+                    + namedReason)
+            }
+            guidanceContent = decodedGuidanceContent
+        } else {
+            guidanceContent = decodedGuidanceContent
+        }
 
         // `items[]` beside `introSteps[]` would render a blank panel; fail loudly instead.
         let hasItems = container.contains(.items)
@@ -736,53 +788,4 @@ extension InspectConfig {
         }
         return "Unknown key '\(key)' in root config"
     }
-}
-
-// The status enums the current preset views read.
-// MARK: - Unified Status Enum
-
-/// Unified status enum for all Inspect mode items
-enum InspectItemStatus: Equatable {
-    case pending
-    case downloading
-    case completed
-    case failed(String)
-
-    /// Handler for simple status without associated values for basic comparisons
-    var simpleStatus: SimpleItemStatus {
-        switch self {
-        case .pending: return .pending
-        case .downloading: return .downloading
-        case .completed: return .completed
-        case .failed: return .failed
-        }
-    }
-}
-
-/// Simple download status enum
-///
-/// **EXTERNAL API**: This enum is maintained for backward compatibility with external scripts
-/// that may rely on parsing Dialog's state output.
-///
-/// **Internal Usage**: Prefer `InspectItemStatus` with Swift pattern matching:
-/// ```swift
-/// // Preferred internal approach:
-/// if case .failed = itemStatus {
-///     // Handle failure
-/// }
-///
-/// // Avoid in internal code:
-/// if itemStatus.simpleStatus == .failed {
-///     // Less type-safe
-/// }
-/// ```
-///
-/// **Note**: `InspectItemStatus` provides richer information via associated values
-/// (e.g., `.failed(String)` includes error message), while `SimpleItemStatus` only
-/// indicates state without context.
-enum SimpleItemStatus {
-    case pending
-    case downloading
-    case completed
-    case failed
 }
