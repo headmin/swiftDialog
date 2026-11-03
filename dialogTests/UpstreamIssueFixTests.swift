@@ -28,7 +28,14 @@ final class UpstreamIssueFixTests: XCTestCase {
         XCTAssertEqual(PresetCommonViews.ItemOrder(itemSortOrder: "activeFirst"), .upNext)
         XCTAssertEqual(PresetCommonViews.ItemOrder(itemSortOrder: "guiIndex"), .guiIndex)
         XCTAssertEqual(PresetCommonViews.ItemOrder(itemSortOrder: "bogus"), .completedFirst)
-        XCTAssertFalse(PresetCommonViews.ItemOrder.completedFirst.followsActive, "the default order does not start scrolling")
+        XCTAssertTrue(PresetCommonViews.ItemOrder.completedFirst.followsActive, "the default order follows the installing row")
+        XCTAssertFalse(PresetCommonViews.ItemOrder.activeFirst.followsActive)
+        // Preset 1 starts the list two finished rows above the installing one.
+        let rows: [(id: String, status: StepStatus)] = [("a", .completed), ("b", .completed), ("c", .completed),
+                                                        ("d", .active), ("e", .pending)]
+        XCTAssertEqual(DeploymentItemList.followTop(rows), "b")
+        XCTAssertEqual(DeploymentItemList.followTop([("a", .active), ("b", .pending)]), "a", "never above the first row")
+        XCTAssertEqual(DeploymentItemList.followTop([("a", .completed), ("b", .pending)]), "a", "else the next waiting one")
         XCTAssertTrue(PresetCommonViews.ItemOrder.upNext.followsActive)
     }
 
@@ -48,6 +55,15 @@ final class UpstreamIssueFixTests: XCTestCase {
         XCTAssertEqual(Preset2CardPager.followAnchor(ids: ids, downloading: [], completed: ["a"], failed: ["b"]), 2)
         XCTAssertEqual(Preset2CardPager.followAnchor(ids: ids, downloading: ["d"], completed: ["a"], failed: []), 3)
         XCTAssertEqual(Preset2CardPager.followAnchor(ids: ids, downloading: [], completed: ["a", "c", "d"], failed: ["b"]), 3)
+
+        // Four cards in view: the installing card holds the third slot with one waiting card after it
+        // (done, done, installing, waiting), sliding by one per finished card.
+        XCTAssertEqual(Preset2CardPager.followStart(anchor: 2, start: 0, perPage: 4, count: 11), 0)
+        XCTAssertEqual(Preset2CardPager.followStart(anchor: 3, start: 0, perPage: 4, count: 11), 1)
+        XCTAssertEqual(Preset2CardPager.followStart(anchor: 4, start: 1, perPage: 4, count: 11), 2)
+        XCTAssertEqual(Preset2CardPager.followStart(anchor: 10, start: 2, perPage: 4, count: 11), 7, "never past the end")
+        XCTAssertEqual(Preset2CardPager.followStart(anchor: 2, start: 0, perPage: 2, count: 11), 1, "no look-ahead under three")
+        XCTAssertEqual(Preset2CardPager.followStart(anchor: 1, start: 4, perPage: 4, count: 11), 1, "back into view")
     }
 
     /// All three token spellings 3.1.1 accepted fill in, on every preset's progress label (Preset 2

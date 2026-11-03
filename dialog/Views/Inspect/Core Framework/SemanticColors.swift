@@ -12,17 +12,20 @@ extension Color {
 
     // MARK: - Status Colors
 
-    /// Success/complete state - Apple system green (#34C759)
-    static let semanticSuccess = Color(hex: "#34C759")
+    // The system colours, not their light-mode hex values: AppKit resolves each for light, dark and
+    // increased contrast (systemGreen is #34C759 light, #30D158 dark).
 
-    /// Error/failure state - Apple system red (#FF3B30)
-    static let semanticFailure = Color(hex: "#FF3B30")
+    /// Success/complete state - system green
+    static let semanticSuccess = Color(nsColor: .systemGreen)
 
-    /// Warning/caution state - Apple system orange (#FF9F0A)
-    static let semanticWarning = Color(hex: "#FF9F0A")
+    /// Error/failure state - system red
+    static let semanticFailure = Color(nsColor: .systemRed)
 
-    /// Info/active state - Apple system blue (#007AFF)
-    static let semanticInfo = Color(hex: "#007AFF")
+    /// Warning/caution state - system orange
+    static let semanticWarning = Color(nsColor: .systemOrange)
+
+    /// Info/active state - system blue
+    static let semanticInfo = Color(nsColor: .systemBlue)
 
     /// Pending/inactive state - System gray
     static let semanticPending = Color.secondary

@@ -117,8 +117,8 @@ struct DeploymentItemList: View, InspectLayoutProtocol {
                             Spacer()
                         }
                         .padding(.horizontal)
-                        // Large gap above the header, small gap below hugs it to its rows.
-                        .padding(.top, InspectConstants.spacingSection * scaleFactor)
+                        // A gap above the header, a smaller one below hugs it to its rows.
+                        .padding(.top, InspectConstants.spacingInner * scaleFactor)
                         .padding(.bottom, InspectConstants.spacingIntra * scaleFactor)
                     }
 
@@ -128,6 +128,13 @@ struct DeploymentItemList: View, InspectLayoutProtocol {
             }
             .padding(.vertical, InspectConstants.spacingInner * scaleFactor)
         }
+        // Rows that scroll up under the header fade out instead of being cut at a hard edge.
+        .mask {
+            VStack(spacing: 0) {
+                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 10)
+                Rectangle()
+            }
+        }
         .onChange(of: inspectState.downloadingItems) { _, _ in follow(proxy) }
         .onChange(of: inspectState.completedItems) { _, _ in follow(proxy) }
         .onChange(of: inspectState.failedItems) { _, _ in follow(proxy) }
@@ -135,9 +142,22 @@ struct DeploymentItemList: View, InspectLayoutProtocol {
     }
 
     private func follow(_ proxy: ScrollViewProxy) {
-        guard order.followsActive,
-              let target = InstallMath.focusRow(ItemSetModel.build(from: inspectState).rows.map { ($0.id, $0.status) }) else { return }
-        withAnimation(.easeInOut(duration: 0.4)) { proxy.scrollTo(target, anchor: .center) }
+        let rows = ItemSetModel.build(from: inspectState).rows.map { ($0.id, $0.status) }
+        guard order.followsActive, let top = Self.followTop(rows) else { return }
+        // Pinned to a row's top edge, so no row sits half under the header; a list that fits never moves.
+        // After the rows and section headers have taken their new state, as Preset 2's slide: in the same
+        // transaction the headers cross-fade over each other while the list moves.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            withAnimation(.easeInOut(duration: 0.4)) { proxy.scrollTo(top, anchor: .top) }
+        }
+    }
+
+    /// The row the list starts at while following: two finished rows above the installing one (else the
+    /// next waiting one), as Preset 2's cards keep two done cards in view.
+    static func followTop(_ rows: [(id: String, status: StepStatus)]) -> String? {
+        guard let focus = InstallMath.focusRow(rows), let index = rows.firstIndex(where: { $0.id == focus })
+        else { return nil }
+        return rows[max(0, index - 2)].id
     }
 
     // MARK: Rows

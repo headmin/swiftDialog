@@ -36,7 +36,9 @@ struct Preset2CardPager: View, InspectLayoutProtocol {
     let loc: PresetLocalization
     let onItemInfo: (InspectConfig.ItemConfig) -> Void
 
-    @State private var pageIndex = 0
+    /// Index of the first visible card. Following the install slides it one card at a time; the arrow
+    /// and the dots move it a page at a time.
+    @State private var startIndex = 0
 
     private var items: [InspectConfig.ItemConfig] { inspectState.items }
 
@@ -46,10 +48,21 @@ struct Preset2CardPager: View, InspectLayoutProtocol {
 
     private var pageCount: Int { max(1, Int(ceil(Double(items.count) / Double(cardsPerPage)))) }
 
+    private var maxStart: Int { max(0, items.count - cardsPerPage) }
+
+    /// The page the dots mark: the last one once the window reaches the end.
+    private var pageIndex: Int { startIndex >= maxStart ? pageCount - 1 : startIndex / cardsPerPage }
+
     private var visibleItems: [InspectConfig.ItemConfig] {
-        let start = min(pageIndex, pageCount - 1) * cardsPerPage
+        let start = min(startIndex, maxStart)
         guard start < items.count else { return [] }
         return Array(items[start..<min(start + cardsPerPage, items.count)])
+    }
+
+    private func show(page: Int) {
+        withAnimation(.easeInOut(duration: InspectConstants.standardAnimationDuration)) {
+            startIndex = min(page * cardsPerPage, maxStart)
+        }
     }
 
     private func cardState(_ item: InspectConfig.ItemConfig) -> Preset2CardState {
@@ -80,19 +93,19 @@ struct Preset2CardPager: View, InspectLayoutProtocol {
                         )
                         .contentShape(RoundedRectangle(cornerRadius: 14))
                         .onTapGesture { onItemInfo(item) }
+                        // Sliding left: a finished card leaves at the leading edge, the next one enters
+                        // at the trailing edge, and the cards between move over by one.
+                        .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
+                                                removal: .move(edge: .leading).combined(with: .opacity)))
                     }
                     if visibleItems.count < cardsPerPage { Spacer(minLength: 0) }
                 }
                 .frame(maxWidth: .infinity)
 
-                if pageIndex < pageCount - 1 {
-                    Preset2PeekColumn(accent: accent) {
-                        withAnimation(.easeInOut(duration: InspectConstants.standardAnimationDuration)) { pageIndex += 1 }
-                    }
+                if startIndex < maxStart {
+                    Preset2PeekColumn(accent: accent) { show(page: pageIndex + 1) }
                 } else if pageCount > 1 {
-                    Preset2PeekColumn(accent: accent, backwards: true) {
-                        withAnimation(.easeInOut(duration: InspectConstants.standardAnimationDuration)) { pageIndex = 0 }
-                    }
+                    Preset2PeekColumn(accent: accent, backwards: true) { show(page: 0) }
                 }
             }
             .padding(.leading, InspectMetrics(scale: scaleFactor).phaseFooterHorizontal)
@@ -101,9 +114,7 @@ struct Preset2CardPager: View, InspectLayoutProtocol {
             if pageCount > 1 {
                 HStack(spacing: 5) {
                     ForEach(0..<pageCount, id: \.self) { page in
-                        Button {
-                            withAnimation(.easeInOut(duration: InspectConstants.standardAnimationDuration)) { pageIndex = page }
-                        } label: {
+                        Button { show(page: page) } label: {
                             RoundedRectangle(cornerRadius: 3)
                                 .fill(page == pageIndex ? accent : Color.secondary.opacity(0.4))
                                 .frame(width: page == pageIndex ? 20 : 5, height: 5)
@@ -133,12 +144,30 @@ struct Preset2CardPager: View, InspectLayoutProtocol {
         return max(0, ids.count - 1)
     }
 
+    /// The first visible card that keeps `anchor` in view with one waiting card after it (done, done,
+    /// installing, waiting at four per page): unchanged while it sits in that range; past it the window
+    /// slides one card per finished card; before the first slot it sits first. Under three per page there
+    /// is no room for the look-ahead.
+    static func followStart(anchor: Int, start: Int, perPage: Int, count: Int) -> Int {
+        let maxStart = max(0, count - perPage)
+        let lastSlot = perPage >= 3 ? perPage - 2 : perPage - 1
+        let target: Int
+        if anchor > start + lastSlot { target = anchor - lastSlot }
+        else if anchor < start { target = anchor }
+        else { target = start }
+        return min(max(0, target), maxStart)
+    }
+
     private func followProgress() {
         let anchorIndex = Self.followAnchor(ids: items.map(\.id), downloading: inspectState.downloadingItems,
                                             completed: inspectState.completedItems, failed: inspectState.failedItems)
-        let targetPage = min(anchorIndex / cardsPerPage, pageCount - 1)
-        if targetPage != pageIndex {
-            withAnimation(.easeInOut(duration: 0.6)) { pageIndex = targetPage }
+        let target = Self.followStart(anchor: anchorIndex, start: startIndex, perPage: cardsPerPage, count: items.count)
+        guard target != startIndex else { return }
+        // After the card's own state change (colour, status line, badge) has drawn, so the slide moves each
+        // card as one piece. In the same transaction its name jumps to the new slot ahead of the card; a
+        // plain `async` still lands in that render pass.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            withAnimation(.easeInOut(duration: 0.6)) { startIndex = target }
         }
     }
 
@@ -233,7 +262,12 @@ struct Preset2AppCard: View {
 
             // No claim or identifier on the card; both open in the card's sheet.
             switch state {
-            case .completed, .queued:
+            case .completed:
+                // Green as in 3.1.1; a validation warning already turns the card `.failed`.
+                Text(statusText)
+                    .font(.system(size: 12))
+                    .foregroundStyle(palette.success)
+            case .queued:
                 Text(statusText)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
@@ -328,9 +362,7 @@ struct Preset2ProgressBlock: View {
 
     private var label: String {
         if let format = localizedFormat {
-            return format
-                .replacingOccurrences(of: "{completed}", with: "\(completed)")
-                .replacingOccurrences(of: "{total}", with: "\(total)")
+            return PresetCommonViews.fillProgressTokens(format, completed: completed, total: total)
         }
         return "\(completed) of \(total) installed"
     }
@@ -348,12 +380,11 @@ struct Preset2ProgressBlock: View {
             }
             .frame(height: 8)
 
-            HStack {
-                Text(label)
-                    .font(.system(size: 13, weight: .medium))
-                Spacer()
-                // Time-remaining slot stays empty: no real estimate source.
-            }
+            // Centred like every other element in the column; a left label read as off-balance.
+            Text(label)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
         }
     }
 }

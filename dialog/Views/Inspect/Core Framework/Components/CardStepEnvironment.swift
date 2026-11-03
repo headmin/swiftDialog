@@ -71,14 +71,10 @@ extension EnvironmentValues {
 
 // MARK: - Top band
 
-/// The brand claim's default and how an authored value overrides it. Defaulted, so older configs still
-/// get a claim; an empty string opts out. Only the plain-branded construction leaves it opt-in.
+/// The brand claim shows only when authored: unset or empty draws no line.
 enum CardFooterClaim {
-    static let defaultText = "Managed with ❤️ by your IT!"
-
     static func resolve(authored: String?) -> String? {
-        guard let authored else { return defaultText }
-        return authored.isEmpty ? nil : authored
+        authored?.isEmpty == false ? authored : nil
     }
 }
 

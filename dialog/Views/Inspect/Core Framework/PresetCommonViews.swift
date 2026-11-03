@@ -219,9 +219,9 @@ struct PresetCommonViews {
             }
         }
 
-        /// Whether the list scrolls to keep the installing item in view. Off for the default
-        /// order so existing configs behave as before.
-        var followsActive: Bool { self == .upNext || self == .guiIndex }
+        /// Whether the list scrolls to keep the installing item in view, so finished rows move out of
+        /// sight. `.activeFirst` already seats it at the top.
+        var followsActive: Bool { self != .activeFirst }
     }
 
     static func getSortedItemsByStatus(_ state: InspectState, order: ItemOrder = .completedFirst) -> [InspectConfig.ItemConfig] {

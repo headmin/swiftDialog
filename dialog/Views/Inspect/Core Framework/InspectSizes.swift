@@ -158,17 +158,28 @@ public enum InspectSizes {
         }
     }
 
+    /// Preset 3's item layout: `chrome: "grid"` opts in to the tile grid; absent or anything else
+    /// is the list, the 3.1.1 look. One reader for the view and the window size.
+    public static func preset3UsesGrid(chrome: String?) -> Bool {
+        chrome?.trimmingCharacters(in: .whitespaces).lowercased() == "grid"
+    }
+
     /// Content-adaptive variant. Preset 3 sizes its height to the number of items, capped at the
     /// preset's standard height. Other presets ignore `itemCount`.
     /// - Parameter itemCount: number of list items (0 ⇒ unknown ⇒ fixed size).
-    public static func getSize(preset: String, mode: String, itemCount: Int) -> (CGFloat, CGFloat) {
+    public static func getSize(preset: String, mode: String, itemCount: Int,
+                               chrome: String? = nil) -> (CGFloat, CGFloat) {
         let (width, height) = getSize(preset: preset, mode: mode)
         guard normalizePreset(preset) == "preset3", itemCount > 0 else { return (width, height) }
-        // 5 tiles per row; height tracks the row count.
-        let rows = Int((Double(itemCount) / 5).rounded(.up))
         let base: CGFloat = 330        // header + progress zone + footer + paddings
-        let rowHeight: CGFloat = 155   // one tile row incl. group label + spacing
-        let adaptive = base + CGFloat(rows) * rowHeight
+        let adaptive: CGFloat
+        if preset3UsesGrid(chrome: chrome) {
+            // 5 tiles per row; one tile row incl. group label + spacing.
+            adaptive = base + CGFloat(Int((Double(itemCount) / 5).rounded(.up))) * 155
+        } else {
+            // One row per item: 44pt row + 8pt spacing.
+            adaptive = base + CGFloat(itemCount) * 52
+        }
         return (width, min(max(adaptive, 460), height))   // clamp: never taller than the fixed max
     }
 
@@ -204,7 +215,7 @@ public enum InspectSizes {
             return (size, "\(preset) \(sizeMode) (\(Int(size.width))×\(Int(size.height)))")
         }
         if !preset.isEmpty {
-            let (w, h) = getSize(preset: preset, mode: sizeMode, itemCount: itemCount)
+            let (w, h) = getSize(preset: preset, mode: sizeMode, itemCount: itemCount, chrome: chrome)
             return (CGSize(width: w, height: h),
                     "\(preset) \(sizeMode) (\(Int(w))×\(Int(h)))")
         }

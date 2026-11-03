@@ -78,8 +78,7 @@ struct BannerHeader: View {
 
             // 6pt below the hero, 56pt side insets.
         Text(title)
-            .font(.system(size: 34, weight: .bold))
-            .tracking(-0.75)
+            .font(.system(size: 26, weight: .bold))    // Setup Assistant title: 26pt bold
             .multilineTextAlignment(.center)
             .padding(.top, 6 * scaleFactor)
             .padding(.horizontal, 56 * scaleFactor)
@@ -112,8 +111,7 @@ struct BannerHeader: View {
 
             // 6pt below the hero, 56pt side insets.
         Text(title)
-            .font(.system(size: 34, weight: .bold))
-            .tracking(-0.75)
+            .font(.system(size: 26, weight: .bold))    // Setup Assistant title: 26pt bold
             .multilineTextAlignment(.center)
             .padding(.top, 6 * scaleFactor)
             .padding(.horizontal, 56 * scaleFactor)
@@ -122,20 +120,22 @@ struct BannerHeader: View {
     // MARK: - Icon-only branch
 
     private var iconHeader: some View {
-        VStack(spacing: 20 * scaleFactor) {
-            // Fixed height so the title below does not move with the icon's aspect.
+        VStack(spacing: 16 * scaleFactor) {
+            // Fixed height so the title below does not move with the icon's aspect. 104, not 140:
+            // in the 860×600 window the hero took a third of the height and squeezed the cards.
+            // No authored icon: this Mac's own icon (the `computer` keyword), not a generic symbol.
+            let authored = iconCache.getMainIconPath(for: state)
             IconView(
-                image: iconCache.getMainIconPath(for: state),
+                image: authored.isEmpty ? "computer" : authored,
                 overlay: iconCache.getOverlayIconPath(for: state),
                 defaultImage: "briefcase.fill",
                 defaultColour: "accent"
             )
-            .frame(height: 140 * scaleFactor)
+            .frame(height: 104 * scaleFactor)
             .onAppear { iconCache.cacheMainIcon(for: state) }
 
             Text(title)
-                .font(.system(size: 34, weight: .bold))
-                .tracking(-0.75)
+                .font(.system(size: 26, weight: .bold))    // Setup Assistant title: 26pt bold
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 56 * scaleFactor)
         }

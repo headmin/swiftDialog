@@ -282,8 +282,7 @@ struct Preset5View: View, InspectLayoutProtocol {
         BrandPosition(authored: config?.logoConfig?.position)
     }
 
-    /// The authored footer claim (MDM > brand > JSON), passed through as authored: the card footer
-    /// reads nil as its default claim and `""` as none.
+    /// The authored footer claim (MDM > brand > JSON); unset or `""` draws no claim.
     var footerClaim: String? {
         branding.footerText
     }

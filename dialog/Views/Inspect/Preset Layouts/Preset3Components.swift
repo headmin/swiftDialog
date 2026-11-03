@@ -95,22 +95,35 @@ struct AdminDetailsChip: View {
 
 // MARK: - Header
 
+/// Preset 3's horizontal metrics. The progress zone and the items start at `textColumn`, the
+/// header text's leading edge, so header, progress and items share one edge.
+enum Preset3M {
+    static let margin: CGFloat = 28
+    static let icon: CGFloat = 72
+    static let iconGap: CGFloat = 24
+    static var textColumn: CGFloat { margin + icon + iconGap }
+}
+
 struct OnboardingHeader: View, InspectLayoutProtocol {
     @ObservedObject var inspectState: InspectState
     @ObservedObject var iconCache: PresetIconCache
     let title: String
     let message: String?
+    /// The rotating `sideMessage` line, under the message as in 3.1.1; nil when none is set.
+    var sideMessage: String? = nil
+    /// Every rotating line, so the seat holds the longest.
+    var sideMessages: [String] = []
     @Binding var showDetails: Bool
 
     var body: some View {
-        HStack(alignment: .top, spacing: 24 * scaleFactor) {
+        HStack(alignment: .top, spacing: Preset3M.iconGap * scaleFactor) {
             IconView(
                 image: iconCache.getMainIconPath(for: inspectState),
                 overlay: iconCache.getOverlayIconPath(for: inspectState),
                 defaultImage: "sparkles",
                 defaultColour: "accent"
             )
-            .frame(width: 72 * scaleFactor, height: 72 * scaleFactor)
+            .frame(width: Preset3M.icon * scaleFactor, height: Preset3M.icon * scaleFactor)
             .onAppear { iconCache.cacheMainIcon(for: inspectState) }
 
             VStack(alignment: .leading, spacing: 6 * scaleFactor) {
@@ -126,21 +139,70 @@ struct OnboardingHeader: View, InspectLayoutProtocol {
 
                 if let message, !message.isEmpty {
                     Text(message)
-                        .font(.system(size: 14 * scaleFactor))
+                        .font(.system(size: 13 * scaleFactor))    // Setup Assistant body: 13pt
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if let sideMessage, !sideMessage.isEmpty {
+                    RotatingMessageLine(messages: sideMessages.isEmpty ? [sideMessage] : sideMessages,
+                                        current: sideMessage,
+                                        index: sideMessages.firstIndex(of: sideMessage) ?? 0,
+                                        font: .system(size: 13 * scaleFactor))
                 }
             }
         }
         // Trailing sits on the footer rail so header, progress, tiles and button share one edge.
-        .padding(.leading, 28 * scaleFactor)
+        .padding(.leading, Preset3M.margin * scaleFactor)
         .padding(.trailing, FooterBandM.rail * scaleFactor)
         .padding(.top, 28 * scaleFactor)
         .padding(.bottom, 4 * scaleFactor)
     }
 }
 
-// MARK: - Tile grid
+// MARK: - Shared by the grid and the list
+
+/// Groups in first-occurrence order; uncategorized items form the leading unlabeled group.
+private func preset3Groups(_ items: [InspectConfig.ItemConfig]) -> [(label: String?, items: [InspectConfig.ItemConfig])] {
+    var order: [String] = []
+    var buckets: [String: [InspectConfig.ItemConfig]] = [:]
+    var uncategorized: [InspectConfig.ItemConfig] = []
+    for item in items {
+        if let category = item.category, !category.isEmpty {
+            if buckets[category] == nil { order.append(category) }
+            buckets[category, default: []].append(item)
+        } else {
+            uncategorized.append(item)
+        }
+    }
+    var result: [(String?, [InspectConfig.ItemConfig])] = []
+    if !uncategorized.isEmpty { result.append((nil, uncategorized)) }
+    for category in order { result.append((category, buckets[category] ?? [])) }
+    return result
+}
+
+/// Admin meta line: bundle info, else profile domain, else plist key, else first path.
+@MainActor
+private func preset3MetaLine(for item: InspectConfig.ItemConfig, state: InspectState) -> String? {
+    if let bundleInfo = state.getBundleInfoForItem(item) { return bundleInfo }
+    if let domain = item.managedPrefDomain { return "profile · \(domain)" }
+    if let plistKey = item.plistKey { return "plist · \(plistKey)" }
+    return item.paths.first.map { ($0 as NSString).lastPathComponent }
+}
+
+/// A group's uppercase category caption.
+private struct Preset3GroupLabel: View {
+    let text: String
+    let scale: CGFloat
+    var body: some View {
+        Text(text.uppercased())
+            .font(.system(size: 11 * scale, weight: .semibold))
+            .kerning(0.7)
+            .foregroundStyle(.secondary)
+    }
+}
+
+// MARK: - Tile grid (`chrome: "grid"`)
 
 struct AppTileGrid: View, InspectLayoutProtocol {
     @Environment(\.palette) private var palette
@@ -149,46 +211,22 @@ struct AppTileGrid: View, InspectLayoutProtocol {
     let accent: Color
     let showDetails: Bool
 
-    /// Groups in first-occurrence order; uncategorized items form the leading unlabeled group.
-    private var groups: [(label: String?, items: [InspectConfig.ItemConfig])] {
-        var order: [String] = []
-        var buckets: [String: [InspectConfig.ItemConfig]] = [:]
-        var uncategorized: [InspectConfig.ItemConfig] = []
-        for item in inspectState.items {
-            if let category = item.category, !category.isEmpty {
-                if buckets[category] == nil { order.append(category) }
-                buckets[category, default: []].append(item)
-            } else {
-                uncategorized.append(item)
-            }
-        }
-        var result: [(String?, [InspectConfig.ItemConfig])] = []
-        if !uncategorized.isEmpty { result.append((nil, uncategorized)) }
-        for category in order { result.append((category, buckets[category] ?? [])) }
-        return result
-    }
-
     private var columns: [GridItem] {
         Array(repeating: GridItem(.flexible(), spacing: 8 * scaleFactor), count: 5)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18 * scaleFactor) {
-            ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+            ForEach(Array(preset3Groups(inspectState.items).enumerated()), id: \.offset) { _, group in
                 VStack(alignment: .leading, spacing: 10 * scaleFactor) {
-                    if let label = group.label {
-                        Text(label.uppercased())
-                            .font(.system(size: 11 * scaleFactor, weight: .semibold))
-                            .kerning(0.7)
-                            .foregroundStyle(.secondary)
-                    }
+                    if let label = group.label { Preset3GroupLabel(text: label, scale: scaleFactor) }
                     LazyVGrid(columns: columns, spacing: 8 * scaleFactor) {
                         ForEach(group.items, id: \.id) { item in
                             AppTile(
                                 item: item,
                                 tile: OnboardingTileState(item: item, state: inspectState, accent: accent, palette: palette),
                                 iconPath: iconCache.getItemIconPath(for: item, state: inspectState),
-                                meta: showDetails ? metaLine(for: item) : nil,
+                                meta: showDetails ? preset3MetaLine(for: item, state: inspectState) : nil,
                                 scale: scaleFactor
                             )
                         }
@@ -197,16 +235,91 @@ struct AppTileGrid: View, InspectLayoutProtocol {
             }
         }
         // Tiles sit in the header text column.
-        .padding(.leading, 140 * scaleFactor)
+        .padding(.leading, Preset3M.textColumn * scaleFactor)
         .padding(.trailing, FooterBandM.rail * scaleFactor)
     }
+}
 
-    /// Admin meta line: bundle info, else profile domain, else plist key, else first path.
-    private func metaLine(for item: InspectConfig.ItemConfig) -> String? {
-        if let bundleInfo = inspectState.getBundleInfoForItem(item) { return bundleInfo }
-        if let domain = item.managedPrefDomain { return "profile · \(domain)" }
-        if let plistKey = item.plistKey { return "plist · \(plistKey)" }
-        return item.paths.first.map { ($0 as NSString).lastPathComponent }
+// MARK: - Row list (default; the 3.1.1 look)
+
+/// One full-width row per item: icon, name, status on the trailing edge. Rows sit in the header
+/// text column like the tiles, so header, progress and items share one leading edge.
+struct AppRowList: View, InspectLayoutProtocol {
+    @Environment(\.palette) private var palette
+    @ObservedObject var inspectState: InspectState
+    @ObservedObject var iconCache: PresetIconCache
+    let accent: Color
+    let showDetails: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18 * scaleFactor) {
+            ForEach(Array(preset3Groups(inspectState.items).enumerated()), id: \.offset) { _, group in
+                VStack(alignment: .leading, spacing: 8 * scaleFactor) {
+                    if let label = group.label { Preset3GroupLabel(text: label, scale: scaleFactor) }
+                    ForEach(group.items, id: \.id) { item in
+                        AppRow(
+                            item: item,
+                            tile: OnboardingTileState(item: item, state: inspectState, accent: accent, palette: palette),
+                            iconPath: iconCache.getItemIconPath(for: item, state: inspectState),
+                            meta: showDetails ? preset3MetaLine(for: item, state: inspectState) : nil,
+                            scale: scaleFactor
+                        )
+                    }
+                }
+            }
+        }
+        .padding(.leading, Preset3M.textColumn * scaleFactor)
+        .padding(.trailing, FooterBandM.rail * scaleFactor)
+    }
+}
+
+private struct AppRow: View {
+    let item: InspectConfig.ItemConfig
+    let tile: OnboardingTileState
+    let iconPath: String
+    let meta: String?
+    let scale: CGFloat
+
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        HStack(spacing: 12 * scale) {
+            IconView(image: iconPath)
+                .frame(width: 32 * scale, height: 32 * scale)
+                .opacity(tile.iconDimmed ? 0.4 : 1.0)
+                .animation(.easeInOut(duration: 0.2), value: tile.iconDimmed)
+
+            VStack(alignment: .leading, spacing: 2 * scale) {
+                Text(item.displayName)
+                    .font(.system(size: 13 * scale, weight: .semibold))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                ItemClaimAndIdentifier(claim: item.claim,
+                                       identifier: item.displayIdentifier,
+                                       scaleFactor: scale,
+                                       identifierChars: 40)
+                if let meta {
+                    Text(meta)
+                        .font(.system(size: 9 * scale, design: .monospaced))
+                        .foregroundStyle(palette.textFaint)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer(minLength: 8 * scale)
+
+            Text(tile.statusText)
+                .font(.system(size: 12 * scale))
+                .foregroundStyle(tile.statusColor)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 14 * scale)
+        .padding(.vertical, 6 * scale)
+        .frame(minHeight: 44 * scale)    // matches the 44pt row in InspectSizes' list sizing
+        .background(
+            RoundedRectangle(cornerRadius: 10 * scale, style: .continuous)
+                .fill(Color.primary.opacity(0.04))
+        )
     }
 }
 

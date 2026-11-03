@@ -30,7 +30,7 @@ extension Preset6View {
         }()
 
         IntroFooterView(
-            // The claim defaults as on card footers (`CardFooterClaim`); an authored empty string opts out.
+            // The claim shows only when authored, as on card footers (`CardFooterClaim`).
             // A media caption takes precedence.
             footerText: mediaCaption ?? CardFooterClaim.resolve(authored: branding.footerText),
             backButtonText: backText,

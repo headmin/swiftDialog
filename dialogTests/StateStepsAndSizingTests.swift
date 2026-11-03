@@ -737,6 +737,21 @@ final class SizeDoctrineTests: XCTestCase {
         XCTAssertEqual(InspectSizes.scale(mode: "Compact"), 1.0)
     }
 
+    /// Preset 3 lists by default (the 3.1.1 look); `chrome: "grid"` opts in to tiles. The window
+    /// height follows the layout: one 52pt row per item, or one 155pt row per five tiles.
+    func testPreset3ListIsTheDefaultAndGridIsOptIn() {
+        XCTAssertFalse(InspectSizes.preset3UsesGrid(chrome: nil))
+        XCTAssertFalse(InspectSizes.preset3UsesGrid(chrome: "list"))
+        XCTAssertFalse(InspectSizes.preset3UsesGrid(chrome: "plain"), "an unknown value lists, like absence")
+        XCTAssertTrue(InspectSizes.preset3UsesGrid(chrome: " Grid "))
+
+        let list = InspectSizes.getSize(preset: "3", mode: "standard", itemCount: 6)
+        let grid = InspectSizes.getSize(preset: "3", mode: "standard", itemCount: 6, chrome: "grid")
+        XCTAssertEqual(list.1, 330 + 6 * 52)
+        XCTAssertEqual(grid.1, 330 + 2 * 155)
+        XCTAssertEqual(InspectSizes.getSize(preset: "3", mode: "standard", itemCount: 40).1, 820, "capped")
+    }
+
     /// Presets 2 and 3 have exactly one size each, with no mode ladder.
     func testLegacyPresetsHaveExactlyOneSizeEach() {
         let two = InspectSizes.getSize(preset: "preset2", mode: "standard")

@@ -43,6 +43,17 @@ enum FleetSetup {
         let percent: Int?
     }
 
+    /// The icon for a row Fleet has no software title for: macOS's own bundle for that kind of work, so
+    /// the row reads as part of the set instead of a placeholder. nil for software (Fleet serves those).
+    static func systemIcon(for kind: Row.Kind) -> String? {
+        switch kind {
+        case .bootstrap: return "/System/Library/CoreServices/Installer.app"
+        case .profile:   return "/System/Applications/System Settings.app"
+        case .script:    return "/System/Applications/Utilities/Script Editor.app"
+        case .software:  return nil
+        }
+    }
+
     static func slug(_ s: String) -> String {
         s.lowercased().filter { $0.isLetter || $0.isNumber }.filter(\.isASCII)
     }
@@ -351,6 +362,8 @@ final class FleetSetupSource: @unchecked Sendable {
     private let startedAt: Date
     /// Titles whose icon has been requested, once per source.
     private var iconsRequested: Set<Int> = []
+    /// Rows given a system icon, once per source.
+    private var systemIconsSent: Set<String> = []
     private static let iconCache: URL? = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
         .appendingPathComponent("swiftDialog/FleetIcons", isDirectory: true)
     private var join = FleetSetup.Join()
@@ -499,6 +512,12 @@ final class FleetSetupSource: @unchecked Sendable {
 
     /// For each row with a server icon: the cached copy first, then a fresh fetch. Only decodable images are used.
     private func requestIcons(_ rows: [FleetSetup.Row]) {
+        for row in rows where row.titleID == nil && !systemIconsSent.contains(row.id) {
+            guard let path = FleetSetup.systemIcon(for: row.kind), FileManager.default.fileExists(atPath: path)
+            else { continue }
+            systemIconsSent.insert(row.id)
+            send(icon: path, ids: ids(for: row.id, rows: rows))
+        }
         guard let cache = Self.iconCache else { return }
         for row in rows where row.hasIcon {
             guard let tid = row.titleID, !iconsRequested.contains(tid) else { continue }

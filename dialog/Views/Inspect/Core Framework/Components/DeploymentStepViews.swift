@@ -5,6 +5,36 @@
 
 import SwiftUI
 
+// MARK: - Rotating message line
+
+/// The root `sideMessage` line in a seat as tall as its longest message, so rotating to a longer one
+/// never moves what follows. Every message is laid out hidden underneath; only `current` shows.
+struct RotatingMessageLine: View {
+    let messages: [String]
+    let current: String
+    /// Changes with each rotation, so the new line fades in rather than morphing the old one.
+    let index: Int
+    var font: Font = .system(size: 13)
+    var alignment: TextAlignment = .leading
+
+    var body: some View {
+        ZStack(alignment: alignment == .center ? .top : .topLeading) {
+            ForEach(messages.indices, id: \.self) { i in
+                line(messages[i]).hidden()
+            }
+            line(current)
+                .foregroundStyle(.secondary)
+                .id(index)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: InspectConstants.standardAnimationDuration), value: index)
+        }
+    }
+
+    private func line(_ text: String) -> some View {
+        Text(text).font(font).lineLimit(2).multilineTextAlignment(alignment)
+    }
+}
+
 // MARK: - Side Message View
 
 /// Rotating messages; the timer starts and stops with the view lifecycle.

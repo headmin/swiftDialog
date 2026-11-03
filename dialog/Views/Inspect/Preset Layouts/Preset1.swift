@@ -655,21 +655,18 @@ struct Preset1View: View, InspectLayoutProtocol {
                 }
 
                 if let currentMessage = loc.sideMessage() {
-                    Text(currentMessage)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        .id(inspectState.uiConfiguration.currentSideMessageIndex)
-                        .transition(.opacity)
-                        .animation(.easeInOut(duration: 0.5), value: inspectState.uiConfiguration.currentSideMessageIndex)
+                    // The same size as `message` above, so the two read as one block.
+                    RotatingMessageLine(messages: loc.sideMessages(), current: currentMessage,
+                                        index: inspectState.uiConfiguration.currentSideMessageIndex,
+                                        font: .system(size: 15))
                 }
             }
             // 60 is the header without a `message`; with one it grows by that line.
             .frame(minHeight: 60, alignment: .topLeading)
             .padding(.horizontal)
             .padding(.top, InspectConstants.spacingInner)
-            .padding(.bottom, 4)
+            // The list scrolls under this edge as it follows the install; 12 keeps a scrolled row clear of the text.
+            .padding(.bottom, 12)
 
             DeploymentItemList(
                 inspectState: inspectState,

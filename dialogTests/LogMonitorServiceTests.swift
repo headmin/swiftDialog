@@ -1668,3 +1668,15 @@ final class LogPatternRegexCacheTests: XCTestCase {
         XCTAssertNil(LogPatternPreset.firstCapture(in: "anything", pattern: "(unclosed", group: 0))
     }
 }
+
+/// Rows Fleet serves no icon for get macOS's own bundle for that kind of work.
+final class FleetSetupSystemIconTests: XCTestCase {
+    func testEveryNonSoftwareKindHasAnIconThatExists() {
+        for kind in [FleetSetup.Row.Kind.bootstrap, .profile, .script] {
+            let path = FleetSetup.systemIcon(for: kind)
+            XCTAssertNotNil(path, "\(kind)")
+            XCTAssertTrue(FileManager.default.fileExists(atPath: path ?? ""), "\(kind): \(path ?? "nil")")
+        }
+        XCTAssertNil(FleetSetup.systemIcon(for: .software), "Fleet serves software icons")
+    }
+}

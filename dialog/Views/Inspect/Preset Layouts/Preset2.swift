@@ -108,14 +108,14 @@ struct Preset2View: View, InspectLayoutProtocol {
                 if let subtitle = loc.string("subtitle", fallback: inspectState.uiConfiguration.subtitleMessage),
                    !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.system(size: 15))
+                        .font(.system(size: 13))    // Setup Assistant body: 13pt secondary
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         // Two lines at most, or the column below shifts.
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 56 * scaleFactor)
-                        .padding(.top, 6 * scaleFactor)
+                        .padding(.top, 8 * scaleFactor)
                 }
 
                 // Fixed-height slot so a rotating message never shifts the layout.
@@ -133,6 +133,10 @@ struct Preset2View: View, InspectLayoutProtocol {
                 .frame(height: 32 * scaleFactor)
                 .padding(.horizontal, 56 * scaleFactor)
 
+                // With the trailing spacer, this splits the spare height evenly, so the cards and
+                // progress sit as one group centred between the header and the footer band.
+                Spacer(minLength: 8 * scaleFactor)
+
                 Preset2CardPager(
                     inspectState: inspectState,
                     iconCache: iconCache,
@@ -143,7 +147,6 @@ struct Preset2View: View, InspectLayoutProtocol {
                         showItemDetailOverlay = true
                     }
                 )
-                .padding(.top, 10 * scaleFactor)
 
                 Preset2ProgressBlock(
                     completed: inspectState.trackedCompletedCount,
@@ -153,8 +156,11 @@ struct Preset2View: View, InspectLayoutProtocol {
                     localizedFormat: loc.string("progressFormat", fallback: nil)
                         ?? inspectState.config?.uiLabels?.progressFormat
                 )
+                // Setup Assistant's large content width (600pt), centred, so the bar reads as part
+                // of the card group rather than a rule across the window.
+                .frame(maxWidth: 600 * scaleFactor)
                 .padding(.horizontal, 40 * scaleFactor)
-                .padding(.top, 9 * scaleFactor)
+                .padding(.top, 24 * scaleFactor)
 
                 Spacer(minLength: 0)
             }
@@ -173,7 +179,8 @@ struct Preset2View: View, InspectLayoutProtocol {
                     popoverArrowEdge: nil,
                     config: inspectState.config,
                     triggerFilePath: triggerFilePath,
-                    centerText: resolveManagedLine(inspectState.config?.footerText ?? "Managed with ❤️ by your IT!")
+                    // Authored only: no stock claim when `footerText` is unset or resolves empty.
+                    centerText: inspectState.config?.footerText.map(resolveManagedLine).flatMap { $0.isEmpty ? nil : $0 }
                 )
             }
         }

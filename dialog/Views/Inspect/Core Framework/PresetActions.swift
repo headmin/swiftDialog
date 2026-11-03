@@ -249,8 +249,13 @@ struct PresetLocalization {
     }
 
     /// The current side message, localized.
+    /// Every rotating line, localized; the seat for the current one is sized from these.
+    func sideMessages() -> [String] {
+        array("sideMessages", fallback: state.uiConfiguration.sideMessages) ?? state.uiConfiguration.sideMessages
+    }
+
     func sideMessage() -> String? {
-        let messages = array("sideMessages", fallback: state.uiConfiguration.sideMessages) ?? state.uiConfiguration.sideMessages
+        let messages = sideMessages()
         guard !messages.isEmpty else { return nil }
         let index = min(state.uiConfiguration.currentSideMessageIndex, messages.count - 1)
         return messages[index]

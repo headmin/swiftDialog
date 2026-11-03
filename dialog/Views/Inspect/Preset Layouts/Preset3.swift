@@ -117,22 +117,28 @@ struct Preset3View: View, InspectLayoutProtocol {
                 iconCache: iconCache,
                 title: title,
                 message: message,
+                sideMessage: loc.sideMessage(),
+                sideMessages: loc.sideMessages(),
                 showDetails: $showDetails
             )
 
-            // Progress and grid align with the header text column (icon 88 + gap 24 + margin 28).
+            // Progress and items align with the header text column (Preset3M.textColumn).
             progressZone
-                .padding(.leading, 140 * scaleFactor)
+                .padding(.leading, Preset3M.textColumn * scaleFactor)
                 .padding(.trailing, FooterBandM.rail * scaleFactor)
                 .padding(.top, 10 * scaleFactor)
 
             ScrollView {
-                AppTileGrid(
-                    inspectState: inspectState,
-                    iconCache: iconCache,
-                    accent: primaryColor,
-                    showDetails: showDetails
-                )
+                // `chrome: "grid"` opts in to the tiles; the list is the default (the 3.1.1 look).
+                Group {
+                    if InspectSizes.preset3UsesGrid(chrome: inspectState.config?.chrome) {
+                        AppTileGrid(inspectState: inspectState, iconCache: iconCache,
+                                    accent: primaryColor, showDetails: showDetails)
+                    } else {
+                        AppRowList(inspectState: inspectState, iconCache: iconCache,
+                                   accent: primaryColor, showDetails: showDetails)
+                    }
+                }
                 .padding(.vertical, 18 * scaleFactor)
             }
 
@@ -178,7 +184,9 @@ struct Preset3View: View, InspectLayoutProtocol {
 
     private var progressLeftText: String {
         if allComplete {
-            return loc.string("setupComplete", fallback: nil) ?? "Setup complete"
+            // The authored completion text, as in 3.1.1 (`completionMessage`), before v6's own key.
+            return loc.string("completionMessage", fallback: inspectState.config?.uiLabels?.completionMessage)
+                ?? loc.string("setupComplete", fallback: nil) ?? "Setup complete"
         }
         return PresetCommonViews.getProgressText(
             state: inspectState,
@@ -231,8 +239,7 @@ struct Preset3View: View, InspectLayoutProtocol {
                 satisfied = FileManager.default.fileExists(atPath: prefPath)
             }
             if satisfied {
-                inspectState.completedItems.insert(item.id)
-                inspectState.downloadingItems.remove(item.id)
+                inspectState.applyItemStatus(item.id, .completed)
                 writeLog("Preset3View: managed pref '\(domain)' satisfied for item '\(item.id)'", logLevel: .info)
             }
         }

@@ -81,7 +81,7 @@ struct IntroFooterView: View {
     /// The brand claim, drawn in one of two places depending on whether a step counter is seated.
     @ViewBuilder
     private var brandClaim: some View {
-        if let footerText {
+        if let footerText, !footerText.isEmpty {
             // 11.5pt muted, at most two lines; sizes come from `BrandSlotMetrics`. It wraps, never shrinks.
             OwnershipLine(text: footerText, ink: .secondary)
         }

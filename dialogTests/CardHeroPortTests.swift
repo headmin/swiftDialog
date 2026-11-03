@@ -71,11 +71,11 @@ final class CardStepCounterTests: XCTestCase {
     }
 }
 
-/// The footer claim defaults on; an empty string is the opt-out.
+/// The footer claim is opt-in: only authored text draws a line.
 final class CardFooterClaimTests: XCTestCase {
 
-    func testAnUnauthoredClaimFallsBackToTheDefault() {
-        XCTAssertEqual(CardFooterClaim.resolve(authored: nil), CardFooterClaim.defaultText)
+    func testAnUnauthoredClaimDrawsNothing() {
+        XCTAssertNil(CardFooterClaim.resolve(authored: nil))
     }
 
     func testAnAuthoredClaimWins() {
