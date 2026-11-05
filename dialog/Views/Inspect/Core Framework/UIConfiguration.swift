@@ -10,7 +10,7 @@ import SwiftUI
 struct ButtonConfiguration {
     var button1Text: String = ""
     var button1Disabled: Bool = false
-    var button1Symbol: String?               // Classic --button1symbol grammar (ButtonSymbolSpec)
+    var button1Symbol: String?               // Classic --button1symbol grammar (InspectButtonSymbolSpec)
     var button2Text: String = ""
     var button2Symbol: String?               // Same grammar as button1Symbol
     var button2Visible: Bool = false          // Shown when complete; always enabled

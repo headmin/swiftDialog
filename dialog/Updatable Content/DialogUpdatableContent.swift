@@ -733,6 +733,12 @@ final class DialogUpdatableContent: ObservableObject {
     @Published var showSheet: Bool
     @Published var sheetErrorMessage: String
 
+    /// Markdown message sheet opened by a button's `sheet` action
+    @Published var messageSheet: MessageSheetContent?
+
+    /// Values of every input as loaded, which inactive controls (enabledif / visibleif) go back to
+    var controlDefaults: [String: String] = [:]
+
     @Published var constructionKitShown: Bool = false
 
     // Builder: markdown source references (file path / URL). When set, the message /
@@ -786,6 +792,7 @@ final class DialogUpdatableContent: ObservableObject {
         listItemsArray = userInputState.listItems
         
         observedUserInputState = userInputState
+        controlDefaults = controlValues(textFields: userInputState.textFields, state: userInputState)
 
         showSheet = false
         sheetErrorMessage = ""
@@ -892,6 +899,10 @@ final class DialogUpdatableContent: ObservableObject {
                 input[item.title] = item.selected
             }
         }
+
+        // Collect page button state (selection, colour, clicked)
+        input.merge(collectButtonInput()) { current, _ in current }
+        input.merge(collectNumberInput()) { current, _ in current }
         
         return input
     }
@@ -903,6 +914,8 @@ final class DialogUpdatableContent: ObservableObject {
         userInputState.checkBoxes.removeAll()
         userInputState.listItems.removeAll()
         userInputState.iconItems.removeAll()
+        userInputState.buttonRows.removeAll()
+        userInputState.numberInputs.removeAll()
         
         // Update observed arrays and state
         textFieldArray = []
@@ -991,7 +1004,9 @@ final class DialogUpdatableContent: ObservableObject {
         // Only request a window resize when the card itself explicitly asked for new
         // dimensions — otherwise placeWindow snaps the window back to the configured offset
         // and looks like a "jump" during every card transition.
-        let cardSpecifiesSize = appArguments.windowWidth.present || appArguments.windowHeight.present
+        // Navigation style keeps one window size for every page (size keys are top-level only).
+        let cardSpecifiesSize = !cardState.isNavigationStyle &&
+            (appArguments.windowWidth.present || appArguments.windowHeight.present)
         let windowSizeChanged = cardSpecifiesSize && (appProperties.windowWidth != appvars.windowWidth ||
                                                      appProperties.windowHeight != appvars.windowHeight)
         appProperties = appvars
@@ -1009,6 +1024,10 @@ final class DialogUpdatableContent: ObservableObject {
                        animated: true)
         }
         
+        // Remember the values as loaded, before any stored input is restored: they are the defaults for
+        // controls that become inactive (enabledif / visibleif)
+        controlDefaults = controlValues(textFields: userInputState.textFields, state: userInputState)
+
         // Check if we have stored input for this card (user navigated back)
         // and restore the values
         if let storedInput = cardState.getStoredInput(for: cardState.currentCardIndex) {
@@ -1062,6 +1081,10 @@ final class DialogUpdatableContent: ObservableObject {
             }
         }
         
+        // Restore page button state
+        restoreButtonInput(from: storedInput)
+        restoreNumberInput(from: storedInput)
+
         // Restore list selections
         for index in 0..<userInputState.listItems.count {
             if let selected = storedInput[userInputState.listItems[index].title] as? Bool {
@@ -1099,6 +1122,77 @@ final class DialogUpdatableContent: ObservableObject {
             }
         }
 
+        return false
+    }
+
+    // MARK: - Navigation Style Support
+
+    /// Store, validate and run onAdvance for the page being left, recording the outcome for the sidebar.
+    /// Never blocks leaving the page - problems are only enforced when the dialog is dismissed.
+    func leaveCurrentNavigationPage() {
+        let index = cardState.currentCardIndex
+        let input = collectCurrentUserInput()
+        cardState.storeCurrentCardInput(input)
+
+        var issue: String?
+        let validation = validateRequiredFields(observedObject: self, beep: false)
+        if !validation.isValid {
+            issue = validation.errorMessage
+        } else if appArguments.onAdvance.present && !appArguments.onAdvance.value.isEmpty {
+            let callbackResult = executeOnAdvanceCallback(
+                command: appArguments.onAdvance.value,
+                cardIndex: index,
+                cardId: cardState.currentCard?.cardId,
+                input: input
+            )
+            if !callbackResult.success {
+                issue = callbackResult.errorMessage
+            }
+        }
+
+        if let issue {
+            cardState.pageIssues[index] = issue
+        } else {
+            cardState.pageIssues.removeValue(forKey: index)
+        }
+        cardState.visitedPages.insert(index)
+    }
+
+    /// Switch the navigation view to another page.
+    func navigateToPage(_ index: Int) {
+        guard cardState.isNavigationStyle, index != cardState.currentCardIndex else { return }
+        leaveCurrentNavigationPage()
+        if cardState.select(index: index), let card = cardState.currentCard {
+            applyCardConfiguration(card)
+        }
+    }
+
+    /// Check every page before the navigation view is dismissed with button 1.
+    /// If any page needs attention, the first one is opened and a summary sheet is shown.
+    /// - Returns: True if all pages are complete and the dialog may exit.
+    func validateNavigationForDismissal() -> Bool {
+        leaveCurrentNavigationPage()
+
+        let issueIndices = cardState.pageIssues.keys.sorted()
+        guard let firstIssue = issueIndices.first else { return true }
+
+        // A blocked Done reveals every incomplete page in the sidebar, visited or not
+        cardState.visitedPages.formUnion(issueIndices)
+
+        var summary = ""
+        for index in issueIndices {
+            let title = cardState.cards[index].sidebarTitle ?? "Page \(index + 1)"
+            summary += "\(title)\n\(cardState.pageIssues[index] ?? "")\n"
+        }
+
+        if cardState.select(index: firstIssue), let card = cardState.currentCard {
+            applyCardConfiguration(card)
+        }
+        // Re-validate the page now on screen so its offending fields are highlighted
+        _ = validateRequiredFields(observedObject: self)
+
+        sheetErrorMessage = summary
+        showSheet = true
         return false
     }
 }

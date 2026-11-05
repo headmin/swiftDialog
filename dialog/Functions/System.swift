@@ -61,10 +61,13 @@ func checkRegexPattern(regexPattern: String, textToValidate: String) -> Bool {
 }
 
 /// Validates required fields and regex patterns for the current card/dialog
-/// - Parameter observedObject: The dialog content to validate
+/// - Parameters:
+///   - observedObject: The dialog content to validate
+///   - beep: Sound an alert for each failure (off when silently checking a page being left)
 /// - Returns: A tuple of (isValid, errorMessage) where isValid is true if validation passed
-func validateRequiredFields(observedObject: DialogUpdatableContent) -> (isValid: Bool, errorMessage: String) {
+func validateRequiredFields(observedObject: DialogUpdatableContent, beep: Bool = true) -> (isValid: Bool, errorMessage: String) {
     var requiredString = ""
+    let conditionValues = controlValues(textFields: userInputState.textFields, state: userInputState)
     var isValid = true
     
     // Validate text fields
@@ -79,9 +82,10 @@ func validateRequiredFields(observedObject: DialogUpdatableContent) -> (isValid:
             let textfieldValidation = textField.confirm
             let textFieldValidationValue = textField.validationValue
             userInputState.textFields[index].requiredTextfieldHighlight = Color.clear
+            if !ControlCondition.isActive(enabledIf: textField.enabledIf, visibleIf: textField.visibleIf, values: conditionValues) { continue }
             
             if textfieldRequired && textfieldValue == "" {
-                NSSound.beep()
+                if beep { NSSound.beep() }
                 requiredString += "  - \"\(textfieldTitle)\" \("is required".localized)<br>"
                 userInputState.textFields[index].requiredTextfieldHighlight = Color.red
                 isValid = false
@@ -89,13 +93,13 @@ func validateRequiredFields(observedObject: DialogUpdatableContent) -> (isValid:
             } else if !(textfieldValue.isEmpty)
                         && !(textField.regex.isEmpty)
                         && !checkRegexPattern(regexPattern: textField.regex, textToValidate: textfieldValue) {
-                NSSound.beep()
+                if beep { NSSound.beep() }
                 userInputState.textFields[index].requiredTextfieldHighlight = Color.green
                 requiredString += "  - "+(textField.regexError)+"<br>"
                 isValid = false
                 writeLog("Textfield \(textfieldTitle) value \(textfieldValue) does not meet regex requirements \(String(describing: textField.regex))")
             } else if textfieldValidation && textFieldValidationValue != textfieldValue {
-                NSSound.beep()
+                if beep { NSSound.beep() }
                 requiredString += "  - \"\(textfieldTitle)\" \("confirmation failed  <br>values do not match".localized)<br>"
                 userInputState.textFields[index].requiredTextfieldHighlight = Color.red
                 isValid = false
@@ -113,9 +117,10 @@ func validateRequiredFields(observedObject: DialogUpdatableContent) -> (isValid:
             let dropdownItemSelectedValue = dropdownItem.selectedValue
             let dropdownItemRequired = dropdownItem.required
             userInputState.dropdownItems[index].requiredfieldHighlight = Color.clear
+            if !ControlCondition.isActive(enabledIf: dropdownItem.enabledIf, visibleIf: dropdownItem.visibleIf, values: conditionValues) { continue }
             
             if dropdownItemRequired && dropdownItemSelectedValue == "" {
-                NSSound.beep()
+                if beep { NSSound.beep() }
                 requiredString += "  - \"\(dropdownItem.title)\" \("is required".localized)<br>"
                 userInputState.dropdownItems[index].requiredfieldHighlight = Color.red
                 isValid = false
@@ -206,6 +211,11 @@ func executeOnAdvanceCallback(command: String, cardIndex: Int, cardId: String?, 
 }
 
 func buttonAction(action: String, exitCode: Int32, executeShell: Bool, shouldQuit: Bool = true, observedObject: DialogUpdatableContent, isCardsMode: Bool = false) {
+    // button1 / button2 can't dismiss the dialog while page button actions are still running.
+    // (Every other way of quitting is a force quit and kills them.)
+    if shouldQuit && (exitCode == 0 || exitCode == 2) && observedObject.blockDismissalWhileButtonActionsRun() {
+        return
+    }
     writeLog("processing button action \(action)")
     if action != "" {
         if executeShell {
@@ -230,6 +240,8 @@ func printVersionString() {
 
 func quitDialog(exitCode: Int32, exitMessage: String? = "", observedObject: DialogUpdatableContent? = nil) {
     writeLog("About to quit with exit code \(exitCode)")
+    // Anything still running from a page button is killed as we go
+    ButtonActionRunner.shared.killAll()
     if exitMessage != "" {
         print("\(exitMessage!)")
     }
@@ -249,6 +261,7 @@ func quitDialog(exitCode: Int32, exitMessage: String? = "", observedObject: Dial
         var outputArray: Array = [String]()
         var dontQuit = false
         var requiredString = ""
+        let conditionValues = controlValues(textFields: userInputState.textFields, state: userInputState)
 
         if appArguments.textField.present {
             writeLog("Textfield present - checking requirements are met")
@@ -270,7 +283,8 @@ func quitDialog(exitCode: Int32, exitMessage: String? = "", observedObject: Dial
                     textfieldName = textfieldTitle
                 }
 
-                if exitCode == 0 {
+                // required / regex checks only apply to fields the user can reach
+                if exitCode == 0 && ControlCondition.isActive(enabledIf: textField.enabledIf, visibleIf: textField.visibleIf, values: conditionValues) {
                     if textfieldRequired && textfieldValue == "" { // && userInputState.textFields[index].regex.isEmpty {
                         NSSound.beep()
                         requiredString += "  - \"\(textfieldTitle)\" \("is required".localized)<br>"
@@ -327,7 +341,8 @@ func quitDialog(exitCode: Int32, exitMessage: String? = "", observedObject: Dial
                     dropdownItemName = dropdownItem.title
                 }
 
-                if exitCode == 0 && dropdownItemRequired && dropdownItemSelectedValue == "" {
+                if exitCode == 0 && dropdownItemRequired && dropdownItemSelectedValue == ""
+                    && ControlCondition.isActive(enabledIf: dropdownItem.enabledIf, visibleIf: dropdownItem.visibleIf, values: conditionValues) {
                     NSSound.beep()
                     requiredString += "  - \"\(dropdownItem.title)\" \("is required".localized)<br>"
                     userInputState.dropdownItems[index].requiredfieldHighlight = Color.red
@@ -365,6 +380,18 @@ func quitDialog(exitCode: Int32, exitMessage: String? = "", observedObject: Dial
                 outputArray.append("\"\(checkboxName)\" : \"\(checkBox.checked)\"")
                 json[checkboxName].boolValue = checkBox.checked
             }
+        }
+
+        // page buttons: clicked state / exit code, selected value, chosen colour
+        for entry in buttonOutputEntries(userInputState.buttonRows) {
+            outputArray.append(contentsOf: entry.lines)
+            json[entry.key] = JSON(entry.value)
+        }
+
+        // sliders and steppers: the chosen number
+        for entry in numberOutputEntries(userInputState.numberInputs) {
+            outputArray.append(entry.line)
+            json[entry.key] = JSON(entry.value)
         }
 
         // print the output

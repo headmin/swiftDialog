@@ -83,13 +83,20 @@ struct ContentView: View {
                 }
             }
         }
-        .edgesIgnoringSafeArea(.all)
+        // Navigation style: keep detail content clear of the (floating) sidebar
+        .edgesIgnoringSafeArea(cardState.isNavigationStyle ? .top : .all)
         .sheet(isPresented: $observedData.showSheet, content: {
             ErrorView(observedContent: observedData)
                 .background(WindowAccessor { window in
                     window?.canBecomeVisibleWithoutLogin = true
                 })
         })
+        .sheet(item: $observedData.messageSheet) { content in
+            MessageSheetView(content: content, onClose: { observedData.messageSheet = nil })
+                .background(WindowAccessor { window in
+                    window?.canBecomeVisibleWithoutLogin = true
+                })
+        }
         .onReceive(screenResChanged) {_ in
             placeWindow(observedData.mainWindow ?? NSApp.windows[0],
                         size: CGSize(width: appvars.windowWidth,

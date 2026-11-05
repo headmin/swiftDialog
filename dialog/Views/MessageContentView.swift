@@ -27,6 +27,17 @@ struct MessageContent: View {
 
     let theAllignment: Alignment = .topLeading
 
+    /// Navigation style lays content out top-down and left-aligned in a single scroll view,
+    /// rather than pinning the message to the top and user input to the bottom.
+    private var isNavigation: Bool { cardState.isNavigationStyle }
+
+    /// Navigation style: height given to content that scrolls itself (list items, web, log, EULA),
+    /// which would otherwise collapse inside the page's scroll view.
+    let navigationScrollingContentHeight: CGFloat = 250
+
+    /// Navigation style: height given to the main image / slideshow.
+    let navigationImageHeight: CGFloat = 300
+
     init(observedDialogContent: DialogUpdatableContent) {
         writeLog("Displaying main message content")
         self.observedData = observedDialogContent
@@ -44,7 +55,20 @@ struct MessageContent: View {
     }
 
     var body: some View {
-        VStack {
+        if isNavigation {
+            ScrollView(.vertical) {
+                content
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
+            // New scroll position (top) for each page
+            .id(observedData.currentCardIndex)
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
+        VStack(alignment: isNavigation ? .leading : .center) {
             if observedData.args.centreIcon.present && observedData.args.iconOption.present {
                 HStack {
                     Spacer()
@@ -78,73 +102,49 @@ struct MessageContent: View {
             if observedData.args.mainImage.present {
                 ImageView(imageArray: observedData.imageArray, captionArray: observedData.appProperties.imageCaptionArray, autoPlaySeconds: observedData.args.autoPlay.value.floatValue(), showControls: true, hideTimer: observedData.args.hideTimer.present)
                     .id(observedData.currentCardIndex)
+                    // Sized from a GeometryReader, which collapses inside the page's ScrollView
+                    .frame(height: isNavigation ? navigationImageHeight : nil)
             }
 
-            if !["", "none"].contains(observedData.args.messageOption.value) {
+            if !["", "none"].contains(observedData.args.messageOption.value) && isNavigation {
+                // Navigation style: natural height, scrolls with the rest of the page
+                if observedData.args.eulaMode.present {
+                    eulaMessage
+                        .frame(height: navigationScrollingContentHeight)
+                } else {
+                    styledMessage(
+                        StructuredText(observedData.args.messageOption.value,
+                                       parser: ColoredMarkdownParser())
+                            .frame(maxWidth: .infinity, alignment: observedData.appProperties.messagePosition)
+                            .multilineTextAlignment(observedData.appProperties.messageAlignment)
+                            .lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    )
+                    .padding(.top, appDefaults.topPadding)
+                }
+            } else if !["", "none"].contains(observedData.args.messageOption.value) {
                 if ["centre", "center", "bottom"].contains(observedData.args.messageVerticalAlignment.value) {
                     Spacer()
                 }
 
                 GeometryReader { messageGeometry in
                         if observedData.args.eulaMode.present {
-                            HStack {
-                                List {
-                                    Text(observedData.args.messageOption.value)
-                                        .font(.system(size: 12, design: .monospaced))
-                                        .background(GeometryReader { child in
-                                            Color.clear
-                                                .onAppear {
-                                                    self.messageHeight = child.size.height > defaultMessageHeight ? child.size.height : defaultMessageHeight
-                                                }
-                                        })
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .background(Color("editorBackgroundColour"))
-                                .cornerRadius(5.0)
-                                .border(observedData.appProperties.debugBorderColour, width: 2)
-                            }
+                            eulaMessage
                         } else {
                             ScrollView {
-
-                                StructuredText(observedData.args.messageOption.value,
-                                               parser: ColoredMarkdownParser())
-                                    .frame(width: messageGeometry.size.width, alignment: observedData.appProperties.messagePosition)
-                                    .multilineTextAlignment(observedData.appProperties.messageAlignment)
-                                    .lineSpacing(2)
-                                    .fixedSize()
-                                    .onGeometryChange(for: CGFloat.self) { proxy in
-                                        max(proxy.size.height, defaultMessageHeight)
-                                    } action: { newValue in
-                                        messageHeight = newValue
-                                    }
-                                    // Instead of .textual.structuredTextStyle(.gitHub), set each piece individually:
-                                    .textual.inlineStyle(
-                                        InlineStyle()
-                                            .code(.monospaced, .fontScale(0.85))  // same as .gitHub but NO .backgroundColor
-                                            .strong(.fontWeight(.semibold))
-                                            //.link(.foregroundColor(.gitHubLink))
-                                    )
-                                    .textual.headingStyle(.gitHub)
-                                    .textual.paragraphStyle(.gitHub)
-                                    .textual.blockQuoteStyle(.gitHub)
-                                    .textual.codeBlockStyle(.gitHub)
-                                    .textual.listItemStyle(.default)
-                                    .textual.unorderedListMarker(.hierarchical(.disc, .circle, .square))
-                                    .textual.orderedListMarker(.decimal)
-                                    .textual.tableStyle(.gitHub)
-                                    .textual.tableCellStyle(.gitHub)
-                                    .textual.thematicBreakStyle(.gitHub)
-                                    .textual.textSelection(.enabled)
-                                    .font(
-                                        appvars.messageFontName.isEmpty ?
-                                        Font.system(size: appvars.messageFontSize, weight: appvars.messageFontWeight, design: .default) :
-                                        .custom(appvars.messageFontName, size: appvars.messageFontSize)
-                                    )
-                                    .fontWeight(appvars.messageFontWeight)
-                                    .foregroundColor(messageColour)
-                                    .accessibilityHint(observedData.args.messageOption.value)
-                                    .focusable(false)
-                                    .border(observedData.appProperties.debugBorderColour, width: 2)
+                                styledMessage(
+                                    StructuredText(observedData.args.messageOption.value,
+                                                   parser: ColoredMarkdownParser())
+                                        .frame(width: messageGeometry.size.width, alignment: observedData.appProperties.messagePosition)
+                                        .multilineTextAlignment(observedData.appProperties.messageAlignment)
+                                        .lineSpacing(2)
+                                        .fixedSize()
+                                        .onGeometryChange(for: CGFloat.self) { proxy in
+                                            max(proxy.size.height, defaultMessageHeight)
+                                        } action: { newValue in
+                                            messageHeight = newValue
+                                        }
+                                )
                             }
                             .padding(.top, appDefaults.topPadding)
                         }
@@ -153,7 +153,7 @@ struct MessageContent: View {
                 if !observedData.args.messageVerticalAlignment.present || ["centre", "center", "top"].contains(observedData.args.messageVerticalAlignment.value) {
                     Spacer()
                 }
-            } else {
+            } else if !isNavigation {
                 Spacer()
             }
             
@@ -164,32 +164,40 @@ struct MessageContent: View {
 
             GuidanceBridgeView(observedData: observedData)
 
+            if let layout = observedData.appProperties.viewLayout {
+                // Extended vieworder: individual inputs placed in groups
+                GroupedInputsView(observedData: observedData, groups: layout)
+                    .frame(maxWidth: dataEntryMaxWidth, alignment: isNavigation ? .leading : .center)
+            } else {
             Group {
                 ForEach(Array(observedData.appProperties.viewOrder.indices), id: \.self) { index in
                     switch index {
                     case observedData.appProperties.viewOrder.firstIndex(of: ViewType.textfile.rawValue):
                         TextFileView(logFilePath: observedData.args.logFileToTail.value, loadHistory: observedData.args.logFileHistory.present, historyLineLimit: logHistoryLimit)
+                            .frame(height: isNavigation ? navigationScrollingContentHeight : nil)
                             .padding(.bottom, appDefaults.contentPadding)
                     case observedData.appProperties.viewOrder.firstIndex(of: ViewType.webcontent.rawValue):
                         WebContentView(observedDialogContent: observedData, url: observedData.args.webcontent.value)
+                            .frame(height: isNavigation ? navigationScrollingContentHeight : nil)
                             .border(observedData.appProperties.debugBorderColour, width: 2)
                             .padding(.bottom, appDefaults.contentPadding)
                     case observedData.appProperties.viewOrder.firstIndex(of: ViewType.listitem.rawValue):
                         ListView(observedDialogContent: observedData)
                             .id(observedData.currentCardIndex)
+                            .frame(height: isNavigation ? navigationScrollingContentHeight : nil)
                             .border(observedData.appProperties.debugBorderColour, width: 2)
                             .padding(.bottom, appDefaults.contentPadding)
                     case observedData.appProperties.viewOrder.firstIndex(of: ViewType.checkbox.rawValue):
                         CheckboxView(observedDialogContent: observedData)
                             .id(observedData.currentCardIndex)
                             .border(observedData.appProperties.debugBorderColour, width: 2)
-                            .frame(maxWidth: dataEntryMaxWidth)
+                            .frame(maxWidth: dataEntryMaxWidth, alignment: isNavigation ? .leading : .center)
                     case observedData.appProperties.viewOrder.firstIndex(of: ViewType.textfield.rawValue):
                         TextEntryView(observedDialogContent: observedData)
                             .id(observedData.currentCardIndex)
                             .padding(.bottom, appDefaults.contentPadding)
                             .border(observedData.appProperties.debugBorderColour, width: 2)
-                            .frame(maxWidth: dataEntryMaxWidth)
+                            .frame(maxWidth: dataEntryMaxWidth, alignment: isNavigation ? .leading : .center)
                     case observedData.appProperties.viewOrder.firstIndex(of: ViewType.dropdown.rawValue):
                         DropdownView(observedDialogContent: observedData)
                             .id(observedData.currentCardIndex)
@@ -201,15 +209,34 @@ struct MessageContent: View {
                             .id(observedData.currentCardIndex)
                             .padding(.bottom, appDefaults.contentPadding)
                             .border(observedData.appProperties.debugBorderColour, width: 2)
-                            .frame(maxWidth: dataEntryMaxWidth)
+                            .frame(maxWidth: dataEntryMaxWidth, alignment: isNavigation ? .leading : .center)
+                    case observedData.appProperties.viewOrder.firstIndex(of: ViewType.button.rawValue):
+                        ButtonRowView(observedDialogContent: observedData)
+                            .id(observedData.currentCardIndex)
+                            .padding(.bottom, appDefaults.contentPadding)
+                            .border(observedData.appProperties.debugBorderColour, width: 2)
+                            .frame(maxWidth: dataEntryMaxWidth, alignment: isNavigation ? .leading : .center)
+                    case observedData.appProperties.viewOrder.firstIndex(of: ViewType.slider.rawValue):
+                        NumberInputView(observedDialogContent: observedData, kind: "slider")
+                            .id(observedData.currentCardIndex)
+                            .padding(.bottom, appDefaults.contentPadding)
+                            .border(observedData.appProperties.debugBorderColour, width: 2)
+                            .frame(maxWidth: dataEntryMaxWidth, alignment: isNavigation ? .leading : .center)
+                    case observedData.appProperties.viewOrder.firstIndex(of: ViewType.stepper.rawValue):
+                        NumberInputView(observedDialogContent: observedData, kind: "stepper")
+                            .id(observedData.currentCardIndex)
+                            .padding(.bottom, appDefaults.contentPadding)
+                            .border(observedData.appProperties.debugBorderColour, width: 2)
+                            .frame(maxWidth: dataEntryMaxWidth, alignment: isNavigation ? .leading : .center)
                     default:
                             EmptyView()
                     }
                 }
             }
+            }
 
 
-            if ["top"].contains(observedData.args.messageVerticalAlignment.value) {
+            if !isNavigation && ["top"].contains(observedData.args.messageVerticalAlignment.value) {
                 Spacer()
             }
             if observedData.appProperties.userInputRequired {
@@ -231,6 +258,65 @@ struct MessageContent: View {
             withAnimation(.easeInOut(duration: 0.25)) {
                 contentOpacity = 1
             }
+            observedData.resetInactiveControls()
         }
+        // enabledif / visibleif: controls that become unavailable go back to their defaults
+        .onChange(of: observedData.currentControlValues()) { _, _ in
+            observedData.resetInactiveControls()
+        }
+    }
+
+    /// EULA mode: the message as monospaced text in a scrolling list.
+    private var eulaMessage: some View {
+        HStack {
+            List {
+                Text(observedData.args.messageOption.value)
+                    .font(.system(size: 12, design: .monospaced))
+                    .background(GeometryReader { child in
+                        Color.clear
+                            .onAppear {
+                                self.messageHeight = child.size.height > defaultMessageHeight ? child.size.height : defaultMessageHeight
+                            }
+                    })
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .background(Color("editorBackgroundColour"))
+            .cornerRadius(5.0)
+            .border(observedData.appProperties.debugBorderColour, width: 2)
+        }
+    }
+
+    /// Markdown styling, font and colour applied to the message, shared by the standard
+    /// layout and the navigation style layout.
+    private func styledMessage<Content: View>(_ message: Content) -> some View {
+        message
+            // Instead of .textual.structuredTextStyle(.gitHub), set each piece individually:
+            .textual.inlineStyle(
+                InlineStyle()
+                    .code(.monospaced, .fontScale(0.85))  // same as .gitHub but NO .backgroundColor
+                    .strong(.fontWeight(.semibold))
+                    //.link(.foregroundColor(.gitHubLink))
+            )
+            .textual.headingStyle(.gitHub)
+            .textual.paragraphStyle(.gitHub)
+            .textual.blockQuoteStyle(.gitHub)
+            .textual.codeBlockStyle(.gitHub)
+            .textual.listItemStyle(.default)
+            .textual.unorderedListMarker(.hierarchical(.disc, .circle, .square))
+            .textual.orderedListMarker(.decimal)
+            .textual.tableStyle(.gitHub)
+            .textual.tableCellStyle(.gitHub)
+            .textual.thematicBreakStyle(.gitHub)
+            .textual.textSelection(.enabled)
+            .font(
+                appvars.messageFontName.isEmpty ?
+                Font.system(size: appvars.messageFontSize, weight: appvars.messageFontWeight, design: .default) :
+                .custom(appvars.messageFontName, size: appvars.messageFontSize)
+            )
+            .fontWeight(appvars.messageFontWeight)
+            .foregroundColor(messageColour)
+            .accessibilityHint(observedData.args.messageOption.value)
+            .focusable(false)
+            .border(observedData.appProperties.debugBorderColour, width: 2)
     }
 }

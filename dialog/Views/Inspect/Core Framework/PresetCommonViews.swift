@@ -141,7 +141,7 @@ struct PresetCommonViews {
                     }
                 } label: {
                     ButtonSymbolLabel(text: state.buttonConfiguration.button2Text,
-                                      spec: ButtonSymbolSpec.parse(state.buttonConfiguration.button2Symbol))
+                                      spec: InspectButtonSymbolSpec.parse(state.buttonConfiguration.button2Symbol))
                 }
                 .buttonStyle(.bordered)
                 .controlSize(controlSize)
@@ -164,7 +164,7 @@ struct PresetCommonViews {
                 }
             }) {
                 ButtonSymbolLabel(text: finalButtonText,
-                                  spec: ButtonSymbolSpec.parse(state.buttonConfiguration.button1Symbol))
+                                  spec: InspectButtonSymbolSpec.parse(state.buttonConfiguration.button1Symbol))
             }
             .disabled(state.buttonConfiguration.button1Disabled)
         }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// Parsed form of a classic buttonNsymbol argument.
-struct ButtonSymbolSpec {
+struct InspectButtonSymbolSpec {
     var name: String
     var position: IconPosition = .leading
     var renderingMode: SymbolRenderingMode = .monochrome
@@ -18,12 +18,12 @@ struct ButtonSymbolSpec {
     var color2: Color = .clear
     var color3: Color = .clear
 
-    static func parse(_ argument: String?) -> ButtonSymbolSpec? {
+    static func parse(_ argument: String?) -> InspectButtonSymbolSpec? {
         guard let argument, !argument.isEmpty else { return nil }
         let parts = argument.split(separator: ",").map { $0.lowercased() }
         guard let name = parts.first, !name.isEmpty else { return nil }
 
-        var spec = ButtonSymbolSpec(name: name)
+        var spec = InspectButtonSymbolSpec(name: name)
         for part in parts.dropFirst() {
             if let position = part.toSymbolPosition {
                 spec.position = position
@@ -63,7 +63,7 @@ struct ButtonSymbolSpec {
 /// trailing flips layout direction. No spec draws a plain text label.
 struct ButtonSymbolLabel: View {
     let text: String
-    let spec: ButtonSymbolSpec?
+    let spec: InspectButtonSymbolSpec?
 
     var body: some View {
         if let spec {
@@ -86,7 +86,7 @@ struct ButtonSymbolLabel: View {
     }
 
     @ViewBuilder
-    private func symbolImage(_ spec: ButtonSymbolSpec) -> some View {
+    private func symbolImage(_ spec: InspectButtonSymbolSpec) -> some View {
         let image = Image(systemName: spec.name)
             .resizable()
             .scaledToFit()
