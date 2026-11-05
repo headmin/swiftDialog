@@ -240,6 +240,7 @@ extension InspectConfig {
         let failureMessage: String?             // Default "Step Failed"
         let waitForExternalTrigger: Bool?       // Never auto-complete; wait for a success:/failure: command
         let requireManualConfirm: Bool?        // success:/failure: update state but do not advance
+        let selectable: Bool?                  // Guide picker: this step can be selected (`pickerConfig`)
 
         var stepOverlay: DetailOverlayConfig?   // Per-step help overlay
 
@@ -257,7 +258,7 @@ extension InspectConfig {
         /// Decodes from a bare entries array or a grouped object; see `CadencePayload`.
         var cadence: CadencePayload?
         var cadenceStyle: String?               // "manifest" (default; alias "minimal") | "spotlight" | "bento"
-        /// Continue while the cadence runs: "confirm" (default, live) | "hidden" | "disabled".
+        /// Continue while the cadence or card installation runs: "confirm" (default, live) | "hidden" | "disabled".
         /// On completion or halt Continue is live regardless. `confirmIncomplete` decides what
         /// pressing it does. Unknown values resolve to confirm (`CadenceContinueVisibility.resolve`).
         var continueWhileRunning: String?

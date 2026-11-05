@@ -46,6 +46,16 @@ final class RequiredItemsTests: XCTestCase {
         XCTAssertTrue(s.allRequiredItemsCompleted, "the optional item failed; the required ones are done")
     }
 
+    func testAFailedRequiredItemStillReleasesTheButton() throws {
+        let s = try state(three)
+        s.completedItems = ["edr"]
+        s.failedItems = ["vpn"]
+        XCTAssertFalse(s.allRequiredItemsCompleted, "vpn failed, so not every required item succeeded")
+        XCTAssertTrue(s.allRequiredItemsFinished, "but nothing is left running, so the held button releases")
+        s.failedItems = []
+        XCTAssertFalse(s.allRequiredItemsFinished, "vpn is still pending")
+    }
+
     func testAnEmptyListNeverCountsAsComplete() throws {
         let s = InspectState()
         XCTAssertFalse(s.allRequiredItemsCompleted)

@@ -168,6 +168,14 @@ extension InspectConfig {
         let dismissDelay: Double?           // Seconds before auto-hide (default: 5.0)
     }
 
+    /// 3.1.1 guide picker mode: `selectable` steps are chosen, and Finish writes the selections plist.
+    struct PickerConfig: Codable, Sendable {
+        let selectionMode: String?                  // "single" | "multi" | "none" (default)
+        let returnSelections: Bool?                 // Write the selections plist (default: false)
+        let outputPath: String?                     // Default: /tmp/preset5_guide_selections.plist
+        let allowContinueWithoutSelection: Bool?    // Finish with nothing selected (default: false)
+    }
+
     /// Labels for single- and multi-select picker mode.
     struct PickerLabels: Codable, Sendable {
         let selectButtonText: String?       // Selection button text (default: "Select This")

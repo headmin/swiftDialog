@@ -65,8 +65,8 @@ struct PresetCommonViews {
         resolveInstallStatus(id: item.id, state: state)
     }
 
-    /// The same ladder, by ID, so `ListItem` rows can use it. `failed` is checked first; that is
-    /// why an `item:<id>:failed` command survives the filesystem detector's reconcile.
+    /// The same ladder, by ID, so `ListItem` rows can use it. Every writer goes through
+    /// `ItemLifecycle`, so failed and completed are exclusive; `failed` first is only a backstop.
     static func resolveInstallStatus(id: String, state: InspectState) -> StepStatus {
         if state.failedItems.contains(id) { return .failed }
         if state.completedItems.contains(id) { return .completed }
@@ -107,7 +107,8 @@ struct PresetCommonViews {
         config: InspectConfig? = nil,
         triggerFilePath: String? = nil
     ) -> some View {
-        let allItemsCompleted = state.allRequiredItemsCompleted
+        // The released label follows the release itself: completed or failed (`allRequiredItemsFinished`).
+        let allItemsCompleted = state.allRequiredItemsFinished
         let shouldUseAutoEnableText = allItemsCompleted &&
                                       state.buttonConfiguration.autoEnableButton &&
                                       state.config?.autoEnableButtonText != nil
@@ -176,18 +177,24 @@ struct PresetCommonViews {
         let completed = state.completedItems.count
         let total = state.items.count
 
-        if var text = localizedFormat ?? state.config?.uiLabels?.progressFormat {
-            // Forgiving tokens: {completed}/{total}, $completed/$total, %completed%/%total%.
-            for token in ["{completed}", "$completed", "%completed%"] {
-                text = text.replacingOccurrences(of: token, with: "\(completed)")
-            }
-            for token in ["{total}", "$total", "%total%"] {
-                text = text.replacingOccurrences(of: token, with: "\(total)")
-            }
-            return text
+        if let text = localizedFormat ?? state.config?.uiLabels?.progressFormat {
+            return fillProgressTokens(text, completed: completed, total: total)
         }
 
         return "\(completed) of \(total) completed"
+    }
+
+    /// Forgiving tokens, all three spellings 3.1.1 accepted: {completed}/{total},
+    /// $completed/$total, %completed%/%total%.
+    nonisolated static func fillProgressTokens(_ format: String, completed: Int, total: Int) -> String {
+        var text = format
+        for token in ["{completed}", "$completed", "%completed%"] {
+            text = text.replacingOccurrences(of: token, with: "\(completed)")
+        }
+        for token in ["{total}", "$total", "%total%"] {
+            text = text.replacingOccurrences(of: token, with: "\(total)")
+        }
+        return text
     }
 
     // MARK: Sorted Items

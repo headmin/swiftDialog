@@ -18,8 +18,8 @@ import Foundation
 /// "Obsidian-1.12.7.pkg". An author matching that with an exact path writes a check that breaks on
 /// the next release, so `.../Receipts/Obsidian*` has to be expressible.
 ///
-/// Lives here rather than in its own file only because a new file needs four pbxproj entries and
-/// silently compiles into nothing without them.
+/// Lives here, beside the detection it serves: `App Processing/` is not a synchronized folder, so a new
+/// file there needs its project entries (the `Views/Inspect` folders pick files up on their own).
 enum PathGlob {
 
     /// Whether a pattern contains glob magic. A plain path keeps exact-match semantics, so an
@@ -36,9 +36,11 @@ enum PathGlob {
     }
 
     /// Whether any file at `path` exists, honouring a glob in the LAST component only; the
-    /// directory itself is always taken literally.
+    /// directory itself is always taken literally. The literal path is tried first: `[`, `?` and
+    /// `*` are legal in file names ("Foo [Beta].app"), and 3.1.1 matched paths literally.
     static func exists(atPath path: String) -> Bool {
-        guard needsGlob(path) else { return FileManager.default.fileExists(atPath: path) }
+        if FileManager.default.fileExists(atPath: path) { return true }
+        guard needsGlob(path) else { return false }
         let url = URL(fileURLWithPath: path)
         let directory = url.deletingLastPathComponent().path
         let pattern = url.lastPathComponent

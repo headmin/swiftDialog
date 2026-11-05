@@ -21,7 +21,8 @@ extension Preset5View {
         let isLastSub = subIndex >= screens.count - 1
         let canBack = flowBack || subIndex > 0
         cardScreen(model: CardStepModel(
-            eyebrow: config?.title,
+            // An authored step eyebrow wins over the flow title (3.1.1's `guideStepBadge` arrives here).
+            eyebrow: localized("eyebrow", forStep: step, fallback: step.eyebrow) ?? config?.title,
             eyebrowIcon: config?.icon,
             stepLabel: cardStepLabel(stepIndex),
             // Sub-screens carry no hero and no step overlay.
@@ -52,11 +53,21 @@ extension Preset5View {
                 showBack: canBack,
                 // Only a screen's own label is passed; the step's label is cardFooter's default.
                 continueText: sub?.continueButtonText,
-                // Required-field gating, as on the standard intro step.
-                continueDisabled: standardContinueDisabled(step: step),
+                // Required-field gating, as on the standard intro step; the guide picker holds Finish.
+                continueDisabled: standardContinueDisabled(step: step)
+                    || (isLastSub && stepIndex >= allSteps.count - 1 && !guidePickerAllowsFinish),
+                // The step's footer line (3.1.1's `footerLink` arrives here), as on the card progress step.
+                footnote: localized("footerNote", forStep: step, fallback: step.footerNote),
+                // A selectable guide step seats Select in the secondary slot unless it authors its own.
                 secondaryText: localized("secondaryButtonText", forStep: step,
-                                         fallback: step.secondaryButtonText),
-                onSecondary: step.secondaryButtonText == nil ? nil : { [self] in
+                                         fallback: step.secondaryButtonText)
+                    ?? (isGuidePickable(step)
+                        ? (guideSelections.contains(step.id) ? localizedUI("guideSelected", fallback: "✓ Selected")
+                                                             : localizedUI("guideSelect", fallback: "Select"))
+                        : nil),
+                onSecondary: step.secondaryButtonText == nil
+                    ? (isGuidePickable(step) ? { [self] in toggleGuideSelection(step) } : nil)
+                    : { [self] in
                     if step.secondaryAction?.lowercased() == "next" { goToNextStep() } else { goToPreviousStep() }
                 },
                 subStepper: screens.count > 1 ? CardSubStepperModel(

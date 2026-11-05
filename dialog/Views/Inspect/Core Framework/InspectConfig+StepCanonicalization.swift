@@ -511,6 +511,16 @@ extension InspectConfig {
         }
     }
 
+    /// Preset 6 `items[]` in `guiIndex` order, the documented display order 3.1.1 sorted by.
+    /// `rows` is the same array decoded as ItemConfig, which carries `guiIndex` (0 when absent).
+    /// Stable, so equal indexes, including all-zero ones, keep the authored order.
+    static func orderedByGuiIndex(_ steps: [IntroStep], rows: [ItemConfig]) -> [IntroStep] {
+        guard steps.count == rows.count else { return steps }
+        return zip(steps, rows).enumerated()
+            .sorted { ($0.element.1.guiIndex, $0.offset) < ($1.element.1.guiIndex, $1.offset) }
+            .map { $0.element.0 }
+    }
+
     /// Canonicalizes a whole list and logs the advisories once. Count-preserving.
     static func canonicalizeSteps(_ steps: [IntroStep]?) -> [IntroStep]? {
         guard let steps else { return nil }

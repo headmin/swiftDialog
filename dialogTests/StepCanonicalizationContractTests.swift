@@ -331,14 +331,29 @@ final class StepCanonicalizationContractTests: XCTestCase {
 
     func testAConfigClaimingAReservedIdIsRejectedLoudly() {
         XCTAssertThrowsError(try decodeConfig("""
-        { "preset": "5", "introSteps": [ {"id":"_outro","stepType":"outro"} ] }
+        { "preset": "5", "introSteps": [ {"id":"_outro","stepType":"outro"} ],
+          "summaryScreen": { "title": "Bye" } }
         """), "a reserved bookend id must be rejected at decode") { error in
             XCTAssertTrue("\(error)".contains("reserved"), "error should name the problem: \(error)")
         }
     }
 
     func testReservedIdRejectionAppliesToIntroToo() {
-        XCTAssertThrowsError(try decodeConfig(#"{ "preset": "5", "introSteps": [ {"id":"_intro"} ] }"#))
+        XCTAssertThrowsError(try decodeConfig("""
+        { "preset": "5", "introSteps": [ {"id":"_intro"} ], "introScreen": { "title": "Hi" } }
+        """))
+    }
+
+    /// Without the matching screen nothing is projected, so the id is an ordinary step id, as in
+    /// 3.1.1; only the end that has a screen is reserved.
+    func testReservedIdsAreOrdinaryWithoutTheirScreen() throws {
+        let config = try decodeConfig("""
+        { "preset": "5", "introSteps": [ {"id":"_intro"}, {"id":"_outro"} ] }
+        """)
+        XCTAssertEqual(config.introSteps?.map(\.id), ["_intro", "_outro"])
+        XCTAssertNoThrow(try decodeConfig("""
+        { "preset": "5", "introSteps": [ {"id":"_outro"} ], "introScreen": { "title": "Hi" } }
+        """), "an intro screen reserves `_intro` only")
     }
 
     // MARK: The renderer vocabulary is closed and matches the schema

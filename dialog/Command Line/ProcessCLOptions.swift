@@ -1314,7 +1314,6 @@ func processCLOptions(json: JSON = getJSON()) {
         // `exit`, not `quitDialog`: there is no dialog result to report, and quitDialog would print
         // one — `--json` is also the classic "print results as JSON" flag.
         exit(code)
-        return
     }
 
     // `--inspect-new <recipe> [folder]` / `--inspect-new list` — a working flow from a recipe
@@ -1322,7 +1321,6 @@ func processCLOptions(json: JSON = getJSON()) {
     if appArguments.inspectNew.present {
         let code = MainActor.assumeIsolated { InspectRecipeComposer.runCommandLine(arguments: CommandLine.arguments) }
         exit(code)   // no dialog result to report (see --inspect-lint)
-        return
     }
 
     if appArguments.listFonts.present {

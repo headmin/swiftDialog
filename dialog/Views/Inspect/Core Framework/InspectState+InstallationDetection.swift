@@ -15,6 +15,22 @@ extension InspectState {
         checkDirectInstallationStatus()
     }
     
+    /// Adopts the command file's current content when monitoring starts, so only lines written
+    /// afterwards are processed. Seeding here rather than on the first look keeps a script's first
+    /// command, written in the gap before the first poll or write event, from being adopted unrun.
+    func seedCommandFileCursor() {
+        let commandFilePath = InspectConstants.commandFilePath
+        let content = (try? String(contentsOfFile: commandFilePath, encoding: .utf8)) ?? ""
+        let lines = content.components(separatedBy: .newlines).filter { !$0.isEmpty }
+        lastCommandFileSize = content.count
+        lastProcessedLineCount = lines.count
+        commandFileCursorSeeded = true
+        if !lines.isEmpty {
+            writeLog("InspectState: Adopted \(lines.count) pre-existing command line(s) at "
+                     + "\(commandFilePath) without replaying them", logLevel: .info)
+        }
+    }
+
     func checkCommandFileForUpdates() {
         let commandFilePath = InspectConstants.commandFilePath
 
@@ -29,21 +45,12 @@ extension InspectState {
             // Empty lines are not counted, or a trailing newline would skip real content.
             let lines = content.components(separatedBy: .newlines).filter { !$0.isEmpty }
 
-            // An empty file at launch has size 0 == lastCommandFileSize; seeding must still happen.
             if commandFileCursorSeeded && currentSize == lastCommandFileSize { return }
 
             let newLines = CommandFileReplayGuard.linesToProcess(
                 allLines: lines,
                 lastProcessedLineCount: lastProcessedLineCount,
                 seeded: commandFileCursorSeeded)
-
-            if !commandFileCursorSeeded {
-                commandFileCursorSeeded = true
-                if !lines.isEmpty {
-                    writeLog("InspectState: Adopted \(lines.count) pre-existing command line(s) at "
-                             + "\(commandFilePath) without replaying them", logLevel: .info)
-                }
-            }
 
             if !newLines.isEmpty {
                 writeLog("InspectState: Processing \(newLines.count) new command lines", logLevel: .debug)
@@ -167,7 +174,14 @@ extension InspectState {
             }
 
             let isDownloading = !isInstalled && checkCacheForItem(item)
-            if isInstalled { pathCheckSawInstalled.insert(item.id) }
+            // Read before this scan records it: a failure that arrived while the path was already
+            // there (a failed update) stands; the poller may only clear a failure when the path
+            // appears after it (a retry that worked).
+            let sawInstalledBefore = pathCheckSawInstalled.contains(item.id)
+            let failureStands = failedItems.contains(item.id) && sawInstalledBefore
+            // The marker tracks the path, whatever the item's state: an absent path resets it, so
+            // a failed item whose app is removed and put back counts as a new install.
+            if isInstalled { pathCheckSawInstalled.insert(item.id) } else { pathCheckSawInstalled.remove(item.id) }
             if isDownloading { pathCheckSawCaching.insert(item.id) }
 
             // Kept in step with completedItems, or the row flashes "Failed" until validation catches up.
@@ -182,22 +196,21 @@ extension InspectState {
                 }
             }
 
-            if isInstalled && !wasCompleted {
+            if isInstalled && !wasCompleted && !failureStands {
                 let words = DetectionLog.pollerWords(wasCompleted: wasCompleted, wasDownloading: wasDownloading,
                                                      isInstalled: isInstalled, isDownloading: isDownloading)
                 self.debouncedUpdater.debounce(key: "item-install-\(item.id)") { [weak self] in
                     guard let self = self else { return }
                     DetectionLog.note(itemId: item.id, from: words.from, to: words.to,
                                       by: requirementVerdict != nil ? .requirements : .poller)
-                    self.completedItems.insert(item.id)
-                    self.downloadingItems.remove(item.id)
+                    // Through ItemLifecycle, so completing also clears failed: never both.
+                    self.applyItemStatus(item.id, .completed)
                 }
                 writeLog("InspectState: \(source) - \(item.displayName) detection completed", logLevel: .info)
                 changesDetected = true
 
-            } else if !isInstalled && wasCompleted && pathCheckSawInstalled.contains(item.id) {
+            } else if !isInstalled && wasCompleted && sawInstalledBefore {
                 // A completed item whose path the check never saw came from a script, and stands.
-                pathCheckSawInstalled.remove(item.id)
                 if isDownloading {
                     self.debouncedUpdater.debounce(key: "item-download-\(item.id)") { [weak self] in
                         guard let self = self else { return }
@@ -236,7 +249,7 @@ extension InspectState {
                 
             } else if !isDownloading && !isInstalled
                         && ((wasDownloading && pathCheckSawCaching.contains(item.id))
-                            || (wasCompleted && pathCheckSawInstalled.contains(item.id))) {
+                            || (wasCompleted && sawInstalledBefore)) {
                 pathCheckSawCaching.remove(item.id)
                 // The log monitor is authoritative for download state: a live status blocks the reset.
                 let hasLogMonitorStatus = self.logMonitorStatuses[item.id] != nil
@@ -401,21 +414,16 @@ extension InspectState {
             if let status = status {
                 switch status.lowercased() {
                 case "success":
-                    self.completedItems.insert(app.id)
-                    self.downloadingItems.remove(app.id)
-                    self.failedItems.remove(app.id)
+                    self.applyItemStatus(app.id, .completed)
                     writeLog("InspectState: \(app.displayName) completed (from command)", logLevel: .info)
                 case "wait":
                     self.downloadingItems.insert(app.id)
                     writeLog("InspectState: \(app.displayName) downloading (from command)", logLevel: .info)
                 case "pending":
-                    self.downloadingItems.remove(app.id)
-                    self.completedItems.remove(app.id)
-                    self.failedItems.remove(app.id)
+                    self.applyItemStatus(app.id, .pending)
                     writeLog("InspectState: \(app.displayName) pending (from command)", logLevel: .info)
                 case "fail", "error":
-                    self.failedItems.insert(app.id)
-                    self.downloadingItems.remove(app.id)
+                    self.applyItemStatus(app.id, .failed)
                     writeLog("InspectState: \(app.displayName) failed (from command)", logLevel: .info)
                 default:
                     writeLog("InspectState: Unknown status '\(status)' for \(app.displayName)", logLevel: .debug)

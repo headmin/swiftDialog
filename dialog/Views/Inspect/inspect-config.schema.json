@@ -702,6 +702,17 @@
       "type": "string",
       "description": "Overlay icon for brand identity badges"
     },
+    "pickerConfig": {
+      "type": "object",
+      "description": "Preset 5 guide picker (3.1.1): steps with selectable: true get a Select button; Finish waits for a selection and, with returnSelections, writes a plist of selectedItem (single) or selectedItems[] + selectionCount (multi), each {id, title}.",
+      "additionalProperties": false,
+      "properties": {
+        "selectionMode": {"type": "string", "enum": ["single", "multi", "none"], "default": "none"},
+        "returnSelections": {"type": "boolean", "default": false, "description": "Write the selections plist at Finish"},
+        "outputPath": {"type": "string", "default": "/tmp/preset5_guide_selections.plist"},
+        "allowContinueWithoutSelection": {"type": "boolean", "default": false}
+      }
+    },
     "pickerLabels": {
       "$ref": "#/definitions/PickerLabels"
     },
@@ -5908,7 +5919,7 @@
             "disabled"
           ],
           "default": "confirm",
-          "description": "How Continue behaves while a cadence is running: 'confirm' (default; live, with the confirmIncomplete sheet), 'hidden' or 'disabled'. Always live on completion."
+          "description": "How Continue behaves while a cadence or a card installation step is running: 'confirm' (default; live, with the confirmIncomplete sheet), 'hidden' or 'disabled'. Always live once nothing is installing or waiting, failures included."
         },
         "cadenceInterval": {
           "type": "number",
@@ -6114,6 +6125,11 @@
           "type": "boolean",
           "default": false,
           "description": "When true, success:/failure: IPC commands update state but don't auto-advance. User must click to proceed."
+        },
+        "selectable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Guide picker (pickerConfig): this step can be selected."
         },
         "stepOverlay": {
           "$ref": "#/definitions/DetailOverlayConfig"

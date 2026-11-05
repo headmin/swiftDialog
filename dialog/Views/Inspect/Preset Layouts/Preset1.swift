@@ -131,7 +131,7 @@ struct Preset1View: View, InspectLayoutProtocol {
     /// Same label chain as `PresetCommonViews.buttonArea`: autoEnable → finalButtonText →
     /// button1Text → resolved button1Text → "Continue".
     private var plainSimpleButtonText: String {
-        let allItemsCompleted = inspectState.allRequiredItemsCompleted
+        let allItemsCompleted = inspectState.allRequiredItemsFinished
         let shouldUseAutoEnableText = allItemsCompleted
             && inspectState.buttonConfiguration.autoEnableButton
             && inspectState.config?.autoEnableButtonText != nil

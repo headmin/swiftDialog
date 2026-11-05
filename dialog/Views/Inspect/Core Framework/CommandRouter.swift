@@ -162,8 +162,9 @@ final class CommandRouter: ObservableObject {
         return true
     }
 
-    /// Splits a raw line into command and nonce. The wire form is a final tab-separated
-    /// `nonce=<token>` field; a trailing ` @<token>` with a strict charset is also accepted.
+    /// Splits a raw line into command and nonce. The only wire form is a final tab-separated
+    /// `nonce=<token>` field: message text such as `update_message:x:ping @helpdesk` is content,
+    /// never a nonce.
     private static func splitNonce(_ line: String) -> (command: String, nonce: String?) {
         if line.contains("\t") {
             var fields = line.components(separatedBy: "\t")
@@ -172,9 +173,6 @@ final class CommandRouter: ObservableObject {
                 let nonce = String(last.dropFirst(6)).trimmingCharacters(in: .whitespaces)
                 return (fields.joined(separator: "\t"), nonce.isEmpty ? nil : nonce)
             }
-        }
-        if let range = line.range(of: #" @[A-Za-z0-9._\-]+$"#, options: .regularExpression) {
-            return (String(line[..<range.lowerBound]), String(line[range].dropFirst(2)))
         }
         return (line, nil)
     }

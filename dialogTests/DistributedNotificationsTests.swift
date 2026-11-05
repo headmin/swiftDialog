@@ -633,6 +633,22 @@ final class DistributedNotificationsTests: XCTestCase {
         XCTAssertEqual(receivedNonce, "abc123")
     }
 
+    /// A non-string value still counts: `{"next": 1}` advances, as in 3.1.1.
+    func testNonStringUserInfoValueIsKept() {
+        let expectation = expectation(description: "next from a numeric value")
+        DialogNotifications.startObserving { command, _ in
+            if command == "next" { expectation.fulfill() }
+        }
+
+        DistributedNotificationCenter.default().postNotificationName(
+            DialogNotifications.commandName, object: nil,
+            userInfo: ["next": 1], deliverImmediately: true
+        )
+
+        waitForExpectations(timeout: 2.0)
+        DialogNotifications.stopObserving()
+    }
+
     // MARK: - Nonce Dedupe
 
     /// The same command by notification (nonce param) and by trigger file (`\tnonce=`) runs once.
@@ -753,16 +769,16 @@ final class DistributedNotificationsTests: XCTestCase {
         XCTAssertEqual(received, "nonce=notatrailer\tstill payload")
     }
 
-    /// The ` @<token>` spelling dedupes the same way.
-    func testAtSpellingAlsoDedupes() {
+    /// A trailing ` @word` is message content, not a nonce: it is kept, and a repeat still runs.
+    func testTrailingAtWordIsContentNotNonce() {
         let router = CommandRouter()
-        var nextCount = 0
-        router.onNext = { nextCount += 1 }
+        var received: [String] = []
+        router.onUpdateMessage = { _, message in received.append(message) }
 
-        router.processCommand("next @tok1")
-        router.processCommand("next\tnonce=tok1")
+        router.processCommand("update_message:step1:ping @helpdesk")
+        router.processCommand("update_message:step1:ping @helpdesk")
 
-        XCTAssertEqual(nextCount, 1)
+        XCTAssertEqual(received, ["ping @helpdesk", "ping @helpdesk"])
     }
 
     /// A bare `@` inside a value (URLs, emails) must not be mistaken for a nonce trailer.

@@ -53,6 +53,7 @@ struct Preset5View: View, InspectLayoutProtocol {
     /// `scheduleAutoAdvance`, so at most one advance is ever in flight.
     @State var autoAdvanceTask: Task<Void, Never>?
     @State var gridSelections: [String: Set<String>] = [:]  // gridSelectionKey -> selected IDs
+    @State var guideSelections: Set<String> = []  // guide picker mode: selected step ids
 
     @State var installationItems: [InstallationItemData] = []
     @State var processingState: InspectProcessingState = .idle

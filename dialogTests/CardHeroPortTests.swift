@@ -329,6 +329,20 @@ final class GlobPathMatchingTests: XCTestCase {
                                                pattern: "SelfService+*"))
     }
 
+    /// A real name containing glob characters is found by its literal path (3.1.1 behaviour), and
+    /// the glob still matches versioned names in the same folder.
+    func testALiteralBracketNameExistsAndGlobsStillMatch() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        FileManager.default.createFile(atPath: dir.appendingPathComponent("Foo [Beta].app").path, contents: nil)
+        FileManager.default.createFile(atPath: dir.appendingPathComponent("Obsidian-1.12.7.pkg").path, contents: nil)
+
+        XCTAssertTrue(PathGlob.exists(atPath: dir.appendingPathComponent("Foo [Beta].app").path))
+        XCTAssertTrue(PathGlob.exists(atPath: dir.appendingPathComponent("Obsidian*").path))
+        XCTAssertFalse(PathGlob.exists(atPath: dir.appendingPathComponent("Foo [Gamma].app").path))
+    }
+
     func testNeedsGlobDetectsMagicCharactersOnly() {
         XCTAssertTrue(PathGlob.needsGlob("/path/Obsidian*"))
         XCTAssertTrue(PathGlob.needsGlob("/path/app-?.pkg"))

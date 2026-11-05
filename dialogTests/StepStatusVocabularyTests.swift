@@ -452,8 +452,6 @@ final class StepStatusVocabularyTests: XCTestCase {
     }
 }
 
-extension InstallListLayout: Equatable {}
-
 // MARK: - Removal notice
 
 /// A removal and a cleared download look the same now; only history (`wasCompleted`) tells them

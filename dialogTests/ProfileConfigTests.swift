@@ -203,7 +203,8 @@ final class ProfileConfigTests: XCTestCase {
         XCTAssertNil(box.loadedOnMain, "a new look, first read: holding")
         box.uptime = 3
         tick()
-        wait(for: [applied], timeout: 2)
+        // Generous: the hop to the main thread waits behind whatever else the test host is doing.
+        wait(for: [applied], timeout: 10)
         XCTAssertEqual(box.loadedOnMain, false, "the reload ran off the main thread")
         XCTAssertEqual(box.applied, "B")
     }

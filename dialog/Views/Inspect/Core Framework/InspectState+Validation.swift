@@ -17,10 +17,16 @@ extension InspectState {
         !items.isEmpty && requiredItems.allSatisfy { completedItems.contains($0.id) }
     }
 
+    /// Every required item has finished, completed or failed. This releases a held primary button, so a
+    /// failed install never leaves the user stuck (as Preset 5's `continueWhileRunning`).
+    var allRequiredItemsFinished: Bool {
+        !items.isEmpty && requiredItems.allSatisfy { completedItems.contains($0.id) || failedItems.contains($0.id) }
+    }
+
     /// Called whenever `completedItems` or `failedItems` changes.
     func requiredItemsChanged() {
         recordItemOutcome()
-        guard allRequiredItemsCompleted else { return }
+        guard allRequiredItemsFinished else { return }
         checkAndUpdateButtonState()
     }
 
@@ -38,8 +44,8 @@ extension InspectState {
         
         writeLog("InspectState: Button state check - Total: \(totalApps), Completed: \(completedCount), Required: \(requiredItems.count), AutoEnable: \(buttonConfiguration.autoEnableButton)", logLevel: .info)
         
-        if allRequiredItemsCompleted {
-            writeLog("InspectState: All required items completed (\(completedCount)/\(totalApps) completed)", logLevel: .info)
+        if allRequiredItemsFinished {
+            writeLog("InspectState: All required items finished (\(completedCount)/\(totalApps) completed, \(failedItems.count) failed)", logLevel: .info)
             
             Task { @MainActor in
                 let completedItemsToValidate = items.filter { completedItems.contains($0.id) }

@@ -275,8 +275,13 @@ extension Preset5View {
                                   installationData: [InstallationItemData],
                                   layout: InstallationLayout,
                                   continueText: String) -> some View {
-        let summary = InstallMath.summarize(installationData.filter { !inspectState.addedItemIDs.contains($0.id) })
+        let counted = installationData.filter { !inspectState.addedItemIDs.contains($0.id) }
+        let summary = InstallMath.summarize(counted)
         let sidecar = installSidecarPanel(step: step, summary: summary)
+        // `continueWhileRunning`, as on the cadence step. Running = a counted row still installing or waiting
+        // (the rows "n of m installed" counts), so a failed install still releases Continue.
+        let running = counted.contains { $0.status == .active || $0.status == .pending }
+        let continueVisibility = CadenceContinueVisibility.resolve(step.continueWhileRunning, running: running)
         CardStepShell(
             eyebrow: cardChromeTitle,
             eyebrowIcon: config?.icon,
@@ -285,11 +290,15 @@ extension Preset5View {
             subtitle: localized("subtitle", forStep: step,
                                 fallback: step.subtitle ?? step.processingMessage),
             accent: branding.primaryColor,
-            footer: cardFooter(for: step, index: stepIndex,
-                               continueText: continueText) {
-                continueOrConfirm(step: step,
-                                  remaining: summary.total - summary.completed)
-            }
+            footer: {
+                var footer = cardFooter(for: step, index: stepIndex, continueText: continueText,
+                                        continueDisabled: continueVisibility == .disabled) {
+                    continueOrConfirm(step: step,
+                                      remaining: summary.total - summary.completed)
+                }
+                footer.primaryHidden = continueVisibility == .hidden
+                return footer
+            }()
         ) {
             HStack(alignment: .top, spacing: 26) {
                 VStack(alignment: .leading, spacing: 16) {
@@ -315,6 +324,14 @@ extension Preset5View {
                                 withAnimation(.easeInOut(duration: 0.35)) { proxy.scrollTo(focus, anchor: .center) }
                             }
                         }
+                    }
+                    // As on the classic installation step: the step's rotating lines under the rows.
+                    if let messages = step.sideMessages, !messages.isEmpty {
+                        DeploymentSideMessageView(
+                            messages: messages,
+                            interval: step.sideMessageInterval ?? 8
+                        )
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 if let sidecar {

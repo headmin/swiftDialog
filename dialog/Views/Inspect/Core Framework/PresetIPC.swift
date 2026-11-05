@@ -60,21 +60,48 @@ func presetFinalTriggerFilePath(config: InspectConfig?) -> String {
 /// `echo >>` one path while each session keeps a private file.
 let devTriggerSymlinkPath = "/tmp/swiftdialog_dev.trigger"
 
-/// The older per-preset symlink name, kept so scripts written for it keep working.
+/// The fixed per-preset trigger path 3.1.1 used; v6 keeps it as a symlink so scripts keep working.
 func legacyTriggerSymlinkPath(preset: Character) -> String { "/tmp/swiftdialog_dev_preset\(preset).trigger" }
 
-/// Points the stable symlinks at a session's trigger file. Best effort: a failure must never
-/// affect the session.
-func refreshTriggerSymlinks(target: String, preset: Character?) {
+/// Links the stable names to this session's files, once the config is loaded and before any
+/// preset starts monitoring, so a script can rely on them from launch:
+///   /tmp/swiftdialog_dev.trigger                 → trigger (newest session)
+///   /tmp/swiftdialog_dev_presetN.trigger         → trigger           (3.1.1 path)
+///   /tmp/swiftdialog_dev_presetN_final.trigger   → completion file   (3.1.1 path, presets 5/6)
+///   /tmp/swiftdialog_dev_presetN.trigger.ready   → readiness file    (3.1.1 path)
+/// The 3.1.1 names only apply when the config sets no `triggerFile` (3.1.1 then used the
+/// configured path), and `.ready` only when it sets no `readinessFile`. A link to a file not
+/// written yet dangles until it is, so `test -f` on `.ready` still means "ready". Best effort: a
+/// failure is logged and never affects the session.
+func installTriggerLinks(config: InspectConfig) {
+    let trigger = presetTriggerFilePath(config: config)
+    var links = [(devTriggerSymlinkPath, trigger)]
+    if config.triggerFile == nil, let n = config.preset.first(where: \.isNumber) {
+        let legacy = legacyTriggerSymlinkPath(preset: n)
+        links.append((legacy, trigger))
+        // Presets 5 and 6 write a completion file; 3.1.1 offered `_final` for those two only.
+        if n == "5" || n == "6" {
+            links.append((finalTriggerPath(for: legacy), finalTriggerPath(for: trigger)))
+        }
+        if config.readinessFile == nil {
+            links.append(("\(legacy).ready", resolveReadinessFilePath(config: config, triggerFilePath: trigger)))
+        }
+    }
     let fm = FileManager.default
-    for link in [devTriggerSymlinkPath] + (preset.map { [legacyTriggerSymlinkPath(preset: $0)] } ?? []) {
-        // Whatever is there may be a stale symlink or a plain file.
-        try? fm.removeItem(atPath: link)
+    for (link, target) in links {
+        // A stale link from an earlier session, or a plain file left by 3.1.1.
+        if (try? fm.destinationOfSymbolicLink(atPath: link)) != nil || fm.fileExists(atPath: link) {
+            do { try fm.removeItem(atPath: link) } catch {
+                writeLog("IPC: cannot replace \(link) (owned by another user?): \(error.localizedDescription)",
+                         logLevel: .error)
+                continue
+            }
+        }
         do {
             try fm.createSymbolicLink(atPath: link, withDestinationPath: target)
-            writeLog("IPC: trigger symlink \(link) → \(target)", logLevel: .debug)
+            writeLog("IPC: link \(link) → \(target)", logLevel: .debug)
         } catch {
-            writeLog("IPC: could not refresh trigger symlink \(link): \(error.localizedDescription)", logLevel: .debug)
+            writeLog("IPC: could not create link \(link): \(error.localizedDescription)", logLevel: .error)
         }
     }
 }
@@ -120,8 +147,6 @@ func writeReadinessFile(config: InspectConfig?, triggerFilePath: String,
                 writeLog("IPC: Published session file at \(publishedPath)", logLevel: .info)
             }
         }
-
-        refreshTriggerSymlinks(target: triggerFilePath, preset: preset?.first(where: \.isNumber))
 
         // The `ready` event carries the same path set as the readiness JSON.
         var eventInfo: [String: String] = [

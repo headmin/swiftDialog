@@ -26,6 +26,11 @@ struct InspectConstants {
     static func scanInterval(_ authored: Int?) -> TimeInterval {
         max(1, authored.map(TimeInterval.init) ?? robustUpdateInterval)
     }
+    /// Where `scanInterval(_:)` took its value from, for the log line beside it.
+    static func scanIntervalSource(_ authored: Int?) -> String {
+        guard let authored else { return "(default)" }
+        return authored < 1 ? "(scanInterval \(authored) raised to the 1 s floor)" : "(scanInterval \(authored))"
+    }
     /// How often a preset re-reads plist-backed item statuses (Presets 3 and 4). Slow on purpose:
     /// a faster poll competes with the software being installed. `IntroStepMonitorService` has
     /// its own clocks.

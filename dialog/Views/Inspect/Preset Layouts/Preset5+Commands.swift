@@ -247,6 +247,14 @@ extension Preset5View {
         // `continueAction: "minimize"` hides the window instead of advancing. The last step uses the root
         // `button1Action`, where Continue finishes the flow.
         let isLastStep = currentStepIndex >= allSteps.count - 1
+        // Guide picker: Finish waits for a selection, then writes the selections plist (3.1.1).
+        if isLastStep, isGuidePickerMode {
+            guard guidePickerAllowsFinish else {
+                writeLog("Preset5: Finish held — guide picker needs a selection", logLevel: .info)
+                return
+            }
+            writeGuideSelectionsToOutput()
+        }
         let continueAction = currentStep?.continueAction ?? (isLastStep ? config?.button1Action : nil)
         if ButtonExit.minimizes(continueAction) {
             minimizeDialogWindow()

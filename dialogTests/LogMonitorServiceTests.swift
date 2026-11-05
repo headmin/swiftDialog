@@ -949,9 +949,7 @@ final class LogFileMonitorScopeLifetimeTests: XCTestCase {
         expectation.expectedFulfillmentCount = expectedEvents
 
         monitor.onStatusExtracted = { event in
-            lock.lock()
-            events.append(event)
-            lock.unlock()
+            lock.withLock { events.append(event) }
             expectation.fulfill()
         }
         monitor.start()
@@ -961,9 +959,7 @@ final class LogFileMonitorScopeLifetimeTests: XCTestCase {
         await fulfillment(of: [expectation], timeout: 5.0)
         monitor.stop()
 
-        lock.lock()
-        defer { lock.unlock() }
-        return events
+        return lock.withLock { events }
     }
 
     private static func logMonitorConfig(path: String, preset: String) -> InspectConfig.LogMonitorConfig {

@@ -85,7 +85,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             }
             // Emit minimized/restored events (com.swiftdialog.event) so external tools can observe the
             // window being tucked away and brought back (swiftDialog#689 minimize workflow).
-            DialogNotifications.observeWindowState(window)
+            // Inspect mode only: classic dialogs keep their 3.1.1 output.
+            if appArguments.inspectMode.present {
+                DialogNotifications.observeWindowState(window)
+            }
             if appArguments.showOnAllScreens.present {
                 window.collectionBehavior = [.canJoinAllSpaces]
             }

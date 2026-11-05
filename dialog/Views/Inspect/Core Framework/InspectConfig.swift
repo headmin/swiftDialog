@@ -167,6 +167,7 @@ struct InspectConfig: Codable, Sendable {
     let complianceLabels: ComplianceLabels? // Legacy: use `labels`
     let instructionBanner: InstructionBannerConfig? // Instruction banner (all presets)
     let pickerLabels: PickerLabels?         // Legacy: use `labels`
+    let pickerConfig: PickerConfig?         // 3.1.1 guide picker: selectable steps, selections plist
 
     let iconBasePath: String?                // Base path for relative icon paths
     let overlayicon: String?                  // Overlay icon for brand identity badges
@@ -428,6 +429,7 @@ struct InspectConfig: Codable, Sendable {
         complianceLabels = try container.decodeIfPresent(ComplianceLabels.self, forKey: .complianceLabels)
         instructionBanner = try container.decodeIfPresent(InstructionBannerConfig.self, forKey: .instructionBanner)
         pickerLabels = try container.decodeIfPresent(PickerLabels.self, forKey: .pickerLabels)
+        pickerConfig = try container.decodeIfPresent(PickerConfig.self, forKey: .pickerConfig)
 
         banner = try container.decodeIfPresent(String.self, forKey: .banner)
         bannerHeight = try container.decodeIfPresent(Int.self, forKey: .bannerHeight)
@@ -513,9 +515,17 @@ struct InspectConfig: Codable, Sendable {
         // presets 1-4 `items[]` is a row list and stays ItemConfig.
         if let authored = try container.decodeIfPresent([IntroStep].self, forKey: .steps) {
             steps = InspectConfig.canonicalizeSteps(authored)
-        } else if InspectPresetName.normalizePreset(preset) == "preset6",
-                  let asSteps = try? container.decodeIfPresent([IntroStep].self, forKey: .items) {
-            steps = InspectConfig.canonicalizeSteps(asSteps)
+        } else if InspectPresetName.normalizePreset(preset) == "preset6" {
+            do {
+                let asSteps = try container.decodeIfPresent([IntroStep].self, forKey: .items)
+                let rows = items
+                steps = InspectConfig.canonicalizeSteps(asSteps.map { InspectConfig.orderedByGuiIndex($0, rows: rows) })
+            } catch {
+                // A step-only type mismatch must not silently blank the wizard.
+                InspectConfig.unknownKeyWarnings.append("Preset 6 items[] could not be read as steps: \(error)")
+                writeLog("InspectConfig: Preset 6 items[] could not be read as steps: \(error)", logLevel: .error)
+                steps = nil
+            }
         } else {
             steps = nil
         }
@@ -525,16 +535,6 @@ struct InspectConfig: Codable, Sendable {
         // authored.
         let decodedSteps = decodedIntroSteps ?? steps
 
-        // The bookend projection owns `_intro`/`_outro`; a config claiming one is rejected.
-        if let claimed = decodedSteps?.first(where: { InspectConfig.reservedBookendIds.contains($0.id) }) {
-            throw DecodingError.dataCorrupted(.init(
-                codingPath: [CodingKeys.introSteps],
-                debugDescription: """
-                    Step id '\(claimed.id)' is reserved for the bookend projection \
-                    (introScreen -> '\(InspectConfig.reservedIntroStepId)', \
-                    summaryScreen -> '\(InspectConfig.reservedOutroStepId)'). Rename the step.
-                    """))
-        }
         introSteps = decodedSteps
 
         introScreen = try container.decodeIfPresent(PresetIntroScreen.self, forKey: .introScreen)
@@ -552,6 +552,22 @@ struct InspectConfig: Codable, Sendable {
             }
         } else {
             summaryScreen = nil
+        }
+
+        // `_intro`/`_outro` belong to the bookend projection only when its screen exists: then a
+        // step with that id would collide with the projected one. Without the screen the id is an
+        // ordinary step id, as in 3.1.1, which reserved neither.
+        var claimedIds: Set<String> = []
+        if introScreen != nil { claimedIds.insert(InspectConfig.reservedIntroStepId) }
+        if summaryScreen != nil { claimedIds.insert(InspectConfig.reservedOutroStepId) }
+        if let claimed = decodedSteps?.first(where: { claimedIds.contains($0.id) }) {
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: [CodingKeys.introSteps],
+                debugDescription: """
+                    Step id '\(claimed.id)' is reserved for the bookend projection \
+                    (introScreen -> '\(InspectConfig.reservedIntroStepId)', \
+                    summaryScreen -> '\(InspectConfig.reservedOutroStepId)'). Rename the step.
+                    """))
         }
 
         // Root-level blocks go through the same `canonicalizeBlocks` seam as step and item
@@ -652,7 +668,7 @@ struct InspectConfig: Codable, Sendable {
 
         // Deprecated: decoded and ignored.
         case buttonStyle
-        case autoEnableButton, autoEnableButtonText, hideSystemDetails, observeOnly, autoAdvanceOnComplete, autoAdvanceDelay, colorThresholds, plistSources, labels, uiLabels, complianceLabels, instructionBanner, pickerLabels, items
+        case autoEnableButton, autoEnableButtonText, hideSystemDetails, observeOnly, autoAdvanceOnComplete, autoAdvanceDelay, colorThresholds, plistSources, labels, uiLabels, complianceLabels, instructionBanner, pickerLabels, pickerConfig, items
         case introSteps
         case steps
         case iconBasePath, overlayicon, rotatingImages, imageRotationInterval, imageShape, backButtonStyle, stepStyle, listIndicatorStyle
@@ -737,6 +753,7 @@ extension InspectConfig {
         try container.encodeIfPresent(complianceLabels, forKey: .complianceLabels)
         try container.encodeIfPresent(instructionBanner, forKey: .instructionBanner)
         try container.encodeIfPresent(pickerLabels, forKey: .pickerLabels)
+        try container.encodeIfPresent(pickerConfig, forKey: .pickerConfig)
         try container.encodeIfPresent(banner, forKey: .banner)
         try container.encodeIfPresent(bannerHeight, forKey: .bannerHeight)
         try container.encodeIfPresent(bannerTitle, forKey: .bannerTitle)

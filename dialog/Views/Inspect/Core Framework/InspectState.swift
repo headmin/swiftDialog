@@ -166,8 +166,8 @@ class InspectState: ObservableObject, FileMonitorDelegate, @MainActor CadenceCon
     var configPath: String?
     var lastCommandFileSize: Int = 0
     var lastProcessedLineCount: Int = 0
-    /// False until the first look at the command file, which adopts existing content instead of
-    /// replaying it (CommandFileReplayGuard).
+    /// False until monitoring starts and adopts the command file's existing content instead of
+    /// replaying it (`seedCommandFileCursor`, CommandFileReplayGuard).
     var commandFileCursorSeeded: Bool = false
     var commandFileMonitor: DispatchSourceFileSystemObject?
     var updatePoll: Poll?
@@ -328,6 +328,7 @@ class InspectState: ObservableObject, FileMonitorDelegate, @MainActor CadenceCon
                 let loadedConfig = configResult.config
 
                 self.config = loadedConfig
+                installTriggerLinks(config: loadedConfig)
                 if loadedConfig.watch == true, !appvars.inspectConfigPath.isEmpty {
                     self.startConfigWatch(path: appvars.inspectConfigPath)
                 }
@@ -362,7 +363,8 @@ class InspectState: ObservableObject, FileMonitorDelegate, @MainActor CadenceCon
 
                 // Setting items ends the loading view.
                 self.items = loadedConfig.items.sorted { $0.guiIndex < $1.guiIndex }
-                // Steps keep authored order; `guiIndex` only sorts rows.
+                // Steps keep authored order, except preset 6 `items[]`, already in `guiIndex` order
+                // (InspectConfig.orderedByGuiIndex).
                 self.steps = loadedConfig.steps ?? []
                 
                 if self.uiConfiguration.sideMessages.count > 1, let interval = loadedConfig.sideInterval {
@@ -423,6 +425,7 @@ class InspectState: ObservableObject, FileMonitorDelegate, @MainActor CadenceCon
         writeLog("InspectState.startMonitoring() - Starting all monitoring components", logLevel: .info)
         
         // FSEvents monitoring starts in loadConfiguration(): `config` is still nil here.
+        seedCommandFileCursor()
         setupCommandFileMonitoring()
         setupOptimizedPeriodicUpdates()
 
@@ -471,7 +474,13 @@ class InspectState: ObservableObject, FileMonitorDelegate, @MainActor CadenceCon
     
     private func setupOptimizedPeriodicUpdates() {
         updatePoll?.cancel()
-        let poll = Poll(every: InspectConstants.scanInterval(config?.scanInterval))
+        let every = InspectConstants.scanInterval(config?.scanInterval)
+        // Only once the config is in: the first start, before it arrives, is replaced at load.
+        if config != nil {
+            writeLog("InspectState: scanning item paths every \(Int(every)) s "
+                     + InspectConstants.scanIntervalSource(config?.scanInterval), logLevel: .info)
+        }
+        let poll = Poll(every: every)
         poll.start { [weak self] in
             self?.performRobustAppCheck()
         }
@@ -520,14 +529,10 @@ class InspectState: ObservableObject, FileMonitorDelegate, @MainActor CadenceCon
                     previousStatuses[itemId] = status
 
                     if status.hasPrefix("Failed") {
-                        self.failedItems.insert(itemId)
-                        self.completedItems.remove(itemId)
-                        self.downloadingItems.remove(itemId)
+                        self.applyItemStatus(itemId, .failed)
                         writeLog("InspectState: Item '\(itemId)' marked as failed from log monitor", logLevel: .info)
                     } else if status == "Completed" {
-                        self.completedItems.insert(itemId)
-                        self.downloadingItems.remove(itemId)
-                        self.failedItems.remove(itemId)
+                        self.applyItemStatus(itemId, .completed)
                         writeLog("InspectState: Item '\(itemId)' marked as completed from log monitor", logLevel: .info)
                     } else if self.isUpdatingStatus(status) {
                         if self.completedItems.contains(itemId) {

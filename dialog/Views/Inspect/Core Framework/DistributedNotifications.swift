@@ -206,9 +206,10 @@ enum DialogNotifications {
                 forName: name, object: nil, queue: .main
             ) { notification in
                 // Reduced to `[String: String]` so nothing non-Sendable crosses into the actor.
+                // Non-string values are kept as their text: `{"next": 1}` still means next.
                 var info: [String: String] = [:]
                 for (key, value) in notification.userInfo ?? [:] {
-                    if let key = key as? String, let value = value as? String { info[key] = value }
+                    if let key = key as? String { info[key] = (value as? String) ?? "\(value)" }
                 }
                 if legacy, let pid = info["pid"], pid != ours { return }
                 MainActor.assumeIsolated {

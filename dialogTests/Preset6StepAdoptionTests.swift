@@ -35,6 +35,19 @@ final class Preset6StepAdoptionTests: XCTestCase {
         XCTAssertEqual(c.items.count, 4, "the row list still decodes too, for one release")
     }
 
+    /// `guiIndex` sets the display order (documented as required in 3.1.1); ties keep file order.
+    func testPreset6ItemsFollowGuiIndex() throws {
+        let c = try config("""
+        {"preset": "6", "items": [
+          {"id": "done", "displayName": "Done", "guiIndex": 3},
+          {"id": "welcome", "displayName": "Welcome", "guiIndex": 0},
+          {"id": "b", "displayName": "B", "guiIndex": 1},
+          {"id": "a", "displayName": "A", "guiIndex": 1}
+        ]}
+        """)
+        XCTAssertEqual(try XCTUnwrap(c.steps).map(\.id), ["welcome", "b", "a", "done"])
+    }
+
     /// `steps[]` and `items[]` decode to the same steps.
     func testStepsKeyAndItemsKeyAgree() throws {
         let body = """
