@@ -559,7 +559,7 @@ final class FleetSetupSource: @unchecked Sendable {
         var rows = configRows + addedRows
         readEvents(rows: rows)
         // An install the config does not list gets its own row, named from the installer.
-        for (filename, began) in join.unclaimed() where (began ?? .distantPast) >= startedAt.addingTimeInterval(-60) {
+        for (filename, began) in join.unclaimed() where !((began ?? .distantPast) < startedAt.addingTimeInterval(-60)) {   // not <= / >= on Date (see SlotPickerCopy.resolve)
             let title = FleetSetup.title(fromFilename: filename), id = "app-" + FleetSetup.slug(title)
             guard !FleetSetup.slug(title).isEmpty, !rows.contains(where: { $0.id == id }) else { continue }
             let row = FleetSetup.Row(id: id, name: title, names: [title], kind: .software, status: "pending", error: nil)

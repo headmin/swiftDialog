@@ -80,7 +80,9 @@ enum SlotPickerCopy {
     /// granularity grid, so it can sit minutes behind the clock.
     static func resolve(block: InspectConfig.GuidanceContent, chosen: Date, now: Date,
                         selectionKey: String, l10n: (String, String) -> String) -> SlotPickerFooterCopy {
-        let isNow = chosen <= now
+        // `!(a > b)`, not `a <= b`: Foundation's Date <= and >= are new in the macOS 27.2 SDK and missing
+        // from some 27.2 builds, where a call jumps to address 0. <, > and == exist everywhere.
+        let isNow = !(chosen > now)
         let continueText: String?
         if isNow {
             continueText = block.continueAtNow

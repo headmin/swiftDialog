@@ -75,6 +75,7 @@ extension Config {
 
         do {
             var jsonData = data
+            var remapNotes: [String] = []
             if var jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
 
                 if jsonObject["iconBasePath"] == nil {
@@ -92,6 +93,12 @@ extension Config {
                     writeLog("🎨 CONFIG: No brandPalette found in config", logLevel: .debug)
                 }
 
+                // 3.1.1 keys, as `validateInspectSchema` does for the file and inline loaders.
+                let remap = InspectLegacyRemap.apply(jsonObject)
+                jsonObject = remap.object
+                remapNotes = remap.notes
+                InspectLegacyRemap.log(remap.notes)
+
                 if let coerced = InspectConfigCoercion.coerceScalars(in: jsonObject) as? [String: Any] {
                     jsonObject = coerced
                 }
@@ -105,7 +112,7 @@ extension Config {
             }
 
             let decoder = JSONDecoder()
-            InspectConfig.unknownKeyWarnings = []
+            InspectConfig.unknownKeyWarnings = remapNotes
             let config = try decoder.decode(InspectConfig.self, from: jsonData)
             let keyWarnings = InspectConfig.unknownKeyWarnings
             InspectConfig.unknownKeyWarnings = []
@@ -155,7 +162,9 @@ extension Config {
         }
 
         let validation = validateInspectSchema(resolvedData)
-        let keyWarnings = InspectConfig.unknownKeyWarnings
+        // Once each: a profile fallback check above runs the same schema pass, legacy notes included.
+        var seenWarnings = Set<String>()
+        let keyWarnings = InspectConfig.unknownKeyWarnings.filter { seenWarnings.insert($0).inserted }
         InspectConfig.unknownKeyWarnings = []
 
         switch validation {

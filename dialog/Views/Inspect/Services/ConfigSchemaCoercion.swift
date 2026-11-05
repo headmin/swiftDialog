@@ -155,7 +155,11 @@ func validateInspectSchema(_ data: Data) -> InspectSchemaValidation {
     if let a = obj["items"] as? [Any], !a.isEmpty { hasMarker = true }
     guard hasMarker else { return .notInspect }
 
-    let coerced = (InspectConfigCoercion.coerceScalars(in: obj) as? [String: Any]) ?? obj
+    // 3.1.1 keys first, in memory only; their notes reach the loader's warnings and lint.
+    let remap = InspectLegacyRemap.apply(obj)
+    InspectLegacyRemap.log(remap.notes)
+    InspectConfig.unknownKeyWarnings.append(contentsOf: remap.notes)
+    let coerced = (InspectConfigCoercion.coerceScalars(in: remap.object) as? [String: Any]) ?? remap.object
     guard let coercedData = try? JSONSerialization.data(withJSONObject: coerced) else {
         return .malformed(reason: "could not re-serialize coerced JSON")
     }

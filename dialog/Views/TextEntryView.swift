@@ -93,7 +93,7 @@ struct TextEntryView: View {
         let components = observedData.textFieldArray[index].dateComponents
         let (minDate, maxDate) = observedData.textFieldArray[index].pickerBounds
         switch (minDate, maxDate) {
-        case let (minDate?, maxDate?) where minDate <= maxDate:
+        case let (minDate?, maxDate?) where !(minDate > maxDate):   // not <= / >= on Date (see SlotPickerCopy.resolve)
             DatePicker("", selection: selection, in: minDate...maxDate, displayedComponents: components)
         case let (minDate?, _):
             DatePicker("", selection: selection, in: minDate..., displayedComponents: components)

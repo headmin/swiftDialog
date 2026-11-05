@@ -54,7 +54,7 @@ struct SlotPickerView<Context: UserInputContext & ObservableObject>: View {
     /// An unparseable or past deadline means the block does not render at all.
     private var isValid: Bool {
         guard let deadlineDate else { return false }
-        return deadlineDate >= now
+        return !(deadlineDate < now)   // not <= / >= on Date (see SlotPickerCopy.resolve)
     }
 
     var body: some View {

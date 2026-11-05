@@ -64,8 +64,18 @@ struct StepAddEnvelope<Step: Decodable>: Decodable {
 }
 
 func decodeStepEnvelope<Step: Decodable>(_ payload: String) throws -> StepAddEnvelope<Step> {
-    guard let data = payload.data(using: .utf8) else {
+    guard var data = payload.data(using: .utf8) else {
         throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "payload is not UTF-8"))
+    }
+    // 3.1.1 step keys, as for a loaded config (InspectLegacyRemap).
+    if var envelope = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+       let step = envelope["step"] as? [String: Any] {
+        let remap = InspectLegacyRemap.apply(step: step)
+        if !remap.notes.isEmpty {
+            InspectLegacyRemap.log(remap.notes)
+            envelope["step"] = remap.object
+            data = (try? JSONSerialization.data(withJSONObject: envelope)) ?? data
+        }
     }
     return try JSONDecoder().decode(StepAddEnvelope<Step>.self, from: data)
 }
